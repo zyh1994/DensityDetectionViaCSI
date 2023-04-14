@@ -102,6 +102,5 @@ def main():
             update_plot(ax, meta_info, abs_csi.T)
 
 
-
 if __name__ == "__main__":
     main()
