@@ -74,6 +74,9 @@ def main():
     # Change the figue title
     fig.canvas.manager.set_window_title("CSI Plotter")
 
+    # Print out debug message
+    print("Start to get CSI data")
+
     while True:
 
         # Get the data from the server
