@@ -59,14 +59,6 @@ def update_plot(ax, meta_info, abs_csi):
 
 def main():
 
-    # Get the client socket
-    cli_sock = setup_client_side()
-
-    # If the client socket is None, print out the error message and exit
-    if cli_sock is None:
-        print("Cannot connect to the server")
-        return
-    
     # Set up real-time plotting
     plt.ion()
     fig, ax = plt.subplots()
@@ -74,49 +66,41 @@ def main():
     # Change the figue title
     fig.canvas.manager.set_window_title("CSI Plotter")
 
+    # Get the client socket
+    cli_sock = setup_client_side()
+
     while True:
 
-        # Get the data from the server
-        try:
+        # If the socket is closed, then reconnect to the server
+        if cli_sock._closed:
+            cli_sock = setup_client_side()
 
-            # Two bytes for the length of the data
-            loaded_bytes = cli_sock.recv(2)
-            if not loaded_bytes:
-                print("No data received")
-                break
-        
-            # Convert the data to the short type
-            data_len = struct.unpack('>H', loaded_bytes)[0]
+        # Two bytes for the length of the data
+        loaded_bytes = cli_sock.recv(2)
+        if not loaded_bytes:
+            print("No data received")
+            continue
+    
+        # Convert the data to the short type
+        data_len = struct.unpack('>H', loaded_bytes)[0]
 
-            # Read the rest of the data
-            raw_frame = cli_sock.recv(data_len)
+        # Read the rest of the data
+        raw_frame = cli_sock.recv(data_len)
 
-            # Process the raw frame and convert it to the CSI entry
-            meta_info, csi_mat = parse_csi_data(data_len, raw_frame)
+        # Process the raw frame and convert it to the CSI entry
+        meta_info, csi_mat = parse_csi_data(data_len, raw_frame)
 
-            if meta_info is not None and csi_mat is not None:
-                # Compute the absolute value of the CSI matrix
-                abs_csi = np.abs(csi_mat)
+        if meta_info is not None and csi_mat is not None:
+            # Compute the absolute value of the CSI matrix
+            abs_csi = np.abs(csi_mat)
 
-                # Convert the shape of the CSI matrix to the 2D array
-                # From (nTx, nRx, nSC) to (nAnt, nSC)
-                abs_csi = np.reshape(abs_csi, (abs_csi.shape[0] * abs_csi.shape[1], abs_csi.shape[2]))
+            # Convert the shape of the CSI matrix to the 2D array
+            # From (nTx, nRx, nSC) to (nAnt, nSC)
+            abs_csi = np.reshape(abs_csi, (abs_csi.shape[0] * abs_csi.shape[1], abs_csi.shape[2]))
 
-                # Transpose the CSI matrix and plot it
-                update_plot(ax, meta_info, abs_csi.T)
+            # Transpose the CSI matrix and plot it
+            update_plot(ax, meta_info, abs_csi.T)
 
-        except ConnectionAbortedError:
-            print('Connection aborted')
-        except ConnectionResetError:
-            print('Connection reset')
-        except socket.timeout:
-            print('Connection timed out')
-        finally:
-            # Close the socket
-            cli_sock.close()
-
-            # Print out the message
-            print("Connection closed")
 
 
 if __name__ == "__main__":
