@@ -1,53 +1,16 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import struct
-import time
 import sys
+import time
 
-from Bfee import Bfee
-from CSIUtilities import get_scaled_csi
-
-
-def parse_csi_data(data_len, raw_frame):
-    # Read the first byte from the frame
-    frame_code = raw_frame[0]
-
-    # Compute the checksum of the frame
-    # checksum = hashlib.md5(raw_frame).hexdigest()
-
-    # Convert the bytes from 1 to the last one to the numpy array
-    np_frame = np.frombuffer(raw_frame[1:], dtype=np.uint8)
-
-    # Now trying to decode the csi frame
-    if frame_code == 187:
-        bfee = Bfee(np_frame)
-        return bfee.get_meta_info(), get_scaled_csi(bfee)
-    else:
-        # If the frame code is not 187, then print out the error message
-        print("The frame code is not 187, convert to CSI entry failed")
-        return None, None
+from plotter_base import *
 
 
-def update_plot(ax, abs_csi):
-    ax.clear()
-    ax.plot(abs_csi)
-    ax.legend(['RX Antenna A', 'RX Antenna B', 'RX Antenna C'], loc='lower right')
-    ax.set_xlabel('Subcarrier index')
-    ax.set_ylabel('SNR [dB]')
-    plt.pause(0.01)
-
-
-def plot_csi(filename):
+def main(filename):
     # Open the local csi file
     csi_fd = open(filename, "rb")
 
     # Set up real-time plotting
-    plt.ion()
-    fig, ax = plt.subplots()
-
-    # Change the figue title
-    # fig.canvas.set_window_title('CSI Plotter')
-    fig.canvas.manager.set_window_title(filename)
+    ax = prepare_chart(f"Offline: {filename}")
 
     for i in range(1000):
         # Read the length of bytes in the data
@@ -63,27 +26,24 @@ def plot_csi(filename):
 
         # Processing the data and plot it to the chart
         meta, csi = parse_csi_data(data_len, loaded_bytes)
+
         if meta is not None and csi is not None:
-            # Squeeze and take the absolute value
-            abs_csi = np.abs(np.squeeze(csi))
+            # Compute the absolute value of the CSI matrix
+            abs_csi = np.abs(csi)
 
-            # Transpose to match the Matlab example
-            abs_csi = abs_csi.T
+            # Convert the shape of the CSI matrix to the 2D array
+            # From (nTx, nRx, nSC) to (nAnt, nSC)
+            abs_csi = np.reshape(abs_csi, (abs_csi.shape[0] * abs_csi.shape[1], abs_csi.shape[2]))
 
-            # If the size of abs_csi is above 2 dimensions, then take the mean
-            if abs_csi.ndim > 2:
-                abs_csi = np.mean(abs_csi, axis=2)
-
-            print(abs_csi.shape)
-
-            # Update the plot
-            update_plot(ax, abs_csi)
+            # Transpose the CSI matrix and plot it
+            update_chart(ax, meta, abs_csi.T)
 
         # Sleep for 0.2 seconds
         time.sleep(0.5)
 
     # Close the csi file
     csi_fd.close()
+
 
 if __name__ == "__main__":
 
@@ -94,4 +54,4 @@ if __name__ == "__main__":
         filename = "csi.dat"
 
     # Plot the CSI data
-    plot_csi(filename)
+    main(filename)
