@@ -39,7 +39,7 @@ def main(filename):
             update_chart(ax, meta, abs_csi.T)
 
         # Sleep for 0.2 seconds
-        time.sleep(0.5)
+        time.sleep(0.2)
 
     # Close the csi file
     csi_fd.close()
