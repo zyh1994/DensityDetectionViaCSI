@@ -32,7 +32,6 @@ def main(filename):
             abs_csi = np.abs(csi)
 
             # Convert the shape of the CSI matrix to the 2D array
-            # From (nTx, nRx, nSC) to (nAnt, nSC)
             abs_csi = np.reshape(abs_csi, (abs_csi.shape[0] * abs_csi.shape[1], abs_csi.shape[2]))
 
             # Transpose the CSI matrix and plot it
