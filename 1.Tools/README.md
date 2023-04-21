@@ -99,7 +99,17 @@ $(csi) pip3 install -r requirements.txt
 
 ## 启动CSI信号监听
 
-推荐使用tools/csi_listener.py启动监听
+CSI信号，只有当WI-FI收发了数据后才会产生，为此我们需要准备一个通过WI-FI进行信号发送和接收的完整环境。目前我们采用的信号发送方法，是让PC对路由器发送PING，从而建立起完整的闭环。
+
+> PING是一种用于测试网络连接的实用工具，它使用的是Internet控制消息协议（ICMP）。因此，PING既不是TCP协议，也不是UDP协议。ICMP位于IP层，是用于网络节点之间传递控制信息的协议。在PING操作中，主机会发送ICMP回显请求报文，目标主机会回复ICMP回显应答报文，从而确认网络连接是否正常。
+
+所以建立CSI监听的过程大体上可以简化为，首先本机对其他设备发起PING（例如对路由器）
+
+```bash
+$(csi) sudo ping 192.168.0.1 -i 0.02
+```
+
+然后在本机使用tools/csi_listener.py脚本启动监听
 
 ```bash
 $(csi) python3 csi_listener.py
@@ -111,20 +121,65 @@ $(csi) python3 csi_listener.py
 * wifi01
 * vpn01
 
-> 你需要知道自己的5300网卡所对应的设备名称，如果不知道可以使用
+从中选择Wi-Fi网卡
+
+> 如果不知道自己的Wi-Fi网卡所对应的设备名，可以执行以下脚本进行确认
 >
 > ```bash
 > $(csi) sh get_adapter_info.sh
 > ```
->
-> 获取网络设备的全部信息，然后自己判断正确的名字。
 
 选择好设备后，接下来会提示
 
 * Log to file
 * Transmit
 
-选择 Log to file 会启动离线记录模式，会将WI-FI接收到的CSI信息直接以日志形式记录，并在当前文件夹下生成一个 csi.dat 的文件。该文件可以被 csikit 工具解析，也可以被 plotter/plotter_replayer.py 或者 Bfee 文件解析。
+选择 **Log to file** 会启动离线记录模式，会将WI-FI接收到的CSI信息直接以日志形式记录，并在当前文件夹下生成一个 csi.dat 的文件。该文件可以被 csikit 工具解析，也可以被 plotter/plotter_replayer.py 或者 Bfee 文件解析。
 
-如果选择 Transmit，会启动一个TCP服务器，如果配合使用 plotter/plotter_online.py，那么就可以把得到的数据实时绘制出来。
+如果选择 **Transmit**，会启动一个TCP服务器，然后等待客户端接入。这个时候可以选择使用 plotter/plotter_online.py，它会连接上TCP服务器，然后绘制实时的数据，执行过程很简单。
 
+```bash
+$(csi) python plotter_online.py
+```
+
+# 数据结构说明
+
+根据目前已有的资料，可以知道由Intel 5300网卡产生的CSI信息是长度不等的二进制数据帧。由于数据帧没有特定的包头和包尾，以及Hash验证，所以可以猜测该数据结构只能应用于一些环境相对简单的场景，并且不支持高并发的网络通信。所以如果需要应用在高并发场景，需要对原始数据帧进行解析后，再封装。
+
+目前基本的数据帧如下：
+
+```C
+    struct iwl_bfee_notif
+    {
+        uint32_t /* __le32 */ timestamp_low;
+        uint16_t /* __le16 */ bfee_count;
+        uint16_t reserved1;
+        uint8_t Nrx, Ntx;
+        int8_t rssiA, rssiB, rssiC;
+        int8_t noise;
+        uint8_t agc, antenna_sel;
+        uint16_t /* __le16 */ len;
+        uint16_t /* __le16 */ fake_rate_n_flags;
+        uint8_t payload[0];
+    } __attribute__((packed));
+```
+
+数据帧的解析主要都在Bfee文件中，数据结构中包含了多个有关无线信号的参数，例如信号强度、噪声水平和天线配置等。数据结构的主要组成部分是一个名为Bfee的类，它包含了从原始字节数据中解析得到的无线信号的各种信息。
+
+以下是Bfee数据结构的详细说明：
+
+**timestamp_low**：表示测量CSI时的时间戳。
+**bfee_count**：表示当前数据文件中当前CSI测量的编号。
+**reserved1**：保留字段，未使用。
+**nRx**：接收天线的数量。
+**nTx**：发送天线的数量。
+**rssi_a**、**rssi_b**、**rssi_c**：分别表示三个天线测量到的无线信号的接收信号强度指示器（RSSI）。
+**noise**：无线信号的噪声水平。
+**agc**：用于放大接收信号的自动增益控制（AGC）值。
+**antenna_sel**：表示用于测量CSI的接收天线的二进制值。
+**perm**：根据所选接收天线对CSI矩阵进行重新排序的排列矩阵。
+**len**：包含CSI信息的有效载荷长度。
+**fake_rate_n_flags**：包含有关CSI的各种标志和信息的字段。
+**payload**：实际的CSI矩阵，描述了发送端和接收端之间的无线信道状态。这是一个30xNrxNtx的3D复数矩阵，其中30表示子载波的数量，Nrx和Ntx分别表示接收天线和发送天线的数量。
+
+通过这个数据结构，我们可以对无线信道进行深入分析，从而改进无线通信系统的性能和可靠性。
