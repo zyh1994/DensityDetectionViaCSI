@@ -142,20 +142,22 @@ class Bfee(object):
 
             for ntx in range(self.nTx):
                 for nrx in range(self.nRx):
+                    # Check if the index is within bounds
+                    if idx // 8 + 2 < len(self._payload):  
 
-                    # Extract the real and imaginary part of the complex number
-                    real_bin = bytes([(self._payload[idx // 8] >> remainder) |
-                                      (self._payload[idx // 8 + 1] << (8 - remainder)) & 0b11111111])
-                    real = int.from_bytes(real_bin, byteorder='little', signed=True)
-                    imag_bin = bytes([(self._payload[idx // 8 + 1] >> remainder) |
-                                      (self._payload[idx // 8 + 2] << (8 - remainder)) & 0b11111111])
-                    imag = int.from_bytes(imag_bin, byteorder='little', signed=True)
+                        # Extract the real and imaginary part of the complex number
+                        real_bin = bytes([(self._payload[idx // 8] >> remainder) |
+                                          (self._payload[idx // 8 + 1] << (8 - remainder)) & 0b11111111])
+                        real = int.from_bytes(real_bin, byteorder='little', signed=True)
+                        imag_bin = bytes([(self._payload[idx // 8 + 1] >> remainder) |
+                                          (self._payload[idx // 8 + 2] << (8 - remainder)) & 0b11111111])
+                        imag = int.from_bytes(imag_bin, byteorder='little', signed=True)
 
-                    # Create the complex number and store it in the CSI matrix
-                    csi_matrix[nrx, ntx, carrier] = complex(float(real), float(imag))
+                        # Create the complex number and store it in the CSI matrix
+                        csi_matrix[nrx, ntx, carrier] = complex(float(real), float(imag))
 
                     # Increment the index by 16 bits (real and imaginary part)
-                    idx += 16
+                    idx += 16            
 
         # return the CSI matrix
         return csi_matrix
