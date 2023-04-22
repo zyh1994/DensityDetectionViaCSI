@@ -31,8 +31,8 @@ sudo ln -s /usr/bin/g++-8 /usr/bin/g++
 # If the directory is not exist, do the following
 if [ ! -d "linux-80211n-csitool" ]; then
     echo "${GREEN}Cloning the modified Linux kernel code...${NC}"
-    #git clone https://github.com/spanev/linux-80211n-csitool.git
-    git clone https://github.com/seagochen/linux-80211n-csitool.git
+    git clone https://github.com/spanev/linux-80211n-csitool.git
+    # git clone https://github.com/seagochen/linux-80211n-csitool.git
 fi
 cd linux-80211n-csitool
 
