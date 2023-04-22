@@ -1,5 +1,6 @@
 import re
 import subprocess
+import time
 from typing import List
 
 
@@ -10,30 +11,49 @@ def get_wireless_adapters() -> List[str]:
     return wireless_adapters
 
 
-def set_monitor_mode(interface: str):
+def _get_mode(interface: str) -> str:
     iw_config_output = subprocess.check_output(['iwconfig', interface]).decode()
     mode = re.search(r'Mode:(\w+)', iw_config_output).group(1)
+    return mode
 
-    # Print out the current mode of the interface
-    if mode == "Managed":
-        print(f"Interface {interface} is in managed mode")
-    elif mode == "Ad-Hoc":
-        print(f"Interface {interface} is in ad-hoc mode")
-    elif mode == "Master":
-        print(f"Interface {interface} is in master mode")
-    elif mode == "Repeater":
-        print(f"Interface {interface} is in repeater mode")
-    elif mode == "Secondary":
-        print(f"Interface {interface} is in secondary mode")
-    elif mode == "Monitor":
-        print(f"Interface {interface} is already in monitor mode")
-        return
 
-    # Set the interface to monitor mode
-    print(f"Now, setting interface {interface} to monitor mode")
+def _change_mode(interface: str, mode: str):
     subprocess.run(['sudo', 'ifconfig', interface, 'down'])
-    subprocess.run(['sudo', 'iwconfig', interface, 'mode', 'monitor'])
+    subprocess.run(['sudo', 'iwconfig', interface, 'mode', mode])
     subprocess.run(['sudo', 'ifconfig', interface, 'up'])
+
+
+def set_monitor_mode(interface: str):
+
+    # Attempt to change the mode of the interface to monitor mode, at least 5 times
+    for i in range(5):
+
+        # Get the current mode of the interface
+        mode = _get_mode(interface)
+
+        # Print out the current mode of the interface
+        if mode == "Managed":
+            print(f"Interface {interface} is in managed mode")
+        elif mode == "Ad-Hoc":
+            print(f"Interface {interface} is in ad-hoc mode")
+        elif mode == "Master":
+            print(f"Interface {interface} is in master mode")
+        elif mode == "Repeater":
+            print(f"Interface {interface} is in repeater mode")
+        elif mode == "Secondary":
+            print(f"Interface {interface} is in secondary mode")
+        elif mode == "Monitor":
+            print(f"Interface {interface} is already in monitor mode")
+            return
+        
+        # If the interface is not in monitor mode, attempt to change it
+        if mode != "Monitor":
+            print(f"Attempting to change interface {interface} to monitor mode")
+            _change_mode(interface, "monitor")
+
+        # Wait for the interface to change mode for 1 second
+        time.sleep(1)
+
 
 
 def log_csi_data():
