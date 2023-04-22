@@ -54,6 +54,8 @@ def set_monitor_mode(interface: str):
         # Wait for the interface to change mode for 1 second
         time.sleep(1)
 
+    # It is possible that the interface is not able to change to monitor mode
+    print(f"Unable to change interface {interface} to monitor mode...")
 
 
 def log_csi_data():
