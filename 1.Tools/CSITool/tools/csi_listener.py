@@ -56,6 +56,10 @@ def set_monitor_mode(interface: str):
 
     # It is possible that the interface is not able to change to monitor mode
     print(f"Unable to change interface {interface} to monitor mode...")
+    print("Exiting...")
+
+    # Exit the program
+    exit()
 
 
 def log_csi_data():
