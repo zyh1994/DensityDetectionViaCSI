@@ -1,10 +1,15 @@
 #!/bin/bash
 
+# Local variables 
 ANACONDA_VERSION=5.0.1
 ANACONDA_INSTALLER=Anaconda3-$ANACONDA_VERSION-Linux-x86_64.sh
 ANACONDA_URL=https://repo.anaconda.com/archive/$ANACONDA_INSTALLER
 ANACONDA_HASH_VAL=55e4db1919f49c92d5abbf27a4be5986ae157f074bf9f8238963cd4582a4068a
+
 ANACONDA_INSTALL_DIR=$HOME/anaconda3
+ANACONDA_INSTALL_BIN=$ANACONDA_INSTALL_DIR/bin
+
+NEW_PATH=$ANACONDA_INSTALL_BIN:"$PATH"
 
 # Create a temporary directory for the installer
 TEMP_DIR=$(mktemp -d)
@@ -36,8 +41,8 @@ bash $ANACONDA_INSTALLER -b -p "$ANACONDA_INSTALL_DIR"
 
 # Add Anaconda to PATH
 echo "Adding Anaconda to PATH..."
-echo 'export PATH="$ANACONDA_INSTALL_DIR/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
+echo "export PATH=`echo $NEW_PATH`" >> $HOME/.bashrc
+source $HOME/.bashrc
 
 # Echo the completion of the installation
 echo "Anaconda installation complete!"
