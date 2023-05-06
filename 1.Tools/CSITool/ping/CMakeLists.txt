@@ -1,6 +1,14 @@
-cmake_minimum_required(VERSION 3.25)
-project(Ping C)
+cmake_minimum_required(VERSION 3.10)
+project(ping)
 
-set(CMAKE_C_STANDARD 11)
+# Set the CPP standard, we use C++14 here
+set(CMAKE_CXX_STANDARD 14)
 
-add_executable(Ping main.c)
+# Allow to include all necessary files
+file(GLOB all_SRCS
+        "${PROJECT_SOURCE_DIR}/src/*.h"
+        "${PROJECT_SOURCE_DIR}/src/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/*.c"
+        )
+
+add_executable(ping ${all_SRCS} src/main.cpp src/main.cpp)

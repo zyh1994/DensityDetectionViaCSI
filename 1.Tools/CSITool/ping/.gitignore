@@ -187,3 +187,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+# Other folders
+debug/*
+build/*
+release/*
