@@ -21,13 +21,13 @@ unsigned short checksum(void *b, int len)
 // Send the Ping message
 int send_ping(int sock_fd, struct sockaddr_in* addr, struct packet* pack) 
 {
-    socklen_t len = sizeof(*addr_ping);
-    return sendto(sock_fd, pack, sizeof(*pack), 0, (struct sockaddr*)addr, &len);
+    socklen_t len = sizeof(*addr);
+    return sendto(sock_fd, pack, sizeof(*pack), 0, (struct sockaddr*)addr, len);
 }
 
 // Receive the Ping message
 int recv_ping(int sock_fd, struct sockaddr_in* addr, struct packet* pack)
 {
-    socklen_t len = sizeof(*addr_ping);
+    socklen_t len = sizeof(*addr);
     return recvfrom(sock_fd, pack, sizeof(*pack), 0, (struct sockaddr*)addr, &len);
 }

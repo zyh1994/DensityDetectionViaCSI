@@ -11,4 +11,4 @@ file(GLOB all_SRCS
         "${PROJECT_SOURCE_DIR}/src/*.c"
         )
 
-add_executable(ping ${all_SRCS} src/main.cpp src/main.cpp)
+add_executable(ping ${all_SRCS})

@@ -1,13 +1,4 @@
-#include <fcntl.h>
-#include <sys/socket.h>
-#include <resolv.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/ip_icmp.h>
-#include <unistd.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <cstdlib>
+#include <signal.h>
 
 #include "common.h"
 
@@ -15,15 +6,23 @@
 #define INFINITE_LOOP true
 #endif
 
-// infinite loop flag
-bool infinite_loop = false;
-
 // 计数器
-int cnt=1;
+int cnt=0;
 
 // 协议实体
 struct protoent *proto = NULL;
 
+// Linux signal handler
+volatile sig_atomic_t infinite_loop = 1;
+
+void handle_signal(int signal)
+{
+    if (signal == SIGINT)
+    {
+        printf("Caught SIGINT signal, terminating...\n");
+        infinite_loop = 0;
+    }
+}
 
 /**
  * ping
@@ -66,30 +65,11 @@ void ping(const char *address, useconds_t wait_time) {
         return;
     }
 
+
 #if INFINITE_LOOP
     while (infinite_loop)
     {
 #endif
-        socklen_t len=sizeof(r_addr);
-
-        // receive message from remote
-        // if ( recvfrom(sock_fd, &pckt, sizeof(pckt), 0, (struct sockaddr*)&r_addr, &len) <= 0 )
-        // {
-        //     // Print out the error message if no message received
-        //     perror("recvfrom");
-        // }
-        // else { // Print out the message if received
-        //     printf("%d bytes from %s: icmp_seq=%d ttl=%d\n",
-        //            PACKETSIZE, inet_ntoa(r_addr.sin_addr), cnt, val);
-        // }
-
-        if (recv_ping(sock_fd, &r_addr, &pckt) <= 0) {
-            perror("recvfrom");
-        } else {
-            printf("%d bytes from %s: icmp_seq=%d ttl=%d\n",
-                   PACKETSIZE, inet_ntoa(r_addr.sin_addr), cnt, val);
-        }
-
 
         bzero(&pckt, sizeof(pckt)); // 清零数据包结构
         pckt.hdr.type = ICMP_ECHO; // 设置ICMP回显
@@ -100,24 +80,30 @@ void ping(const char *address, useconds_t wait_time) {
         for (i = 0; i < sizeof(pckt.msg) - 1; i++ ) {
             pckt.msg[i] = '0'; // 填充数据负载
         }
-        pckt.msg[i] = 0;  // 设置序列号
+        pckt.msg[i] = 0;
 
-        pckt.hdr.un.echo.sequence = cnt++; // 设置序列号
+        pckt.hdr.un.echo.sequence = ++cnt; // 设置序列号
         pckt.hdr.checksum = checksum(&pckt, sizeof(pckt)); // 计算并设置校验和
-
-        // send data to remote device
-        // if ( sendto(sock_fd, &pckt, sizeof(pckt), 0,
-        //             (struct sockaddr*)&addr_ping, sizeof(addr_ping)) <= 0 )
-        // {
-        //     perror("sendto"); // 发送数据包
-        // }
 
         if (send_ping(sock_fd, &addr_ping, &pckt) <= 0) {
             perror("sendto");
         }
 
+
         // wait several milliseconds
         usleep(wait_time);
+
+
+        socklen_t len=sizeof(r_addr);
+
+        if (recv_ping(sock_fd, &r_addr, &pckt) <= 0) {
+            perror("recvfrom");
+        } else {
+            printf("%d bytes from %s: icmp_seq=%d ttl=%d\n",
+                   PACKETSIZE, inet_ntoa(r_addr.sin_addr), cnt, val);
+        }
+
+
 #if INFINITE_LOOP
     }
 #endif
@@ -129,23 +115,21 @@ void ping(const char *address, useconds_t wait_time) {
 int main(int argc, char *argv[])
 {
     // check the input parameters
-    // ping <address> <wait_time> <infinite_loop> or ping <address> <wait_time>
+    // ping <address> <sample_rate>
     if (argc != 4 && argc != 3)
     {
-        printf("Usage: ping <address> <wait_time> <infinite_loop>\n");
+        printf("Usage: ping <address> <sample_rate>\n");
         return 1;
     }
     // get the input parameters
     const char *address = argv[1];
-    useconds_t wait_time = static_cast<useconds_t>(atoi(argv[2]));
+    useconds_t sample_rate = 1000000 / static_cast<useconds_t>(atoi(argv[2]));
 
-    if (argc == 4)
-    {
-        infinite_loop = static_cast<bool>(atoi(argv[3]));
-    }
+    // Register signal handler for SIGINT
+    signal(SIGINT, handle_signal);
 
     // start ping
-    ping(address, wait_time);
+    ping(address, sample_rate);
 
     return 0;
 }

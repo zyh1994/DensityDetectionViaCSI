@@ -1,6 +1,17 @@
 #ifndef __PING_H__
 #define __PING_H__
 
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <resolv.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/ip_icmp.h>
+#include <unistd.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <cstdlib>
+
 #ifndef PACKETSIZE
 /* 定义数据包大小 */
 #define PACKETSIZE 64
