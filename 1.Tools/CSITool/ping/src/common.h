@@ -12,25 +12,31 @@
 #include <arpa/inet.h>
 #include <cstdlib>
 
-#ifndef PACKETSIZE
-/* 定义数据包大小 */
-#define PACKETSIZE 64
+// c++ safe pointers
+#include <memory> 
+
+
+#ifndef PACKET_SIZE
+#define PACKET_SIZE 64 // Size of the ping packet
 #endif
 
-/* 定义数据包结构 */
-struct packet
-{
-    struct icmphdr hdr; // ICMP头部
-    char msg[PACKETSIZE - sizeof(struct icmphdr)]; // 数据负载
-};
+// Create the raw socket
+extern int create_raw_socket();
 
-// Calculate the checksum of a packet
-extern unsigned short checksum(void *b, int len);
+// Create the address structure with safe pointers
+extern std::unique_ptr<struct sockaddr_in> create_address(const char* ip);
+
+// Create the ICMP packet with safe pointers
+extern std::unique_ptr<char[]> create_packet();
+
+// Create the ICMP packet header with safe pointers
+extern std::unique_ptr<struct icmphdr> create_packet_header(int seq, int pid);
 
 // Send the Ping message
-extern int send_ping(int sock_fd, struct sockaddr_in* addr, struct packet* pack);
+extern int send_ping(int sock_fd, std::unique_ptr<char[]>& packet, std::unique_ptr<struct sockaddr_in>& addr);
 
 // Receive the Ping message
-extern int recv_ping(int sock_fd, struct sockaddr_in* addr, struct packet* pack);
+extern int recv_ping(int sock_fd, std::unique_ptr<char[]>& packet, std::unique_ptr<struct sockaddr_in>& addr);
+
 
 #endif

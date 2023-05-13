@@ -9,9 +9,6 @@
 // 计数器
 int cnt=0;
 
-// 协议实体
-struct protoent *proto = NULL;
-
 // Linux signal handler
 volatile sig_atomic_t infinite_loop = 1;
 
@@ -28,42 +25,15 @@ void handle_signal(int signal)
  * ping
 */
 void ping(const char *address, useconds_t wait_time) {
-    const int val = 255;
-    struct packet pckt;
-    struct sockaddr_in r_addr;
-    int loop;
 
-    struct sockaddr_in addr_ping;
+    // Create the raw socket
+    int sock_fd = create_raw_socket();
 
-    int const pid = getpid(); // 获取进程ID
-    proto = getprotobyname("ICMP"); // 获取ICMP协议信息
+    // Create the address structure with safe pointers
+    auto addr = create_address(address);
 
-    // struct hostent hname = gethostbyname(adress); // 获取主机信息
-    // bzero(&addr_ping, sizeof(addr_ping)); // 清零addr_ping结构
-    // addr_ping.sin_family = hname->h_addrtype;
-    // addr_ping.sin_port = 0;
-    // addr_ping.sin_addr.s_addr = *(long *) hname->h_addr;
-
-    bzero(&addr_ping, sizeof(addr_ping)); // 清零addr_ping结构
-    addr_ping.sin_family = AF_INET;
-    addr_ping.sin_port = 0;
-    inet_pton(AF_INET, address, &addr_ping.sin_addr);
-
-    int sock_fd = socket(PF_INET, SOCK_RAW, proto->p_proto); // 创建原始套接字
-    if (sock_fd < 0) {
-        perror("socket");
-        return;
-    }
-    if (setsockopt(sock_fd, SOL_IP, IP_TTL, &val, sizeof(val)) != 0) // 设置TTL
-    {
-        perror("Set TTL option");
-        return;
-    }
-    if (fcntl(sock_fd, F_SETFL, O_NONBLOCK) != 0) // 设置非阻塞I/O
-    {
-        perror("Request nonblocking I/O");
-        return;
-    }
+    // Create the ICMP packet with safe pointers
+    auto packet = create_packet();
 
 
 #if INFINITE_LOOP
@@ -71,38 +41,24 @@ void ping(const char *address, useconds_t wait_time) {
     {
 #endif
 
-        bzero(&pckt, sizeof(pckt)); // 清零数据包结构
-        pckt.hdr.type = ICMP_ECHO; // 设置ICMP回显
-        pckt.hdr.un.echo.id = pid; // 设置进程ID
+        // Create the ICMP packet header with safe pointers
+        auto packet_header = create_packet_header(cnt, getpid());
 
-        // filling the data payload
-        int i = 0;
-        for (i = 0; i < sizeof(pckt.msg) - 1; i++ ) {
-            pckt.msg[i] = '0'; // 填充数据负载
-        }
-        pckt.msg[i] = 0;
+        // Copy the packet header to the packet
+        memcpy(packet.get(), packet_header.get(), sizeof(struct icmphdr));
 
-        pckt.hdr.un.echo.sequence = ++cnt; // 设置序列号
-        pckt.hdr.checksum = checksum(&pckt, sizeof(pckt)); // 计算并设置校验和
-
-        if (send_ping(sock_fd, &addr_ping, &pckt) <= 0) {
+        // Send the Ping message
+        if (send_ping(sock_fd, packet, addr) <= 0) {
             perror("sendto");
         }
-
 
         // wait several milliseconds
         usleep(wait_time);
 
-
-        socklen_t len=sizeof(r_addr);
-
-        if (recv_ping(sock_fd, &r_addr, &pckt) <= 0) {
+        // Get the response
+        if (recv_ping(sock_fd, packet, addr) <= 0) {
             perror("recvfrom");
-        } else {
-            printf("%d bytes from %s: icmp_seq=%d ttl=%d\n",
-                   PACKETSIZE, inet_ntoa(r_addr.sin_addr), cnt, val);
         }
-
 
 #if INFINITE_LOOP
     }
