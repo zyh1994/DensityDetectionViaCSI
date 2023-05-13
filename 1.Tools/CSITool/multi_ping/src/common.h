@@ -24,14 +24,34 @@ struct packet
     char msg[PACKETSIZE - sizeof(struct icmphdr)]; // 数据负载
 };
 
+struct ping_dev_info
+{
+    int sock_fd;
+    struct sockaddr_in addr;
+    struct packet packet; // ICMP packe
+};
+
+
 // Calculate the checksum of a packet
 extern unsigned short checksum(void *b, int len);
 
 // Send the Ping message
 extern int send_ping(int sock_fd, struct sockaddr_in* addr, struct packet* pack);
 
-// Receive the Ping message
+// Send the Ping message
+extern int send_ping(struct ping_dev_info* dev_info);
+
+// Receive the feedback message
 extern int recv_ping(int sock_fd, struct sockaddr_in* addr, struct packet* pack);
+
+// Receive the feedback
+extern int recv_ping(struct ping_dev_info* dev_info);
+
+// Create the ICMP socket
+extern int create_icmp_sock();
+
+// Set the ICMP address struct
+extern void set_icmp_addr_struct(struct sockaddr_in* addr, const char *address);
 
 // Set the ICMP header
 extern void set_icmp_header(struct packet* pack, int seq, int pid);

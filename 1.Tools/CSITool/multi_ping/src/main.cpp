@@ -1,4 +1,6 @@
 #include <signal.h>
+#include <vector>
+#include <string>
 
 #include "common.h"
 
@@ -12,6 +14,7 @@ int cnt=0;
 // Linux signal handler
 volatile sig_atomic_t infinite_loop = 1;
 
+// Linux signal handler
 void handle_signal(int signal)
 {
     if (signal == SIGINT)
@@ -21,40 +24,18 @@ void handle_signal(int signal)
     }
 }
 
-/**
- * ping
-*/
-void ping(const char *address, useconds_t wait_time) {
-    const int val = 255;
-    struct packet pckt;
-    struct sockaddr_in r_addr;
-    int loop;
 
-    struct sockaddr_in addr_ping;
+void create_ping_dev_target(const char* addr, struct ping_dev_info* dev_info) {
+    // Create the ICMP socket
+    dev_info->sock_fd = create_icmp_sock();
 
-    int const pid = getpid(); // 获取进程ID
-    // proto = getprotobyname("ICMP"); // 获取ICMP协议信息
+    // Set the ICMP address struct
+    set_icmp_addr_struct(&(dev_info->addr), addr);
+}
 
-    bzero(&addr_ping, sizeof(addr_ping)); // 清零addr_ping结构
-    addr_ping.sin_family = AF_INET;
-    addr_ping.sin_port = 0;
-    inet_pton(AF_INET, address, &addr_ping.sin_addr);
 
-    int sock_fd = socket(PF_INET, SOCK_RAW, proto->p_proto); // 创建原始套接字
-    if (sock_fd < 0) {
-        perror("socket");
-        return;
-    }
-    if (setsockopt(sock_fd, SOL_IP, IP_TTL, &val, sizeof(val)) != 0) // 设置TTL
-    {
-        perror("Set TTL option");
-        return;
-    }
-    if (fcntl(sock_fd, F_SETFL, O_NONBLOCK) != 0) // 设置非阻塞I/O
-    {
-        perror("Request nonblocking I/O");
-        return;
-    }
+// Ping the target device
+void ping(struct ping_dev_info* dev_inf, int const pid, useconds_t wait_time) {
 
 
 #if INFINITE_LOOP
@@ -63,10 +44,10 @@ void ping(const char *address, useconds_t wait_time) {
 #endif
 
         // set the ICMP header
-        set_icmp_header(&pckt, cnt++, pid);
+        set_icmp_header(&(dev_inf->packet), cnt++, pid);
 
         // send the ping message
-        if (send_ping(sock_fd, &addr_ping, &pckt) <= 0) {
+        if (send_ping(dev_inf) <= 0) {
             perror("sendto");
         }
 
@@ -74,12 +55,11 @@ void ping(const char *address, useconds_t wait_time) {
         usleep(wait_time);
 
         // receive the ping message
-        socklen_t len=sizeof(r_addr);
-        if (recv_ping(sock_fd, &r_addr, &pckt) <= 0) {
+        if (recv_ping(dev_inf) <= 0) {
             perror("recvfrom");
         } else {
             printf("%d bytes from %s: icmp_seq=%d ttl=%d\n",
-                   PACKETSIZE, inet_ntoa(r_addr.sin_addr), cnt, val);
+                   PACKETSIZE, inet_ntoa(dev_inf->addr.sin_addr), cnt, 255);
         }
 
 #if INFINITE_LOOP
@@ -94,20 +74,29 @@ int main(int argc, char *argv[])
 {
     // check the input parameters
     // ping <address> <sample_rate>
-    if (argc != 4 && argc != 3)
-    {
-        printf("Usage: ping <address> <sample_rate>\n");
-        return 1;
-    }
+//    if (argc != 4 && argc != 3)
+//    {
+//        printf("Usage: ping <address> <sample_rate>\n");
+//        return 1;
+//    }
     // get the input parameters
-    const char *address = argv[1];
-    useconds_t sample_rate = 1000000 / static_cast<useconds_t>(atoi(argv[2]));
+//    const char *address = argv[1];
+//    useconds_t sample_rate = 1000000 / static_cast<useconds_t>(atoi(argv[2]));
 
     // Register signal handler for SIGINT
-    signal(SIGINT, handle_signal);
-
-    // start ping
-    ping(address, sample_rate);
+//    signal(SIGINT, handle_signal);
+//
+//    std::vector<std::string> ip_addr_vector;
+//    ip_addr_vector.push_back("8.8.8.8");
+//    ip_addr_vector.push_back("8.8.4.4");
+//
+//
+//    // Create the target device info
+//    struct ping_dev_info dev_info;
+//    create_ping_dev_target(address, &dev_info);
+//
+//    // start ping
+//    ping(&dev_info, getpid(), sample_rate);
 
     return 0;
 }
