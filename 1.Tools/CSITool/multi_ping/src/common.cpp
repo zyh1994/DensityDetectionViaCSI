@@ -4,7 +4,7 @@
 unsigned short checksum(void *b, int len)
 {
     auto *buf = static_cast<unsigned short *>(b);
-    unsigned int sum=0;
+    unsigned int sum;
     unsigned short result;
 
     for ( sum = 0; len > 1; len -= 2 )
@@ -25,7 +25,7 @@ void set_icmp_header(struct packet* pack, int seq, int pid)
     pack->hdr.un.echo.id = pid; // 设置进程ID
 
     // filling the data payload
-    int i = 0;
+    int i;
     for (i = 0; i < sizeof(pack->msg) - 1; i++ ) {
         pack->msg[i] = '0'; // 填充数据负
     }
@@ -48,7 +48,7 @@ int send_ping(int sock_fd, struct sockaddr_in* addr, struct packet* pack)
 int send_ping(struct ping_dev_info* dev_info)
 {
     return send_ping(dev_info->sock_fd, &(dev_info->addr), &(dev_info->packet));
-};
+}
 
 
 // Receive the feedback message
@@ -85,11 +85,11 @@ int create_icmp_sock()
         perror("Set TTL option");
         return -1;
     }
-    if (fcntl(sock_fd, F_SETFL, O_NONBLOCK) != 0) // 设置非阻塞I/O
-    {
-        perror("Request nonblocking I/O");
-        return -1;
-    }
+   if (fcntl(sock_fd, F_SETFL, O_NONBLOCK) != 0) // 设置非阻塞I/O
+   {
+       perror("Request nonblocking I/O");
+       return -1;
+   }
 
     return sock_fd;
 }

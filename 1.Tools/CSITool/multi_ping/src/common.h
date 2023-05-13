@@ -27,6 +27,7 @@ struct packet
 struct ping_dev_info
 {
     int sock_fd;
+    int seq;
     struct sockaddr_in addr;
     struct packet packet; // ICMP packe
 };
