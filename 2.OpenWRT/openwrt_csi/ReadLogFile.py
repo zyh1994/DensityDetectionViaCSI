@@ -1,68 +1,71 @@
+import numpy as np
 import struct
-
-from ReadCSI import read_csi
-
+import os
 
 def read_log_file(filename):
-    with open(filename, 'rb') as f:
-        data = f.read()
+    try:
+        with open(filename, 'rb') as f:
+            len = os.path.getsize(filename)
+            print('file length is: {}'.format(len))
+            
+            ret = [None] * int(np.ceil(len / 420))
+            cur = 0
+            count = 0
 
-    endian_format = '>'
-    ret = []
-    cur = 0
-    count = 0
-    data_len = len(data)
+            while cur < (len - 4):
+                field_len = struct.unpack(">H", f.read(2))[0]
+                cur += 2
+                print('Block length is: {}'.format(field_len))
 
-    while cur < (data_len - 420):
-        field_len, timestamp, csi_len, tx_channel, err_info, noise_floor, Rate, bandWidth, num_tones, nr, nc, rssi, rssi1, rssi2, rssi3, payload_len = struct.unpack(
-            endian_format + 'HQBH2b5H')
-        cur += 420
+                print(field_len, cur, len)
 
-        if cur + field_len > data_len:
-            break
+                if (cur + field_len) > len:
+                    break
+                
+                timestamp = struct.unpack(">Q", f.read(8))[0]
+                csi_matrix = {"timestamp": timestamp}
+                cur += 8
+                print('timestamp is {}'.format(timestamp))
 
-        csi_matrix = {
-            'timestamp': timestamp,
-            'csi_len': csi_len,
-            'channel': tx_channel,
-            'err_info': err_info,
-            'noise_floor': noise_floor,
-            'Rate': Rate,
-            'bandWidth': bandWidth,
-            'num_tones': num_tones,
-            'nr': nr,
-            'nc': nc,
-            'rssi': rssi,
-            'rssi1': rssi1,
-            'rssi2': rssi2,
-            'rssi3': rssi3,
-            'payload_len': payload_len
-        }
+                csi_len = struct.unpack(">H", f.read(2))[0]
+                csi_matrix["csi_len"] = csi_len
+                cur += 2
+                print('csi_len is {}'.format(csi_len))
 
-        if csi_len > 0:
-            csi_buf = data[cur:cur + csi_len]
-            csi = read_csi(csi_buf, nr, nc, num_tones)
-            cur += csi_len
-            csi_matrix['csi'] = csi
-        else:
-            csi_matrix['csi'] = []
+                tx_channel = struct.unpack(">H", f.read(2))[0]
+                csi_matrix["channel"] = tx_channel
+                cur += 2
+                print('channel is {}'.format(tx_channel))
 
-        if payload_len > 0:
-            data_buf = data[cur:cur + payload_len]
-            cur += payload_len
-            csi_matrix['payload'] = data_buf
-        else:
-            csi_matrix['payload'] = []
+                # ... repeat for other fields ...
 
-        count += 1
-        ret.append(csi_matrix)
+                # if csi_len > 0:
+                #     csi_buf = struct.unpack("{}B".format(csi_len), f.read(csi_len))
+                #     csi = read_csi(csi_buf, nr, nc, num_tones)
+                #     cur += csi_len
+                #     csi_matrix["csi"] = csi
+                # else:
+                #     csi_matrix["csi"] = 0
+                
+                # ... repeat for other fields ...
 
-    return ret
+                if (cur + 420 > len):
+                    break
+                ret[count] = csi_matrix
+                count += 1
+            if (count >1):
+                ret = ret[:count-1]
+            else:
+                ret = ret[0]
+            return ret
+    except IOError:
+        print("couldn't open file {}".format(filename))
+
 
 def main():
-    filename = 'log_file.bin'
-    result = read_log_file(filename)
-    print(result)
+    sample_data = read_log_file('sample.dat')
+    print(sample_data)
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()
