@@ -1,10 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('TkAgg')
 
-
-def plot_csi(csi_matrix, mode):
+def plot_separated_csi(csi_matrix, mode):
     nr, nc, num_tones = csi_matrix['csi'].shape
 
     fig, axs = plt.subplots(nr, nc, figsize=(17, 10))
@@ -27,33 +25,57 @@ def plot_csi(csi_matrix, mode):
     plt.show()
 
 
-def plot_single_csi(csi_matrix):
-    fig, axs = plt.subplots(2, 2, figsize=(17, 10))
-    plt.ion()
+def plot_csi(csi_matrix, mode):
+    # get the number of receive antennas, transmit antennas and subcarriers
+    nr, nc, tones = csi_matrix['csi'].shape
 
-    csi = csi_matrix['csi'][0, :, :]
-    axs[0, 0].plot(20 * np.log10(np.abs(csi)))
-    axs[0, 0].set_ylabel('CSI Amplitude [dB]')
-    axs[0, 0].set_ylim((30, 50))
-    axs[0, 0].set_xlabel('Subcarrier index')
+    # convert the shape of the CSI matrix to (channels, subcarriers)
+    csi_matrix = np.reshape(csi_matrix['csi'], (nr * nc, tones))
 
-    axs[0, 1].plot(np.unwrap(np.angle(csi)))
-    axs[0, 1].set_ylabel('unwrapped phase (radian)')
-    axs[0, 1].set_ylim((-4, 4))
-    axs[0, 1].set_xlabel('Subcarrier index')
+    # plot all the receive antennas in one figure
+    if mode == "amplitude":
+        plt.plot(20 * np.log10(np.abs(csi_matrix.T)))
+        plt.ylabel('SNR [dB]')
+        plt.ylim((0, 55))
+    elif mode == "phase":
+        plt.plot(np.angle(csi_matrix.T))
+        plt.ylabel('phase (radian)')
+        plt.ylim((-4, 4))
 
-    scaled_csi = get_scaled_csi(csi_matrix)
-    axs[1, 0].plot(scaled_csi[0, :, :])
-    axs[1, 0].set_ylabel('scaled RSS [dBm]')
-    axs[1, 0].set_xlabel('Subcarrier index')
-
-    axs[1, 1].plot(np.unwrap(np.angle(csi[:, :2])))
-    axs[1, 1].set_ylabel('unwrapped phase (radian)')
-    axs[1, 1].set_ylim((-6, 6))
-    axs[1, 1].set_xlabel('Subcarrier index')
-
+    plt.xlabel('Subcarrier index')
     plt.tight_layout()
     plt.show()
+
+
+
+
+# def plot_single_csi(csi_matrix):
+#     fig, axs = plt.subplots(2, 2, figsize=(17, 10))
+#     plt.ion()
+#
+#     csi = csi_matrix['csi'][0, :, :]
+#     axs[0, 0].plot(20 * np.log10(np.abs(csi)))
+#     axs[0, 0].set_ylabel('CSI Amplitude [dB]')
+#     axs[0, 0].set_ylim((30, 50))
+#     axs[0, 0].set_xlabel('Subcarrier index')
+#
+#     axs[0, 1].plot(np.unwrap(np.angle(csi)))
+#     axs[0, 1].set_ylabel('unwrapped phase (radian)')
+#     axs[0, 1].set_ylim((-4, 4))
+#     axs[0, 1].set_xlabel('Subcarrier index')
+#
+#     scaled_csi = get_scaled_csi(csi_matrix)
+#     axs[1, 0].plot(scaled_csi[0, :, :])
+#     axs[1, 0].set_ylabel('scaled RSS [dBm]')
+#     axs[1, 0].set_xlabel('Subcarrier index')
+#
+#     axs[1, 1].plot(np.unwrap(np.angle(csi[:, :2])))
+#     axs[1, 1].set_ylabel('unwrapped phase (radian)')
+#     axs[1, 1].set_ylim((-6, 6))
+#     axs[1, 1].set_xlabel('Subcarrier index')
+#
+#     plt.tight_layout()
+#     plt.show()
 
 
 def get_scaled_csi(csi_matrix):
