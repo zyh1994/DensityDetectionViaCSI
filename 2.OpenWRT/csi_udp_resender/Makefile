@@ -17,7 +17,7 @@ define Package/$(PACKAGE)/description
 endef
 
 define Build/Compile
-	$(TARGET_CXX) $(TARGET_CFLAGS) -o $(PKG_BUILD_DIR)/csi_udp_resender/ main.cpp
+	$(TARGET_CXX) $(TARGET_CFLAGS) -o $(PKG_BUILD_DIR)/csi_udp_resender/ main.cpp csi_fun.cpp
 endef
 
 define Package/$(PACKAGE)/install

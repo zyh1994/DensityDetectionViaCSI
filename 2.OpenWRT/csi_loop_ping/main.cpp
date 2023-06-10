@@ -23,16 +23,23 @@
 #define DEFAULT_DEST_MAC4	0x20
 #define DEFAULT_DEST_MAC5	0x20
 
-#define DEFAULT_IF	        "wlan0"  // 默认的网络接口名
-#define BUF_SIZ	            2048      // 缓冲区大小
+#define DEFAULT_IF	        "wlan0"     // 默认的网络接口名
+#define BUF_SIZ	            2048        // 缓冲区大小
 
-int sockfd;                        // 套接字文件描述符
+int sockfd;                             // 套接字文件描述符
+bool quit;                              // 退出标志
+
 
 /* 处理SIGINT信号 */
 void handle_sigint(int sig)
 {
-    close(sockfd);
-    exit(0);
+    if (sig == SIGINT) {
+        /* 打印信号值 */
+        printf("Caught signal %d\n", sig);
+
+        /* 设置退出标志 */
+        quit = true;
+    }
 }
 
 
@@ -41,11 +48,11 @@ int main(int argc, char *argv[])
     int     i;                       // 循环变量
     struct  ifreq if_idx;            // 网络接口请求结构体
     struct  ifreq if_mac;            // 网络接口MAC地址
-    int     tx_len = 0, Cnt;         // 发送的数据长度和包的数量
+    int     tx_len = 0, cnt;         // 发送的数据长度和包的数量
     char    sendbuf[BUF_SIZ];        // 发送数据的缓冲区
     unsigned int DstAddr[6];         // 目标MAC地址
-    struct  ether_header *eh = (struct ether_header *) sendbuf;  // 以太网头部
-    struct  iphdr *iph = (struct iphdr *) (sendbuf + sizeof(struct ether_header));  // IP头部（未使用）
+    // struct  ether_header *eh = (struct ether_header *) sendbuf;  // 以太网头部 (未使用)
+    // struct  iphdr *iph = (struct iphdr *) (sendbuf + sizeof(struct ether_header));  // IP头部（未使用）
     struct  sockaddr_ll socket_address; // 套接字地址结构体
     char    ifName[IFNAMSIZ];        // 网络接口名
 
@@ -65,10 +72,10 @@ int main(int argc, char *argv[])
     else
         strcpy(ifName, DEFAULT_IF);
 
-    // 目标地址用:分隔，例如：00:7F:5D:3E:4A
+    /* 目标地址用:分隔，例如：00:7F:5D:3E:4A */
     if(argc > 2) {
         sscanf(argv[2],"%x:%x:%x:%x:%x:%x",
-               &DstAddr[0],&DstAddr[1],&DstAddr[2],&DstAddr[3],&DstAddr[4],&DstAddr[5]);
+                &DstAddr[0], &DstAddr[1], &DstAddr[2], &DstAddr[3], &DstAddr[4], &DstAddr[5]);
     }
     else {
         DstAddr[0] = DEFAULT_DEST_MAC0;
@@ -80,12 +87,12 @@ int main(int argc, char *argv[])
     }
 
     if(argc > 3)
-        Cnt = atoi(argv[3]);
+        cnt = atoi(argv[3]);
     else
-        Cnt = 1;
+        cnt = 1;
 
     /* 计算发送包的间隔时间 */
-    int usecs = 1000000 / Cnt;
+    int usecs = 1000000 / cnt;
 
     /* 打开一个RAW套接字以进行发送 */
     if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1) {
@@ -108,24 +115,24 @@ int main(int argc, char *argv[])
     memset(sendbuf, 0, BUF_SIZ);
 
     /* 以太网头部 */
-    eh->ether_shost[0] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[0];
-    eh->ether_shost[1] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[1];
-    eh->ether_shost[2] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[2];
-    eh->ether_shost[3] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[3];
-    eh->ether_shost[4] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[4];
-    eh->ether_shost[5] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[5];
-    eh->ether_dhost[0] = DstAddr[0];
-    eh->ether_dhost[1] = DstAddr[1];
-    eh->ether_dhost[2] = DstAddr[2];
-    eh->ether_dhost[3] = DstAddr[3];
-    eh->ether_dhost[4] = DstAddr[4];
-    eh->ether_dhost[5] = DstAddr[5];
-    eh->ether_type = htons(ETH_P_IP);
+    // eh->ether_shost[0] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[0];
+    // eh->ether_shost[1] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[1];
+    // eh->ether_shost[2] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[2];
+    // eh->ether_shost[3] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[3];
+    // eh->ether_shost[4] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[4];
+    // eh->ether_shost[5] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[5];
+    // eh->ether_dhost[0] = DstAddr[0];
+    // eh->ether_dhost[1] = DstAddr[1];
+    // eh->ether_dhost[2] = DstAddr[2];
+    // eh->ether_dhost[3] = DstAddr[3];
+    // eh->ether_dhost[4] = DstAddr[4];
+    // eh->ether_dhost[5] = DstAddr[5];
+    // eh->ether_type = htons(ETH_P_IP);
     tx_len += sizeof(struct ether_header);
 
     /* 设置数据包的数据部分 */
     memset(sendbuf + tx_len, 0xaa, BUF_SIZ - tx_len);
-    printf("Packet Length is: %d, packet number is: %d\n", tx_len, Cnt);
+    printf("Packet Length is: %d, packet number is: %d\n", tx_len, cnt);
 
     /* 设置套接字地址结构体 */
     socket_address.sll_ifindex = if_idx.ifr_ifindex;    // 接口索引
@@ -133,13 +140,49 @@ int main(int argc, char *argv[])
     memcpy(socket_address.sll_addr, DstAddr, 6);        // 目标MAC地址
     socket_address.sll_halen = ETH_ALEN;                // MAC地址长度
 
+    /* 计数器 */
+    int count = 0;
+
+    /* 计时器 */
+    struct timeval start, end;
+
+    /* 获取当前时间 */
+    gettimeofday(&start, NULL);
+
+    /* 设置退出标志 */
+    quit = false;
+
     /* 发送数据包 */
-    for(i = 0; i < Cnt; i++) {
+    while(!quit) {
+
+        // 按着间隔时间发送数据包
+        usleep(usecs);
+
+        // 发送数据包
         if (sendto(sockfd, sendbuf, tx_len, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) == -1) {
             printf("Send failed: %s\n", strerror(errno));
         }
+
+        // 计数器加1
+        count++;
+
+        // 获取当前时间
+        gettimeofday(&end, NULL);
+
+        // 每1s打印一次发送的数据包数量
+        if(end.tv_sec - start.tv_sec >= 1) {
+            printf("Send %d packets\n", count);
+            count = 0;
+            gettimeofday(&start, NULL);
+        }
     }
 
+    /* 关闭套接字 */
     close(sockfd);
+
+    /* 打印退出信息 */
+    printf("Exit the program\n");
+
+    /* 退出 */
     return 0;
 }
