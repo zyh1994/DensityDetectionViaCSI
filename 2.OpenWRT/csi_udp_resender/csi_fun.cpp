@@ -9,6 +9,7 @@
 #include "csi_fun.h"
 
 #define csi_st_len 23
+
 /* test and find out the system is big endian or not*/
 //for 16/32/64 system this should be all fine.
 bool is_big_endian(){
@@ -102,6 +103,7 @@ int open_csi_device(){
     return fd;
 }
 
+
 void close_csi_device(int fd){
     close(fd);
     //remove("/dev/CSI_dev");
@@ -120,6 +122,7 @@ int read_csi_buf(unsigned char* buf_addr,int fd, int BUFSIZE){
     else
         return 0;
 }
+
 void record_status(unsigned char* buf_addr, int cnt, csi_struct* csi_status){
     if (is_big_endian()){
         csi_status->tstamp  =   
@@ -183,6 +186,7 @@ void record_csi_payload(unsigned char* buf_addr, csi_struct* csi_status, unsigne
     csi_addr = buf_addr + csi_st_len + 2;
     fill_csi_matrix(csi_addr,nr,nc,num_tones, csi_matrix);
 }
+
 void  porcess_csi(unsigned char* data_buf, csi_struct* csi_status,COMPLEX(* csi_buf)[3][114]){
     /* here is the function for csi processing
      * you can install your own function */
