@@ -14,7 +14,7 @@ SOURCES = Main.cpp VideoHelper.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
 # Name of the output executable
-OUTPUT = myprogram
+OUTPUT = csv_recorder
 
 # Default target
 all: $(OUTPUT)

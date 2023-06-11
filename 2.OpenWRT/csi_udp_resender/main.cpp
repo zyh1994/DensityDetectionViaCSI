@@ -1,14 +1,16 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <termios.h>
-#include <pthread.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <stdlib.h>             // 通用函数和常量
+#include <stdio.h>              // 标准输入/输出函数和数据类型
+#include <string.h>             // 字符串操作函数
+#include <unistd.h>             // 对POSIX操作系统API的访问
+#include <fcntl.h>              // 文件控制函数
+#include <errno.h>              // 错误号
+#include <termios.h>            // 终端I/O接口
+#include <pthread.h>            // 线程相关函数
+#include <signal.h>             // 信号处理函数
+#include <sys/types.h>          // 基本的系统数据类型
+#include <sys/stat.h>           // 文件状态函数和数据类型
+
+#include <chrono>               // 时间函数
 
 #include "csi_fun.h"
 
@@ -115,10 +117,8 @@ int main(int argc, char* argv[])
     quit = false;
 
     /* 计时器 */
-    struct timeval start, end;
-
-    /* 获取当前时间 */
-    gettimeofday(&start, NULL);
+    auto start = std::chrono::system_clock::now();
+    auto end = std::chrono::system_clock::now();
 
     /* 计数器 */
     int count = 0;
@@ -133,6 +133,19 @@ int main(int argc, char* argv[])
         if (cnt > 0) {
             /* 广播数据 */
             broadcast_udp(socket_fd, &broadcast_addr, buf_addr, cnt);
+        }
+
+        /* 计数器自增 */
+        count++;
+
+        /* 获取当前时间 */
+        end = std::chrono::system_clock::now();
+
+        /* 每隔1秒打印一次帧率 */
+        if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() >= 1) {
+            printf("FPS: %d\n", count);
+            count = 0;
+            start = std::chrono::system_clock::now();
         }
     }
 

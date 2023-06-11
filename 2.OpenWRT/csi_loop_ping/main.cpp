@@ -1,19 +1,21 @@
-#include <arpa/inet.h>               // 支持网络编程的函数和常量
-#include <linux/if_packet.h>         // 与网络设备相关的数据类型和函数
-#include <stdio.h>                   // 标准输入/输出函数和数据类型
-#include <string.h>                  // 字符串操作函数
-#include <stdlib.h>                  // 通用函数和常量
-#include <sys/ioctl.h>               // 对设备进行操作的函数
-#include <sys/socket.h>              // 套接字接口
-#include <sys/types.h>               // 基本的系统数据类型
-#include <sys/stat.h>                // 文件状态函数和数据类型
-#include <fcntl.h>                   // 文件控制函数
-#include <termios.h>                 // 终端I/O接口
-#include <net/if.h>                  // 与网络接口相关的数据类型和函数
-#include <netinet/ether.h>           // 以太网函数和数据类型
-#include <unistd.h>                  // 对POSIX操作系统API的访问
-#include <errno.h>                   // 错误号
-#include <signal.h>                  // 信号处理函数
+#include <arpa/inet.h>              // 支持网络编程的函数和常量
+#include <linux/if_packet.h>        // 与网络设备相关的数据类型和函数
+#include <stdio.h>                  // 标准输入/输出函数和数据类型
+#include <string.h>                 // 字符串操作函数
+#include <stdlib.h>                 // 通用函数和常量
+#include <sys/ioctl.h>              // 对设备进行操作的函数
+#include <sys/socket.h>             // 套接字接口
+#include <sys/types.h>              // 基本的系统数据类型
+#include <sys/stat.h>               // 文件状态函数和数据类型
+#include <fcntl.h>                  // 文件控制函数
+#include <termios.h>                // 终端I/O接口
+#include <net/if.h>                 // 与网络接口相关的数据类型和函数
+#include <netinet/ether.h>          // 以太网函数和数据类型
+#include <unistd.h>                 // 对POSIX操作系统API的访问
+#include <errno.h>                  // 错误号
+#include <signal.h>                 // 信号处理函数
+
+#include <chrono>                   // 时间函数
 
 /* 定义默认的目标MAC地址 */
 #define DEFAULT_DEST_MAC0	0x00
@@ -144,10 +146,8 @@ int main(int argc, char *argv[])
     int count = 0;
 
     /* 计时器 */
-    struct timeval start, end;
-
-    /* 获取当前时间 */
-    gettimeofday(&start, NULL);
+    auto start = std::chrono::system_clock::now();
+    auto end = std::chrono::system_clock::now();
 
     /* 设置退出标志 */
     quit = false;
@@ -155,25 +155,25 @@ int main(int argc, char *argv[])
     /* 发送数据包 */
     while(!quit) {
 
-        // 按着间隔时间发送数据包
+        /* 按着间隔时间发送数据包 */
         usleep(usecs);
 
-        // 发送数据包
+        /* 发送数据包 */
         if (sendto(sockfd, sendbuf, tx_len, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) == -1) {
             printf("Send failed: %s\n", strerror(errno));
         }
 
-        // 计数器加1
+        /* 计数器加1 */
         count++;
 
-        // 获取当前时间
-        gettimeofday(&end, NULL);
+        /* 获取当前时间 */
+        end = std::chrono::system_clock::now();
 
-        // 每1s打印一次发送的数据包数量
-        if(end.tv_sec - start.tv_sec >= 1) {
+        /* 每1s打印一次发送的数据包数量 */
+        if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() >= 1) {
             printf("Send %d packets\n", count);
             count = 0;
-            gettimeofday(&start, NULL);
+            start = std::chrono::system_clock::now();
         }
     }
 
