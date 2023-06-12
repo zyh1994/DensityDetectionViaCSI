@@ -27,3 +27,17 @@ package			: 0
 core			: 0
 VCED exceptions		: not available
 VCEI exceptions		: not available
+
+
+------------------------------------------------------------------
+
+OpenWRT device without CSI tools (CSI signal sender)
+
+
+OpenWRT device with CSI tools (CSI signal transmitter)
+
+
+PC device which is processing the CSI signals (AV, BIN)
+
+
+

@@ -8,7 +8,7 @@ LIBS = $(shell pkg-config --libs opencv) -lpthread
 INCLUDE = $(shell pkg-config --cflags opencv) -I/usr/local/include/opencv -I/usr/local/include
 
 # List of source files
-SOURCES = Main.cpp VideoHelper.cpp
+SOURCES = Main_UDP.cpp VideoHelper.cpp
 
 # List of object files
 OBJECTS = $(SOURCES:.cpp=.o)
