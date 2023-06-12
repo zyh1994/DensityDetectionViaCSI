@@ -12,6 +12,10 @@
 
 #include <chrono>               // 时间函数
 
+#include <sys/socket.h>   // socket函数和相关常量
+#include <netinet/in.h>   // sockaddr_in结构体和相关函数
+#include <arpa/inet.h>    // inet_addr函数
+
 #include "csi_fun.h"
 
 #define BUFSIZE 4096

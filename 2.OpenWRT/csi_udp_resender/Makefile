@@ -1,7 +1,7 @@
 # Makefile
 include $(TOPDIR)/rules.mk
 
-PACKAGE:=mulping
+PACKAGE:=csi_resender
 PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -10,6 +10,7 @@ define Package/$(PACKAGE)
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=Resend the CSI data by UDP broadcasting.
+	DEPENDS:=+libstdcpp
 endef
 
 define Package/$(PACKAGE)/description
@@ -17,7 +18,7 @@ define Package/$(PACKAGE)/description
 endef
 
 define Build/Compile
-	$(TARGET_CXX) $(TARGET_CFLAGS) -o $(PKG_BUILD_DIR)/csi_udp_resender/ main.cpp csi_fun.cpp
+	$(TARGET_CXX) $(TARGET_CFLAGS) -o $(PKG_BUILD_DIR)/csi_udp_resender main.cpp csi_fun.cpp
 endef
 
 define Package/$(PACKAGE)/install
