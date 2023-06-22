@@ -1,29 +1,14 @@
-# Makefile
-include $(TOPDIR)/rules.mk
+TOOL_CHAIN_BASE=/home/orlando/Desktop/toolchain-mips_24kc_gcc-7.3.0_musl
 
-PACKAGE:=csi_loop_ping
-PKG_RELEASE:=1
+GCC=$(TOOL_CHAIN_BASE)/bin/mips-openwrt-linux-gcc
+GPP=$(TOOL_CHAIN_BASE)/bin/mips-openwrt-linux-g++
 
-include $(INCLUDE_DIR)/package.mk
+LIB=$(TOOL_CHAIN_BASE)/lib/gcc/mips-openwrt-linux-musl/7.3.0
+INCLUDE_DIR=$(TOOL_CHAIN_BASE)/include
 
-define Package/$(PACKAGE)
-	SECTION:=utils
-	CATEGORY:=Utilities
-	TITLE:=Sending ICMP data in a loop.
-	DEPENDS:=+libstdcpp
-endef
 
-define Package/$(PACKAGE)/description
-	Send ICMP signal to the device in a loop
-endef
+build:
+	$(GPP) -I$(INCLUDE_DIR) -L$(LIB) -o csi_loop_ping main.cpp
 
-define Build/Compile
-	$(TARGET_CXX) $(TARGET_CFLAGS) -o $(PKG_BUILD_DIR)/csi_loop_ping main.cpp
-endef
-
-define Package/$(PACKAGE)/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/csi_loop_ping $(1)/usr/bin/
-endef
-
-$(eval $(call BuildPackage,$(PACKAGE)))
+clean:
+	rm csi_loop_ping
