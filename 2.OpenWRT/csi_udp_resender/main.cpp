@@ -127,6 +127,9 @@ int main(int argc, char* argv[])
     /* 计数器 */
     int count = 0;
 
+    /* 时间字符串 */
+    char time_str[100];
+
     /* 循环读取CSI数据 */
     while(!quit) {
 
@@ -146,8 +149,12 @@ int main(int argc, char* argv[])
         end = std::chrono::system_clock::now();
 
         /* 每隔1秒打印一次帧率 */
-        if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() >= 1) {
-            printf("FPS: %d\n", count);
+        if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() >= 10) {
+            std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+            std::tm* local_time = std::localtime(&end_time);
+            std::strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", local_time);
+
+            printf("%s - Received %d packages\n", time_str, count);            
             count = 0;
             start = std::chrono::system_clock::now();
         }

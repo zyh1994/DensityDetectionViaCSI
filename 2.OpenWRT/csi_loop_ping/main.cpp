@@ -53,8 +53,8 @@ int main(int argc, char *argv[])
     int     tx_len = 0, cnt;         // 发送的数据长度和包的数量
     char    sendbuf[BUF_SIZ];        // 发送数据的缓冲区
     unsigned int DstAddr[6];         // 目标MAC地址
-    // struct  ether_header *eh = (struct ether_header *) sendbuf;  // 以太网头部 (未使用)
-    // struct  iphdr *iph = (struct iphdr *) (sendbuf + sizeof(struct ether_header));  // IP头部（未使用）
+    struct  ether_header *eh = (struct ether_header *) sendbuf;  // 以太网头部 (未使用)
+    struct  iphdr *iph = (struct iphdr *) (sendbuf + sizeof(struct ether_header));  // IP头部（未使用）
     struct  sockaddr_ll socket_address; // 套接字地址结构体
     char    ifName[IFNAMSIZ];        // 网络接口名
 
@@ -117,19 +117,21 @@ int main(int argc, char *argv[])
     memset(sendbuf, 0, BUF_SIZ);
 
     /* 以太网头部 */
-    // eh->ether_shost[0] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[0];
-    // eh->ether_shost[1] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[1];
-    // eh->ether_shost[2] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[2];
-    // eh->ether_shost[3] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[3];
-    // eh->ether_shost[4] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[4];
-    // eh->ether_shost[5] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[5];
-    // eh->ether_dhost[0] = DstAddr[0];
-    // eh->ether_dhost[1] = DstAddr[1];
-    // eh->ether_dhost[2] = DstAddr[2];
-    // eh->ether_dhost[3] = DstAddr[3];
-    // eh->ether_dhost[4] = DstAddr[4];
-    // eh->ether_dhost[5] = DstAddr[5];
-    // eh->ether_type = htons(ETH_P_IP);
+    eh->ether_shost[0] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[0];
+    eh->ether_shost[1] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[1];
+    eh->ether_shost[2] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[2];
+    eh->ether_shost[3] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[3];
+    eh->ether_shost[4] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[4];
+    eh->ether_shost[5] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[5];
+    eh->ether_dhost[0] = DstAddr[0];
+    eh->ether_dhost[1] = DstAddr[1];
+    eh->ether_dhost[2] = DstAddr[2];
+    eh->ether_dhost[3] = DstAddr[3];
+    eh->ether_dhost[4] = DstAddr[4];
+    eh->ether_dhost[5] = DstAddr[5];
+
+    /* 以太网类型 */
+    eh->ether_type = htons(ETH_P_IP);
     tx_len += sizeof(struct ether_header);
 
     /* 设置数据包的数据部分 */
@@ -138,9 +140,15 @@ int main(int argc, char *argv[])
 
     /* 设置套接字地址结构体 */
     socket_address.sll_ifindex = if_idx.ifr_ifindex;    // 接口索引
+    socket_address.sll_family = AF_PACKET;              // 套接字类型
     socket_address.sll_protocol=htons(ETH_P_IP);        // 以太网类型
-    memcpy(socket_address.sll_addr, DstAddr, 6);        // 目标MAC地址
+    socket_address.sll_hatype = ARPHRD_ETHER;           // 帧类型
+    socket_address.sll_pkttype = PACKET_OTHERHOST;      // 包类型
     socket_address.sll_halen = ETH_ALEN;                // MAC地址长度
+
+    /* 设置目标MAC地址 */
+    memcpy(socket_address.sll_addr, DstAddr, 6);
+
 
     /* 计数器 */
     int count = 0;
@@ -151,6 +159,9 @@ int main(int argc, char *argv[])
 
     /* 设置退出标志 */
     quit = false;
+
+    /* 时间字符串 */
+    char time_str[100];
 
     /* 发送数据包 */
     while(!quit) {
@@ -169,9 +180,13 @@ int main(int argc, char *argv[])
         /* 获取当前时间 */
         end = std::chrono::system_clock::now();
 
-        /* 每1s打印一次发送的数据包数量 */
-        if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() >= 1) {
-            printf("Send %d packets\n", count);
+        /* 每10s打印一次发送的数据包数量和当前时间 */
+        if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() >= 10) {
+            std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+            std::tm* local_time = std::localtime(&end_time);
+            std::strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", local_time);
+
+            printf("%s - Send %d packages\n", time_str, count);
             count = 0;
             start = std::chrono::system_clock::now();
         }
