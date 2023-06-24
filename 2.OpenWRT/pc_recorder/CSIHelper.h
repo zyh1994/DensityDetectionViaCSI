@@ -42,7 +42,6 @@ typedef struct
 
 extern bool  is_big_endian();
 
-//int   read_csi_buf(unsigned char* buf_addr,int fd, int BUFSIZE);
 
 extern void  record_status(unsigned char* buf_addr,
                            int cnt,
@@ -53,6 +52,6 @@ extern void  record_csi_payload(unsigned char* buf_addr,
                                 unsigned char* data_buf,
                                 COMPLEX(* csi_buf)[3][114]);
 
-//void  porcess_csi(unsigned char* data_buf, csi_struct* csi_status,COMPLEX(* csi_buf)[3][114]);
+extern void print_csi_status(csi_struct *package);
 
 #endif //DENSITYDETECTION_CSIHELPER_H

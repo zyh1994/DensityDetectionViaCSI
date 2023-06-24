@@ -5,20 +5,26 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <fcntl.h>
+
 #include <iostream>
+#include <fstream>
+#include <chrono>
 
 #include "VideoHelper.h"
 #include "CSIHelper.h"
 
+#include <opencv2/opencv.hpp>
+
 #define BUFSIZE 4096
 #define BROADCAST_PORT 8080
 
-int quit;
-unsigned char buf_addr[BUFSIZE];
-unsigned char data_buf[1500];
+using namespace cv;
 
-COMPLEX csi_matrix[3][3][114];
-csi_struct*   csi_status;
+int             quit;               // quit flag
+unsigned char   buf_addr[BUFSIZE];  // buffer for storing the received data
+
+//COMPLEX csi_matrix[3][3][114];
+csi_struct*   csi_status;           // CSI status
 
 /**
  * @brief Handle the Ctrl+C signal
@@ -35,51 +41,59 @@ void sig_handler(int signo)
     }
 }
 
-
-void print_csi_status(csi_struct *package)
+/**
+ * @brief Create a UDP socket for receiving broadcast packets
+ * @return
+ */
+int create_broadcast_socket()
 {
-    /**
-     * An example of the output:
-     * csi_status->tstamp: 108
-     * csi_status->buf_len: 11525
-     * csi_status->channel: 40457
-     * csi_status->rate: 149
-     * csi_status->rssi: 52
-     * csi_status->rssi_0: 50
-     * csi_status->rssi_1: 41
-     * csi_status->rssi_2: 46
-     * csi_status->payload_len: 10240
-     * csi_status->csi_len: 60420
-     * csi_status->phyerr: 0
-     * csi_status->noise: 0
-     * csi_status->nr: 3
-     * csi_status->nc: 3
-     * csi_status->num_tones: 56
-     * csi_status->chanBW: 0
-     */
+    /* Set the socket */
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == -1) {
+        perror("socket");
+        exit(1);
+    }
 
-    /* Clear the screen */
-    printf("\033[2J");
+    /* Set the socket options */
+    int broadcastEnable = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST,
+                   &broadcastEnable, sizeof(broadcastEnable)) == -1) {
+        perror("setsockopt");
+        exit(1);
+    }
 
-    /* Print the CSI status */
-    printf("csi_status->tstamp: %ld\n", package->tstamp);
-    printf("csi_status->buf_len: %d\n", package->buf_len);
-    printf("csi_status->channel: %d\n", package->channel);
-    printf("csi_status->rate: %d\n", package->rate);
-    printf("csi_status->rssi: %d\n", package->rssi);
-    printf("csi_status->rssi_0: %d\n", package->rssi_0);
-    printf("csi_status->rssi_1: %d\n", package->rssi_1);
-    printf("csi_status->rssi_2: %d\n", package->rssi_2);
-    printf("csi_status->payload_len: %d\n", package->payload_len);
-    printf("csi_status->csi_len: %d\n", package->csi_len);
-    printf("csi_status->phyerr: %d\n", package->phyerr);
-    printf("csi_status->noise: %d\n", package->noise);
-    printf("csi_status->nr: %d\n", package->nr);
-    printf("csi_status->nc: %d\n", package->nc);
-    printf("csi_status->num_tones: %d\n", package->num_tones);
-    printf("csi_status->chanBW: %d\n", package->chanBW);
+    /* Set the socket as non-blocking */
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl");
+        exit(1);
+    }
+
+    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("Failed to set socket as non-blocking");
+        exit(1);
+    }
+
+    return sockfd;
 }
 
+/**
+ * @brief Bind the socket to the specified port
+ * @param sockfd
+ * @param port
+ */
+void bind_addr(int sockfd, int port)
+{
+    struct sockaddr_in localAddr;
+    memset(&localAddr, 0, sizeof(localAddr));
+    localAddr.sin_family = AF_INET;
+    localAddr.sin_port = htons(port);
+    localAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (bind(sockfd, (struct sockaddr*)&localAddr, sizeof(localAddr)) == -1) {
+        perror("bind");
+        exit(1);
+    }
+}
 
 /**
  * @brief Record the CSI status
@@ -96,107 +110,112 @@ int main(int argc, char* argv[])
         port = atoi(argv[1]);
     }
 
-    /* file pointer */
-//    FILE*       fp;
+    /* Open the OpenCV VideoCapture */
+    VideoCapture cap = VideoHelper::openCamera();
 
-    int         i;
-    int         total_msg_cnt,cnt;
-//    int         log_flag;
-//    unsigned char endian_flag;
-//    u_int16_t   buf_len;
+    /* Set the video resolution to 640x480 */
+    auto codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
+    VideoWriter writer = VideoHelper::openVideoWriter("output.avi", codec,
+                                                      30.0, Size(640, 480));
 
-    /* Set the socket */
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd == -1) {
-        std::cerr << "Failed to create socket." << std::endl;
-        return 1;
-    }
-
-    /* Set the socket options */
-    int broadcastEnable = 1;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST,
-                   &broadcastEnable, sizeof(broadcastEnable)) == -1) {
-        std::cerr << "Failed to set socket options." << std::endl;
-        return 1;
-    }
-
-    /* Set the socket as non-blocking */
-    int flags = fcntl(sockfd, F_GETFL, 0);
-    if (flags == -1) {
-        perror("Failed to get socket flags");
-        return 1;
-    }
-
-    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
-        perror("Failed to set socket as non-blocking");
-        return 1;
-    }
+    /* Create the socket */
+    int sockfd = create_broadcast_socket();
 
     /* Bind the socket */
-    struct sockaddr_in localAddr;
-    memset(&localAddr, 0, sizeof(localAddr));
-    localAddr.sin_family = AF_INET;
-    localAddr.sin_port = htons(BROADCAST_PORT);
-    localAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (bind(sockfd, (struct sockaddr*)&localAddr, sizeof(localAddr)) == -1) {
-        std::cerr << "Failed to bind socket." << std::endl;
-        return 1;
-    }
+    bind_addr(sockfd, port);
 
-//    log_flag = 1;
+    /* Allocate memory for the status struct */
     csi_status = (csi_struct*)malloc(sizeof(csi_struct));
 
     /* Register the signal handler */
     signal(SIGINT, sig_handler);
 
+    /* Initialize the quit flag */
     quit = 0;
-    total_msg_cnt = 0;
 
+    /* Initialize the received socket address */
     struct sockaddr_in senderAddr;
     socklen_t senderLen = sizeof(senderAddr);
 
+    /* Print the waiting message */
     printf("Waiting for the first packet...\n");
 
-//    unsigned char udp_buf[BUFSIZE] = {0};
+    /* Try to record the video frame and the CSI status */
+    std::ofstream bin("frame_hash.bin", std::ios::out | std::ios::binary);
+    if (!bin.is_open()) {
+        std::cout << "Failed to open the file" << std::endl;
+        return -1;
+    }
 
+    /* Keep listening to the kernel and waiting for the csi report */
     while(!quit) {
 
-//        std::cout << "1" << std::endl;
+        /* Get the video frame */
+        Mat frame;
+        cap >> frame;
 
         /* keep listening to the kernel and waiting for the csi report */
-        cnt = recvfrom(sockfd, buf_addr, BUFSIZE, 0, (struct sockaddr*)&senderAddr, &senderLen);
+        int recvd = recvfrom(sockfd, buf_addr, BUFSIZE, 0,
+                             (struct sockaddr*)&senderAddr, &senderLen);
 
-        if (cnt > 0){
-            total_msg_cnt += 1;
+        if (recvd > 0){
 
             /* fill the status struct with information about the rx packet */
-            record_status(buf_addr, cnt, csi_status);
+            record_status(buf_addr, recvd, csi_status);
 
             /* Print the information of the CSI packet */
             print_csi_status(csi_status);
 
-            /* 
-             * fill the payload buffer with the payload
-             * fill the CSI matrix with the extracted CSI value
-             */
-            record_csi_payload(buf_addr, csi_status, data_buf, csi_matrix);
+            /* Get current timestamp */
+            auto now = std::chrono::system_clock::now();
+            auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
 
-//            printf("Recv %dth msg with rate: 0x%02x | payload len: %d\n",
-//                total_msg_cnt,
-//                csi_status->rate,
-//                csi_status->payload_len);
-            
-            /* log the received data for off-line processing */
-//            if (log_flag){
-//                buf_len = csi_status->payload_len;
-//                fwrite(&buf_len,1,2,fp);
-//                fwrite(buf_addr,1,buf_len,fp);
-//            }
+            /* Get the video frame size */
+            unsigned long frame_size = frame.total() * frame.elemSize();
+
+            /* Get the CSI data size */
+            unsigned long csi_size = csi_status->buf_len;
+
+            /* Compute the total size */
+            unsigned long total_size = frame_size + csi_size + sizeof(frame_size) + sizeof(csi_size) +
+                    sizeof(total_size) + sizeof(now_ms) + 2;
+
+            /* Write the data into file
+             * total_size | frame_size | csi_size | timestamp | frame | csi_data | \r\n
+            */
+            bin.write((char*)&total_size, sizeof(total_size));
+            bin.write((char*)&frame_size, sizeof(frame_size));
+            bin.write((char*)&csi_size, sizeof(csi_size));
+            bin.write((char*)&now_ms, sizeof(now_ms));
+            bin.write((char*)frame.data, frame_size);
+            bin.write((char*)buf_addr, csi_size);
+            bin.write("\r\n", 2);
+        }
+
+        /* Display the video frame */
+        imshow("Real-time VideoCapture", frame);
+
+        /* If the user presses the ESC key, quit the program */
+        if (waitKey(1) == 27) {
+            quit = 1;
         }
     }
 
-//    fclose(fp);
+    /* Close the file */
+    bin.close();
+
+    /* Close the video writer */
+    writer.release();
+
+    /* Close the video capture */
+    cap.release();
+
+    /* Close the socket */
     close(sockfd);
+
+    /* Free the memory */
     free(csi_status);
+
+    /* Exit the program */
     return 0;
 }

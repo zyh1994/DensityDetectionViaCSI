@@ -1,3 +1,7 @@
 ./2.OpenWRT/pc_recorder/cmake-build-debug-wsl/
 2.OpenWRT/pc_recorder/.idea/workspace.xml
 */.idea/*
+.idea/
+
+*.o
+*.pyc
