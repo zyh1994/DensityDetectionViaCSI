@@ -1,31 +1,24 @@
-/*
- * =====================================================================================
- *       Filename:  csi_fun.h
- *
- *    Description:  head file for csi processing fucntion  
- *        Version:  1.0
- *
- *         Author:  Yaxiong Xie  
- *         Email :  <xieyaxiongfly@gmail.com>
- *   Organization:  WANDS group @ Nanyang Technological University
- *
- *   Copyright (c)  WANDS group @ Nanyang Technological University
- * =====================================================================================
- */
-#include <stdbool.h>
-#include <sys/types.h>
+//
+// Created by Orlando Chen on 2023/06/12.
+//
 
-#define Kernel_CSI_ST_LEN 23 
+#ifndef DENSITYDETECTION_CSIHELPER_H
+#define DENSITYDETECTION_CSIHELPER_H
+
+#include <cstdlib>
+
 typedef struct
 {
     int real;
     int imag;
-}COMPLEX;
+} COMPLEX;
+
+#define Kernel_CSI_ST_LEN 23
 
 typedef struct
 {
     u_int64_t tstamp;         /* h/w assigned time stamp */
-    
+
     u_int16_t channel;        /* wireless channel (represented in Hz)*/
     u_int8_t  chanBW;         /* channel bandwidth (0->20MHz,1->40MHz)*/
 
@@ -47,10 +40,18 @@ typedef struct
     u_int16_t   buf_len;      /*  data length in buffer */
 }csi_struct;
 
-bool  is_big_endian();
-int   open_csi_device();
-void  close_csi_device(int fd);
-int   read_csi_buf(unsigned char* buf_addr,int fd, int BUFSIZE);
-void  record_status(unsigned char* buf_addr, int cnt, csi_struct* csi_status);
-void  record_csi_payload(unsigned char* buf_addr, csi_struct* csi_status,unsigned char* data_buf, COMPLEX(* csi_buf)[3][114]);
-void  porcess_csi(unsigned char* data_buf, csi_struct* csi_status,COMPLEX(* csi_buf)[3][114]);
+extern bool  is_big_endian();
+
+
+extern void  record_status(unsigned char* buf_addr,
+                           int cnt,
+                           csi_struct* csi_status);
+
+extern void  record_csi_payload(unsigned char* buf_addr,
+                                csi_struct* csi_status,
+                                unsigned char* data_buf,
+                                COMPLEX(* csi_buf)[3][114]);
+
+extern void print_csi_status(csi_struct *package);
+
+#endif //DENSITYDETECTION_CSIHELPER_H

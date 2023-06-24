@@ -8,7 +8,7 @@ INCLUDE_DIR=$(TOOL_CHAIN_BASE)/include
 
 
 build:
-	$(GPP) -I$(INCLUDE_DIR) -L$(LIB) -o csi_loop_ping main.cpp
+	$(GPP) -I$(INCLUDE_DIR) -L$(LIB) -o recvCSI csi_fun.c main.c
 
 clean:
 	rm csi_loop_ping
