@@ -13,26 +13,32 @@ typedef struct
     int imag;
 } COMPLEX;
 
+#define Kernel_CSI_ST_LEN 23
+
 typedef struct
 {
-    u_int16_t   data_len;       // length of field
-    u_int64_t   timestamp;      // timestamp of packet capture
-    u_int16_t   csi_len;        // length of csi data in bytes
-    u_int16_t   channel;        // wireless channel, represents in Hz
-    u_int8_t    err_info;       // error code
-    u_int8_t    noise_floor;    // noise level
-    u_int8_t    rate;           // transmission rate
-    u_int8_t    bandWidth;      // bandwidth of the channel, (0->20MHz,1->40MHz)
-    u_int8_t    num_tones;      // number of tones
-    u_int8_t    nr;             // umber of receiving antenna
-    u_int8_t    nc;             // number of transmitting antenna
-    u_int8_t    rssi;           // rx frame RSSI
-    u_int8_t    rssi_0;         // rx frame RSSI [ctl, chain 0]
-    u_int8_t    rssi_1;         // rx frame RSSI [ctl, chain 1]
-    u_int8_t    rssi_2;         // rx frame RSSI [ctl, chain 2]
-    u_int16_t   payload_len;    // payload length (bytes)
-    COMPLEX     *csi_matrix;    // pointer to payload
-} csi_struct;
+    u_int64_t tstamp;         /* h/w assigned time stamp */
+
+    u_int16_t channel;        /* wireless channel (represented in Hz)*/
+    u_int8_t  chanBW;         /* channel bandwidth (0->20MHz,1->40MHz)*/
+
+    u_int8_t  rate;           /* transmission rate*/
+    u_int8_t  nr;             /* number of receiving antenna*/
+    u_int8_t  nc;             /* number of transmitting antenna*/
+    u_int8_t  num_tones;      /* number of tones (subcarriers) */
+    u_int8_t  noise;          /* noise floor (to be updated)*/
+
+    u_int8_t  phyerr;          /* phy error code (set to 0 if correct)*/
+
+    u_int8_t    rssi;         /*  rx frame RSSI */
+    u_int8_t    rssi_0;       /*  rx frame RSSI [ctl, chain 0] */
+    u_int8_t    rssi_1;       /*  rx frame RSSI [ctl, chain 1] */
+    u_int8_t    rssi_2;       /*  rx frame RSSI [ctl, chain 2] */
+
+    u_int16_t   payload_len;  /*  payload length (bytes) */
+    u_int16_t   csi_len;      /*  csi data length (bytes) */
+    u_int16_t   buf_len;      /*  data length in buffer */
+}csi_struct;
 
 extern bool  is_big_endian();
 

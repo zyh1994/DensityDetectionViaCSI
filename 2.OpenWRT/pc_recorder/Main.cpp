@@ -52,13 +52,13 @@ int main(int argc, char* argv[])
     }
 
     /* file pointer */
-    FILE*       fp;
+//    FILE*       fp;
 
     int         i;
     int         total_msg_cnt,cnt;
-    int         log_flag;
-    unsigned char endian_flag;
-    u_int16_t   buf_len;
+//    int         log_flag;
+//    unsigned char endian_flag;
+//    u_int16_t   buf_len;
 
     /* Set the socket */
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    log_flag = 1;
+//    log_flag = 1;
     csi_status = (csi_struct*)malloc(sizeof(csi_struct));
 
     /* Register the signal handler */
@@ -114,14 +114,20 @@ int main(int argc, char* argv[])
 
     while(!quit) {
 
+//        std::cout << "1" << std::endl;
+
         /* keep listening to the kernel and waiting for the csi report */
         cnt = recvfrom(sockfd, buf_addr, BUFSIZE, 0, (struct sockaddr*)&senderAddr, &senderLen);
 
         if (cnt > 0){
             total_msg_cnt += 1;
 
+//            std::cout << "2" << std::endl;
+
             /* fill the status struct with information about the rx packet */
             record_status(buf_addr, cnt, csi_status);
+
+//            std::cout << "3" << std::endl;
 
             /* 
              * fill the payload buffer with the payload
@@ -135,15 +141,15 @@ int main(int argc, char* argv[])
                 csi_status->payload_len);
             
             /* log the received data for off-line processing */
-            if (log_flag){
-                buf_len = csi_status->payload_len;
-                fwrite(&buf_len,1,2,fp);
-                fwrite(buf_addr,1,buf_len,fp);
-            }
+//            if (log_flag){
+//                buf_len = csi_status->payload_len;
+//                fwrite(&buf_len,1,2,fp);
+//                fwrite(buf_addr,1,buf_len,fp);
+//            }
         }
     }
 
-    fclose(fp);
+//    fclose(fp);
     close(sockfd);
     free(csi_status);
     return 0;
