@@ -1,3 +1,3 @@
 ./2.OpenWRT/pc_recorder/cmake-build-debug-wsl/
-./.idea/
 2.OpenWRT/pc_recorder/.idea/workspace.xml
+*/.idea/*

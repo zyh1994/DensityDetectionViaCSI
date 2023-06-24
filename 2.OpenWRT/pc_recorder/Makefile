@@ -3,15 +3,15 @@ GCC = g++
 
 # Link the OpenCV and the pthread libraries
 # LIBS = $(shell pkg-config --libs opencv) -lpthread
-LIBS = $(shell pkg-config --libs opencv)
+LIBS = $(shell pkg-config --libs opencv4)
 
 # Include the necessary header files
-INCLUDE = $(shell pkg-config --cflags opencv) -I/usr/local/include/opencv -I/usr/local/include
+INCLUDE = $(shell pkg-config --cflags opencv4)
 
 # List of source files
-SOURCES = Main.cpp VideoHelper.cpp
+SOURCES = $(wildcard *.cpp)
 
-# List of object files
+# List of object files, include C++ and C files
 OBJECTS = $(SOURCES:.cpp=.o)
 
 # Name of the output executable

@@ -54,6 +54,18 @@ void setup_udp_broadcast(int *socket_fd, struct sockaddr_in *server_addr, const 
         exit(1);
     }
 
+    /* Set the socket as non-blocking */
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("Failed to get socket flags");
+        return 1;
+    }
+
+    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("Failed to set socket as non-blocking");
+        return 1;
+    }
+
     /* Allow broadcast */
     if (setsockopt(*socket_fd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) < 0) {
         perror("setsockopt");

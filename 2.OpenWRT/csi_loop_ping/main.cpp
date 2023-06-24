@@ -149,6 +149,17 @@ int main(int argc, char *argv[])
     /* 设置目标MAC地址 */
     memcpy(socket_address.sll_addr, DstAddr, 6);
 
+    /* Set the socket as non-blocking */
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("Failed to get socket flags");
+        return 1;
+    }
+
+    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("Failed to set socket as non-blocking");
+        return 1;
+    }
 
     /* 计数器 */
     int count = 0;

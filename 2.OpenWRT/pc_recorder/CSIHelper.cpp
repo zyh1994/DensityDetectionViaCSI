@@ -4,17 +4,8 @@
 
 #include "CSIHelper.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <sys/types.h>
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
 
 #define csi_st_len 23
 
@@ -182,8 +173,8 @@ int read_csi_buf(unsigned char* buf_addr,int fd, int BUFSIZE){
      fill_csi_matrix(csi_addr,nr,nc,num_tones, csi_matrix);
  }
 
- void  porcess_csi(unsigned char* data_buf, csi_struct* csi_status,COMPLEX(* csi_buf)[3][114]){
-     /* here is the function for csi processing
-      * you can install your own function */
-     return;
- }
+// void  porcess_csi(unsigned char* data_buf, csi_struct* csi_status,COMPLEX(* csi_buf)[3][114]){
+//     /* here is the function for csi processing
+//      * you can install your own function */
+//     return;
+// }

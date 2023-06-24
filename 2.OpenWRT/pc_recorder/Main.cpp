@@ -4,16 +4,16 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-
+#include <fcntl.h>
 #include <iostream>
 
 #include "VideoHelper.h"
 #include "CSIHelper.h"
 
-#define BUFSIZE 4096        // buffer size
-#define BROADCAST_PORT 8888 // 广播端口
+#define BUFSIZE 4096                // buffer size
+#define BROADCAST_PORT 8888         // 广播端口
 
-int quit;                   // quit flag
+int quit;                           // quit flag
 
 unsigned char buf_addr[BUFSIZE];    // buffer address
 unsigned char data_buf[1500];       // data buffer
@@ -65,6 +65,18 @@ int main(int argc, char* argv[])
     if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST,
                    &broadcastEnable, sizeof(broadcastEnable)) == -1) {
         std::cerr << "Failed to set socket options." << std::endl;
+        return 1;
+    }
+
+    /* Set the socket as non-blocking */
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("Failed to get socket flags");
+        return 1;
+    }
+
+    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("Failed to set socket as non-blocking");
         return 1;
     }
 
