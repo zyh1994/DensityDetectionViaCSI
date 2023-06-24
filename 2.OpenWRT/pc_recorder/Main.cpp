@@ -14,9 +14,11 @@
 #include "CSIHelper.h"
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/version.hpp>
 
-#define BUFSIZE 4096
-#define BROADCAST_PORT 8080
+#define BUFSIZE             4096
+#define BROADCAST_PORT      8080
+#define BIN_FILENAME        "csi_videoc.dat"
 
 using namespace cv;
 
@@ -32,9 +34,9 @@ csi_struct*   csi_status;           // CSI status
  */
 void sig_handler(int signo)
 {
-    if (signo == SIGINT) {
+    if (signo == SIGQUIT) {
         /* log the received data for off-line processing */
-        std::cout << "Received SIGINT. Quitting..." << std::endl;
+        std::cout << "Received SIGQUIT. Quitting..." << std::endl;
 
         /* close the log file */
         quit = 1;
@@ -95,6 +97,34 @@ void bind_addr(int sockfd, int port)
     }
 }
 
+
+void write_data(std::ofstream &file, unsigned char* buf_addr, int size)
+{
+    if (!file.is_open()) {
+        perror("File is not open");
+        return;
+    }
+
+    /* Write the data to the file */
+    while (true) {
+        file.write((char*)buf_addr, size);
+        file.flush();
+
+        if (!file.fail()) {
+            break;
+        }
+
+        /* Reopen the file */
+        file.close();
+        file.open(BIN_FILENAME, std::ios::out | std::ios::binary | std::ios::app);
+        if (!file.is_open()) {
+            perror("File is not open");
+            return;
+        }
+    }
+}
+
+
 /**
  * @brief Record the CSI status
  * @param buf_addr
@@ -113,10 +143,29 @@ int main(int argc, char* argv[])
     /* Open the OpenCV VideoCapture */
     VideoCapture cap = VideoHelper::openCamera();
 
-    /* Set the video resolution to 640x480 */
-    auto codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
-    VideoWriter writer = VideoHelper::openVideoWriter("output.avi", codec,
-                                                      30.0, Size(640, 480));
+#if CV_VERSION_EPOCH == 2
+    // If using the older version of OpenCV, use the following code
+    auto codec = CV_FOURCC('M', 'J', 'P', 'G');
+
+    /* Set the video resolution to 320 x 240 */
+    cap.set(CV_CAP_PROP_FRAME_WIDTH, 320);
+    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+
+    /* Set to grayscale mode */
+    cap.set(CV_CAP_PROP_CONVERT_RGB, 0);
+#else
+    #if CV_VERSION_MAJOR >= 4
+        /* New version API */
+        auto codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
+
+        /* Set the video resolution to 320 x 240 */
+        cap.set(CAP_PROP_FRAME_WIDTH, 320);
+        cap.set(CAP_PROP_FRAME_HEIGHT, 240);
+
+        /* Set to grayscale mode */
+        cap.set(CAP_PROP_CONVERT_RGB, 0);
+    #endif
+#endif
 
     /* Create the socket */
     int sockfd = create_broadcast_socket();
@@ -127,8 +176,8 @@ int main(int argc, char* argv[])
     /* Allocate memory for the status struct */
     csi_status = (csi_struct*)malloc(sizeof(csi_struct));
 
-    /* Register the signal handler */
-    signal(SIGINT, sig_handler);
+    /* Register the signal handler: ctrl + d */
+    signal(SIGQUIT, sig_handler);
 
     /* Initialize the quit flag */
     quit = 0;
@@ -141,11 +190,15 @@ int main(int argc, char* argv[])
     printf("Waiting for the first packet...\n");
 
     /* Try to record the video frame and the CSI status */
-    std::ofstream bin("frame_hash.bin", std::ios::out | std::ios::binary);
+    std::ofstream bin(BIN_FILENAME, std::ios::out | std::ios::binary);
     if (!bin.is_open()) {
         std::cout << "Failed to open the file" << std::endl;
         return -1;
     }
+
+    /* size of the file */
+    unsigned long file_size = 0;
+    unsigned long last_file_size = 0;
 
     /* Keep listening to the kernel and waiting for the csi report */
     while(!quit) {
@@ -155,7 +208,7 @@ int main(int argc, char* argv[])
         cap >> frame;
 
         /* keep listening to the kernel and waiting for the csi report */
-        int recvd = recvfrom(sockfd, buf_addr, BUFSIZE, 0,
+        long recvd = recvfrom(sockfd, buf_addr, BUFSIZE, 0,
                              (struct sockaddr*)&senderAddr, &senderLen);
 
         if (recvd > 0){
@@ -164,7 +217,7 @@ int main(int argc, char* argv[])
             record_status(buf_addr, recvd, csi_status);
 
             /* Print the information of the CSI packet */
-            print_csi_status(csi_status);
+//            print_csi_status(csi_status);
 
             /* Get current timestamp */
             auto now = std::chrono::system_clock::now();
@@ -173,23 +226,27 @@ int main(int argc, char* argv[])
             /* Get the video frame size */
             unsigned long frame_size = frame.total() * frame.elemSize();
 
-            /* Get the CSI data size */
-            unsigned long csi_size = csi_status->buf_len;
-
             /* Compute the total size */
-            unsigned long total_size = frame_size + csi_size + sizeof(frame_size) + sizeof(csi_size) +
-                    sizeof(total_size) + sizeof(now_ms) + 2;
+            unsigned long total_size = sizeof(long) * 3 + sizeof(now_ms) + frame_size + recvd + 2;
 
             /* Write the data into file
              * total_size | frame_size | csi_size | timestamp | frame | csi_data | \r\n
             */
-            bin.write((char*)&total_size, sizeof(total_size));
-            bin.write((char*)&frame_size, sizeof(frame_size));
-            bin.write((char*)&csi_size, sizeof(csi_size));
-            bin.write((char*)&now_ms, sizeof(now_ms));
-            bin.write((char*)frame.data, frame_size);
-            bin.write((char*)buf_addr, csi_size);
-            bin.write("\r\n", 2);
+            write_data(bin, (unsigned char*)&total_size, sizeof(total_size));
+            write_data(bin, (unsigned char*)&frame_size, sizeof(frame_size));
+            write_data(bin, (unsigned char*)&recvd, sizeof(recvd));
+            write_data(bin, (unsigned char*)&now_ms, sizeof(now_ms));
+            write_data(bin, (unsigned char*)frame.data, frame_size);
+            write_data(bin, (unsigned char*)buf_addr, recvd);
+            write_data(bin, (unsigned char*)"\r\n", 2);
+
+            /* Check the file size, if it is continuously increasing, print the increasing rate */
+            file_size = bin.tellp();
+            if (file_size > last_file_size) {
+                std::cout << "File size: " << file_size << " bytes" << std::endl;
+                std::cout << "Increasing rate: " << (file_size - last_file_size) / 1024.0 << " KB/s" << std::endl;
+                last_file_size = file_size;
+            }
         }
 
         /* Display the video frame */
@@ -203,9 +260,6 @@ int main(int argc, char* argv[])
 
     /* Close the file */
     bin.close();
-
-    /* Close the video writer */
-    writer.release();
 
     /* Close the video capture */
     cap.release();
