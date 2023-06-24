@@ -1,15 +1,15 @@
 # Use GNU C++ compiler in the Ubuntu 16.04
 GCC = g++
 
+# Detect Ubuntu version
+UBUNTU_VERSION := $(shell lsb_release -rs)
+
 # Link the OpenCV and the pthread libraries
 ifeq ($(shell expr $(UBUNTU_VERSION) \>= 16.04), 1)
 	LIBS = $(shell pkg-config --libs opencv4)
 else
 	LIBS = $(shell pkg-config --libs opencv)
 endif
-
-# Detect Ubuntu version
-UBUNTU_VERSION := $(shell lsb_release -rs)
 
 # Choose the appropriate pkg-config command based on Ubuntu version
 ifeq ($(shell expr $(UBUNTU_VERSION) \>= 16.04), 1)
