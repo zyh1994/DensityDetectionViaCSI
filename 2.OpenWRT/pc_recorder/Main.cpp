@@ -1,87 +1,131 @@
-#include <iostream>
-#include <opencv2/opencv.hpp>
-#include <fstream>
-#include <chrono>
+#include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+#include <iostream>
 
 #include "VideoHelper.h"
+#include "CSIHelper.h"
 
-using namespace cv;
-using namespace std;
+#define BUFSIZE 4096        // buffer size
+#define BROADCAST_PORT 8888 // 广播端口
 
-/* The flag to quit the program */
-bool quit = false;
+int quit;                   // quit flag
+
+unsigned char buf_addr[BUFSIZE];    // buffer address
+unsigned char data_buf[1500];       // data buffer
+
+COMPLEX csi_matrix[3][3][114];      // CSI matrix
+csi_struct*   csi_status;           // CSI status
 
 /**
  * @brief Handle the Ctrl+C signal
  * @param sig
  */
-void handle_sigint(int sig)
+void sig_handler(int signo)
 {
-    if (sig == SIGINT) {
-        /* 打印信号值 */
-        printf("Caught signal %d\n", sig);
+    if (signo == SIGINT) {
+        /* log the received data for off-line processing */
+        std::cout << "Received SIGINT. Quitting..." << std::endl;
 
-        /* 设置退出标志 */
-        quit = true;
+        /* close the log file */
+        quit = 1;
     }
 }
 
-int main() {
+/**
+ * @brief Record the CSI status
+ * @param buf_addr
+ * @param cnt
+ * @param csi_status
+ */
+int main(int argc, char* argv[])
+{
+    /* file pointer */
+    FILE*       fp;
 
-    /* Open the camera */
-    VideoCapture cap = VideoHelper::openCamera();
+    int         i;
+    int         total_msg_cnt,cnt;
+    int         log_flag;
+    unsigned char endian_flag;
+    u_int16_t   buf_len;
 
-    /* Set the video resolution to 640x480 */
-    int codec = CV_FOURCC('M', 'J', 'P', 'G');
-    int frameWidth = static_cast<int>(cap.get(CV_CAP_PROP_FRAME_WIDTH));
-    int frameHeight = static_cast<int>(cap.get(CV_CAP_PROP_FRAME_HEIGHT));
-
-    // 创建视频文件写入器
-    VideoWriter writer = VideoHelper::openVideoWriter("output.avi", codec, 30.0, Size(frameWidth, frameHeight));
-
-    // 打开二进制文件进行记录
-    ofstream hashFile("frame_hash.bin", ios::out | ios::binary);
-    if (!hashFile.is_open()) {
-        cout << "Cannot open the file!" << endl;
-        return -1;
+    /* Set the socket */
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == -1) {
+        std::cerr << "Failed to create socket." << std::endl;
+        return 1;
     }
 
-    /* Set the quit signal handler */
-    quit = false;
+    /* Set the socket options */
+    int broadcastEnable = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST,
+                   &broadcastEnable, sizeof(broadcastEnable)) == -1) {
+        std::cerr << "Failed to set socket options." << std::endl;
+        return 1;
+    }
+
+    /* Bind the socket */
+    struct sockaddr_in localAddr;
+    memset(&localAddr, 0, sizeof(localAddr));
+    localAddr.sin_family = AF_INET;
+    localAddr.sin_port = htons(BROADCAST_PORT);
+    localAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (bind(sockfd, (struct sockaddr*)&localAddr, sizeof(localAddr)) == -1) {
+        std::cerr << "Failed to bind socket." << std::endl;
+        return 1;
+    }
+
+    log_flag = 1;
+    csi_status = (csi_struct*)malloc(sizeof(csi_struct));
 
     /* Register the signal handler */
-    signal(SIGINT, handle_sigint);
+    signal(SIGINT, sig_handler);
 
-    while (!quit) {
-        Mat frame;
-        cap.read(frame);
+    quit = 0;
+    total_msg_cnt = 0;
 
-        // 写入视频文件
-        writer.write(frame);
+    struct sockaddr_in senderAddr;
+    socklen_t senderLen = sizeof(senderAddr);
 
-        // 获取帧的哈希值和时间戳
-        string frameHash = VideoHelper::getHashValue(frame, "AverageHash");
-        auto timestamp = chrono::system_clock::now();
-        auto time = chrono::system_clock::to_time_t(timestamp);
+    printf("Waiting for the first packet...\n");
 
-        // 写入哈希值和时间戳到二进制文件
-        hashFile.write(reinterpret_cast<const char*>(&time), sizeof(time));
-        hashFile.write(frameHash.c_str(), frameHash.size() + 1);
+    while(!quit) {
 
-        imshow("Video", frame);
+        /* keep listening to the kernel and waiting for the csi report */
+        cnt = recvfrom(sockfd, buf_addr, BUFSIZE, 0, (struct sockaddr*)&senderAddr, &senderLen);
 
-        // 按下Esc键退出循环
-        if (waitKey(1) == 27)
-            break;
+        if (cnt > 0){
+            total_msg_cnt += 1;
+
+            /* fill the status struct with information about the rx packet */
+            record_status(buf_addr, cnt, csi_status);
+
+            /* 
+             * fill the payload buffer with the payload
+             * fill the CSI matrix with the extracted CSI value
+             */
+            record_csi_payload(buf_addr, csi_status, data_buf, csi_matrix); 
+
+            printf("Recv %dth msg with rate: 0x%02x | payload len: %d\n",
+                total_msg_cnt,
+                csi_status->rate,
+                csi_status->payload_len);
+            
+            /* log the received data for off-line processing */
+            if (log_flag){
+                buf_len = csi_status->payload_len;
+                fwrite(&buf_len,1,2,fp);
+                fwrite(buf_addr,1,buf_len,fp);
+            }
+        }
     }
 
-    // 释放资源
-    cap.release();
-    writer.release();
-    hashFile.close();
-    destroyAllWindows();
-
+    fclose(fp);
+    close(sockfd);
+    free(csi_status);
     return 0;
 }

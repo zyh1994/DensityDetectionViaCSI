@@ -12,9 +12,9 @@
 
 #include <chrono>               // 时间函数
 
-#include <sys/socket.h>   // socket函数和相关常量
-#include <netinet/in.h>   // sockaddr_in结构体和相关函数
-#include <arpa/inet.h>    // inet_addr函数
+#include <sys/socket.h>         // socket函数和相关常量
+#include <netinet/in.h>         // sockaddr_in结构体和相关函数
+#include <arpa/inet.h>          // inet_addr函数
 
 #include "csi_fun.h"
 
@@ -29,10 +29,11 @@ int quit;
 void handle_sigint(int sig)
 {
     if (sig == SIGINT) {
-        /* 打印信号值 */
+       
+        /* print the signal number */
         printf("Caught signal %d\n", sig);
 
-        /* 设置退出标志 */
+        /* set the quit flag */
         quit = true;
     }
 }
@@ -47,20 +48,32 @@ void handle_sigint(int sig)
 void setup_udp_broadcast(int *socket_fd, struct sockaddr_in *server_addr, const char *ip_addr, const int port) {
     int broadcast = 1;
 
+    /* Create socket */
     if ((*socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("socket");
         exit(1);
     }
 
+    /* Allow broadcast */
     if (setsockopt(*socket_fd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) < 0) {
         perror("setsockopt");
         exit(1);
     }
 
+    /* Bind to the port */  
     bzero(server_addr, sizeof(struct sockaddr_in));
+
+    /* Set family and port */
     server_addr->sin_family = AF_INET;
-    server_addr->sin_addr.s_addr = inet_addr(ip_addr);
+
+    /* Convert port number to integer */
     server_addr->sin_port = htons(port);
+
+    /* Convert IP address to integer */
+    if (inet_pton(AF_INET, ip_addr, &(server_addr->sin_addr)) <= 0) {
+        std::cerr << "Invalid IP address." << std::endl;
+        return 1;
+    }
 }
 
 /**
@@ -72,6 +85,7 @@ void setup_udp_broadcast(int *socket_fd, struct sockaddr_in *server_addr, const 
  */
 void broadcast_udp(int socket_fd, struct sockaddr_in *client_addr, unsigned char *data, int len) {
 
+    /* Send data via UDP broadcast */
     if (sendto(socket_fd, data, len, 0, (struct sockaddr *)client_addr, sizeof(struct sockaddr)) < 0) {
         perror("sendto");
         exit(1);
@@ -86,69 +100,76 @@ void broadcast_udp(int socket_fd, struct sockaddr_in *client_addr, unsigned char
  */
 int main(int argc, char* argv[])
 {
-    int             csi_fd;         // for csi
+    /* CSI device file descriptor */
+    int             csi_fd;        
 
-    /* 注册信号处理函数 */
+    /* Register the signal handler to handle Ctrl+C */
     signal(SIGINT, handle_sigint);
 
-    /* 检测输入参数情况 程序名 + BroadCast IP + 端口号 */
+    /* Print the usage when the number of parameters is not correct */
     if (argc != 3) {
         printf("Usage: %s <BroadCast IP> <Port>\n", argv[0]);
+        printf("-- Example: %s 192.168.1.255 8888\n", argv[0]);
         return 0;
     }
 
-    /* 设置CSI设备 */
+    /* Open the device file */
     csi_fd = open_csi_device();
     if (csi_fd < 0) {
         perror("Failed to open the device...");
         return errno;
     }
 
-    /* 设置UDP广播 */
+    /* UDP socket file descriptor */
     int socket_fd;
+
+    /* UDP server address */
     struct sockaddr_in broadcast_addr;
 
-    /* 从命令行获取广播地址，端口号 */
+    /* Get the IP address and port number */
     const char *ip_addr = argv[1];
     const int port = atoi(argv[2]);
+
+    /* Setup the UDP broadcast socket */
     setup_udp_broadcast(&socket_fd, &broadcast_addr, ip_addr, port);
 
-    /* 准备CSI数据缓冲区 */
+    /* Prepare the buffer to store the data */
     unsigned char buf_addr[BUFSIZE] = {0};
+
+    /* data length */
     int cnt = 0;
 
-    /* 设置退出标志 */
+    /* quit flag */
     quit = false;
 
-    /* 计时器 */
+    /* timer */
     auto start = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
 
-    /* 计数器 */
+    /* counter */
     int count = 0;
 
-    /* 时间字符串 */
+    /* time string */
     char time_str[100];
 
-    /* 循环读取CSI数据 */
+    /* Main loop */
     while(!quit) {
 
-        /* 读取CSI数据，数据存放在buf_addr中，返回值为数据长度 */
+        /* Read the CSI data from the device file */
         cnt = read_csi_buf(buf_addr, csi_fd, BUFSIZE);
 
-        /* 如果读取到数据 */
+        /* If there is data, broadcast it */
         if (cnt > 0) {
-            /* 广播数据 */
             broadcast_udp(socket_fd, &broadcast_addr, buf_addr, cnt);
         }
 
-        /* 计数器自增 */
+        /* Increase the counter */
         count++;
 
-        /* 获取当前时间 */
+        /* Get the current time */
         end = std::chrono::system_clock::now();
 
-        /* 每隔1秒打印一次帧率 */
+        /* If 10 seconds passed, print the number of packages */
         if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() >= 10) {
             std::time_t end_time = std::chrono::system_clock::to_time_t(end);
             std::tm* local_time = std::localtime(&end_time);
@@ -160,9 +181,9 @@ int main(int argc, char* argv[])
         }
     }
 
-    /* 关闭文件 */
+    /* Close the device file */
     close_csi_device(csi_fd);
 
-    /* 退出程序 */
+    /* Close the UDP socket */
     return 0;
 }

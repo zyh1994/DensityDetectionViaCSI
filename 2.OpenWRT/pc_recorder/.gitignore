@@ -1,4 +1,4 @@
 # Add ignore files and folders of CMake
 cmake-build-debug/*
 CMakeFiles/*
-CMakeCache.txt
+CMakeCache.txtcmake-build-debug-wsl/
