@@ -1,6 +1,0 @@
-###### Requirements without Version Specifiers ######
-csikit
-numpy
-scipy
-matplotlib
-keyboard
