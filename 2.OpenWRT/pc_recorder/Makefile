@@ -2,11 +2,21 @@
 GCC = g++
 
 # Link the OpenCV and the pthread libraries
-# LIBS = $(shell pkg-config --libs opencv) -lpthread
-LIBS = $(shell pkg-config --libs opencv4)
+ifeq ($(shell expr $(UBUNTU_VERSION) \>= 16.04), 1)
+	LIBS = $(shell pkg-config --libs opencv4)
+else
+	LIBS = $(shell pkg-config --libs opencv)
+endif
 
-# Include the necessary header files
-INCLUDE = $(shell pkg-config --cflags opencv4)
+# Detect Ubuntu version
+UBUNTU_VERSION := $(shell lsb_release -rs)
+
+# Choose the appropriate pkg-config command based on Ubuntu version
+ifeq ($(shell expr $(UBUNTU_VERSION) \>= 16.04), 1)
+	INCLUDE = $(shell pkg-config --cflags opencv4)
+else
+	INCLUDE = $(shell pkg-config --cflags opencv)
+endif
 
 # List of source files
 SOURCES = $(wildcard *.cpp)
