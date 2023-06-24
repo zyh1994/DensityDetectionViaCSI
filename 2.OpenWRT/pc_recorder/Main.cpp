@@ -11,7 +11,7 @@
 #include "CSIHelper.h"
 
 #define BUFSIZE 4096                // buffer size
-#define BROADCAST_PORT 8888         // 广播端口
+#define BROADCAST_PORT 8080         // broadcast port
 
 int quit;                           // quit flag
 
@@ -44,6 +44,13 @@ void sig_handler(int signo)
  */
 int main(int argc, char* argv[])
 {
+    /* If the user doesn't specify the port, use the default 8080 */
+    int port = BROADCAST_PORT;
+
+    if (argc == 2) {
+        port = atoi(argv[1]);
+    }
+
     /* file pointer */
     FILE*       fp;
 
