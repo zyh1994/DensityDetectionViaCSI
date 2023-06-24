@@ -172,24 +172,26 @@ int main(int argc, char* argv[])
 
         /* If there is data, broadcast it */
         if (cnt > 0) {
+
+            /* Broadcast the data */
             broadcast_udp(socket_fd, &broadcast_addr, buf_addr, cnt);
-        }
+                   
+            /* Increase the counter */
+            count++;
 
-        /* Increase the counter */
-        count++;
+            /* Get the current time */
+            end = std::chrono::system_clock::now();
 
-        /* Get the current time */
-        end = std::chrono::system_clock::now();
+            /* If 10 seconds passed, print the number of packages */
+            if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() >= 10) {
+                std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+                std::tm* local_time = std::localtime(&end_time);
+                std::strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", local_time);
 
-        /* If 10 seconds passed, print the number of packages */
-        if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() >= 10) {
-            std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-            std::tm* local_time = std::localtime(&end_time);
-            std::strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", local_time);
-
-            printf("%s - Received %d packages\n", time_str, count);            
-            count = 0;
-            start = std::chrono::system_clock::now();
+                printf("%s - Received %d packages\n", time_str, count);            
+                count = 0;
+                start = std::chrono::system_clock::now();
+            }
         }
     }
 

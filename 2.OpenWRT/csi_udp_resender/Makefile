@@ -8,7 +8,7 @@ INCLUDE_DIR=$(TOOL_CHAIN_BASE)/include
 
 
 build:
-	$(GPP) -I$(INCLUDE_DIR) -L$(LIB) -o csi_udp_resender csi_fun.cpp main.cpp
+	$(GPP) -I$(INCLUDE_DIR) -L$(LIB) -o csi_udp_resender csi_fun.c main.cpp
 
 clean:
 	rm csi_loop_ping
