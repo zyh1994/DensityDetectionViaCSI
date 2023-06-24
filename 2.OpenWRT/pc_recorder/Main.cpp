@@ -10,16 +10,15 @@
 #include "VideoHelper.h"
 #include "CSIHelper.h"
 
-#define BUFSIZE 4096                // buffer size
-#define BROADCAST_PORT 8080         // broadcast port
+#define BUFSIZE 4096
+#define BROADCAST_PORT 8080
 
-int quit;                           // quit flag
+int quit;
+unsigned char buf_addr[BUFSIZE];
+unsigned char data_buf[1500];
 
-unsigned char buf_addr[BUFSIZE];    // buffer address
-unsigned char data_buf[1500];       // data buffer
-
-COMPLEX csi_matrix[3][3][114];      // CSI matrix
-csi_struct*   csi_status;           // CSI status
+COMPLEX csi_matrix[3][3][114];
+csi_struct*   csi_status;
 
 /**
  * @brief Handle the Ctrl+C signal
@@ -35,6 +34,52 @@ void sig_handler(int signo)
         quit = 1;
     }
 }
+
+
+void print_csi_status(csi_struct *package)
+{
+    /**
+     * An example of the output:
+     * csi_status->tstamp: 108
+     * csi_status->buf_len: 11525
+     * csi_status->channel: 40457
+     * csi_status->rate: 149
+     * csi_status->rssi: 52
+     * csi_status->rssi_0: 50
+     * csi_status->rssi_1: 41
+     * csi_status->rssi_2: 46
+     * csi_status->payload_len: 10240
+     * csi_status->csi_len: 60420
+     * csi_status->phyerr: 0
+     * csi_status->noise: 0
+     * csi_status->nr: 3
+     * csi_status->nc: 3
+     * csi_status->num_tones: 56
+     * csi_status->chanBW: 0
+     */
+
+    /* Clear the screen */
+    printf("\033[2J");
+
+    /* Print the CSI status */
+    printf("csi_status->tstamp: %ld\n", package->tstamp);
+    printf("csi_status->buf_len: %d\n", package->buf_len);
+    printf("csi_status->channel: %d\n", package->channel);
+    printf("csi_status->rate: %d\n", package->rate);
+    printf("csi_status->rssi: %d\n", package->rssi);
+    printf("csi_status->rssi_0: %d\n", package->rssi_0);
+    printf("csi_status->rssi_1: %d\n", package->rssi_1);
+    printf("csi_status->rssi_2: %d\n", package->rssi_2);
+    printf("csi_status->payload_len: %d\n", package->payload_len);
+    printf("csi_status->csi_len: %d\n", package->csi_len);
+    printf("csi_status->phyerr: %d\n", package->phyerr);
+    printf("csi_status->noise: %d\n", package->noise);
+    printf("csi_status->nr: %d\n", package->nr);
+    printf("csi_status->nc: %d\n", package->nc);
+    printf("csi_status->num_tones: %d\n", package->num_tones);
+    printf("csi_status->chanBW: %d\n", package->chanBW);
+}
+
 
 /**
  * @brief Record the CSI status
@@ -112,6 +157,8 @@ int main(int argc, char* argv[])
 
     printf("Waiting for the first packet...\n");
 
+//    unsigned char udp_buf[BUFSIZE] = {0};
+
     while(!quit) {
 
 //        std::cout << "1" << std::endl;
@@ -122,23 +169,22 @@ int main(int argc, char* argv[])
         if (cnt > 0){
             total_msg_cnt += 1;
 
-//            std::cout << "2" << std::endl;
-
             /* fill the status struct with information about the rx packet */
             record_status(buf_addr, cnt, csi_status);
 
-//            std::cout << "3" << std::endl;
+            /* Print the information of the CSI packet */
+            print_csi_status(csi_status);
 
             /* 
              * fill the payload buffer with the payload
              * fill the CSI matrix with the extracted CSI value
              */
-            record_csi_payload(buf_addr, csi_status, data_buf, csi_matrix); 
+            record_csi_payload(buf_addr, csi_status, data_buf, csi_matrix);
 
-            printf("Recv %dth msg with rate: 0x%02x | payload len: %d\n",
-                total_msg_cnt,
-                csi_status->rate,
-                csi_status->payload_len);
+//            printf("Recv %dth msg with rate: 0x%02x | payload len: %d\n",
+//                total_msg_cnt,
+//                csi_status->rate,
+//                csi_status->payload_len);
             
             /* log the received data for off-line processing */
 //            if (log_flag){
