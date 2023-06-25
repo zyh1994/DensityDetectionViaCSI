@@ -1,11 +1,8 @@
 from AtheroPlotter import *
-import sys
-import time
 import struct
 from VideoWriter import VideoWriter
 
-
-from ReadLogFile import read_log_file
+from CSIConverter import CSIConverter
 
 
 def prepare_chart(title):
@@ -66,14 +63,14 @@ def data_separator(csi_raw_video: str):
     csi_video = VideoWriter('csi_video.mp4', 30, 320, 240)
 
     # Create a file to store the csi matrix
-    # csi_raw = open('csi_raw.dat', 'wb')
+    csi_converter = CSIConverter("csi_data.csv")
 
     # Read the file in a loop until the end of the file
     while cur < (len - 32):
         # Read the length of the current block
         total_size = struct.unpack(endian_format + 'Q', f.read(8))[0]
         cur += 8
-        print('total_size is: {}'.format(total_size))
+        # print('total_size is: {}'.format(total_size))
 
         # If the length of the current block is greater than the remaining file length, then break the loop
         if (cur + total_size) > len:
@@ -82,24 +79,24 @@ def data_separator(csi_raw_video: str):
         # Read the length of the frame
         frame_size = struct.unpack(endian_format + 'Q', f.read(8))[0]
         cur += 8
-        print('frame_size is: {}'.format(frame_size))
+        # print('frame_size is: {}'.format(frame_size))
 
         # Read the length of the csi matrix
         csi_size = struct.unpack(endian_format + 'Q', f.read(8))[0]
         cur += 8
-        print('csi_size is: {}'.format(csi_size))
+        # print('csi_size is: {}'.format(csi_size))
 
         # Read the timestamp
         timestamp = struct.unpack(endian_format + 'Q', f.read(8))[0]
         cur += 8
-        print('timestamp is: {}'.format(timestamp))
+        # print('timestamp is: {}'.format(timestamp))
 
         # Read the frame
         frame = f.read(frame_size)
         cur += frame_size
 
         # Read the csi matrix
-        csi_matrix = f.read(csi_size)
+        csi_raw = f.read(csi_size)
         cur += csi_size
 
         # Read the last two bytes
@@ -114,11 +111,8 @@ def data_separator(csi_raw_video: str):
         # Write the frame to the video file
         csi_video.write(frame, timestamp)
 
-        # Write the csi matrix to the csi matrix file
-        # convert the csi size to 2 bytes, store the bytes in big endian format
-        # csi_size = struct.pack(endian_format + 'H', csi_size)
-        # csi_raw.write(csi_size)
-        # csi_raw.write(csi_matrix)
+        # try to read the csi matrix
+        csi_converter.write(csi_raw, csi_size, timestamp)
 
         # Increase the number of data blocks read
         count += 1
@@ -135,31 +129,31 @@ def data_separator(csi_raw_video: str):
     return None, None
 
 
-def main(raw_data: str):
-
-    # get the video and csi matrix
-    csi_video, csi_raw = data_separator(raw_data)
-    
-    # get the csi matrix from the raw data
-    csi_frames = read_log_file(csi_raw)
-
-    # prepare the chart
-    ax = prepare_chart("CSI Amplitude")
-
-    # plot each frame in the signal frame
-    for frame in csi_frames:
-
-        # get the number of receive antennas, transmit antennas and subcarriers
-        nr, nc, tones = frame['csi'].shape
-
-        # convert the shape of the CSI matrix to (channels, subcarriers)
-        csi_matrix = np.reshape(frame['csi'], (nr * nc, tones))
-
-        # plot the amplitude of the CSI
-        update_chart(ax, csi_matrix)
-
-        # sleep for 0.5 second
-        plt.pause(0.5)
+# def main(raw_data: str):
+#
+#     # get the video and csi matrix
+#     csi_video, csi_raw = data_separator(raw_data)
+#
+#     # get the csi matrix from the raw data
+#     csi_frames = read_log_file(csi_raw)
+#
+#     # prepare the chart
+#     ax = prepare_chart("CSI Amplitude")
+#
+#     # plot each frame in the signal frame
+#     for frame in csi_frames:
+#
+#         # get the number of receive antennas, transmit antennas and subcarriers
+#         nr, nc, tones = frame['csi'].shape
+#
+#         # convert the shape of the CSI matrix to (channels, subcarriers)
+#         csi_matrix = np.reshape(frame['csi'], (nr * nc, tones))
+#
+#         # plot the amplitude of the CSI
+#         update_chart(ax, csi_matrix)
+#
+#         # sleep for 0.5 second
+#         plt.pause(0.5)
 
 
 if __name__ == '__main__':

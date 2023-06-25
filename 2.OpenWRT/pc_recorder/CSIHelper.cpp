@@ -25,13 +25,14 @@
 /* test and find out the system is big endian or not*/
 //for 16/32/64 system this should be all fine.
 bool is_big_endian(){
-    unsigned int a = 0x1;
-    unsigned char b = *(unsigned char *)&a;
-    if ( b == 0)
-    {
-        return true;
-    }
-    return false;
+//    unsigned int a = 0x1;
+//    unsigned char b = *(unsigned char *)&a;
+//    if ( b == 0)
+//    {
+//        return true;
+//    }
+//    return false;
+    return true;
 }
 
 int bit_convert(int data, int maxbit)
