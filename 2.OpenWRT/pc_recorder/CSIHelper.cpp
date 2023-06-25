@@ -25,13 +25,14 @@
 /* test and find out the system is big endian or not*/
 //for 16/32/64 system this should be all fine.
 bool is_big_endian(){
-    unsigned int a = 0x1;
-    unsigned char b = *(unsigned char *)&a;
-    if ( b == 0)
-    {
-        return true;
-    }
-    return false;
+//    unsigned int a = 0x1;
+//    unsigned char b = *(unsigned char *)&a;
+//    if ( b == 0)
+//    {
+//        return true;
+//    }
+//    return false;
+    return true;
 }
 
 int bit_convert(int data, int maxbit)
@@ -109,51 +110,6 @@ void fill_csi_matrix(u_int8_t* csi_addr, int nr, int nc, int num_tones, COMPLEX(
     }
 }
 
-void print_csi_status(csi_struct *package)
-{
-    /**
-     * An example of the output:
-     * csi_status->tstamp: 108
-     * csi_status->buf_len: 11525
-     * csi_status->channel: 40457
-     * csi_status->rate: 149
-     * csi_status->rssi: 52
-     * csi_status->rssi_0: 50
-     * csi_status->rssi_1: 41
-     * csi_status->rssi_2: 46
-     * csi_status->payload_len: 10240
-     * csi_status->csi_len: 60420
-     * csi_status->phyerr: 0
-     * csi_status->noise: 0
-     * csi_status->nr: 3
-     * csi_status->nc: 3
-     * csi_status->num_tones: 56
-     * csi_status->chanBW: 0
-     */
-
-    /* Clear the screen */
-    printf("\033[2J");
-
-    /* Print the CSI status */
-    printf("csi_status->tstamp: %ld\n", package->tstamp);
-    printf("csi_status->buf_len: %d\n", package->buf_len);
-    printf("csi_status->channel: %d\n", package->channel);
-    printf("csi_status->rate: %d\n", package->rate);
-    printf("csi_status->rssi: %d\n", package->rssi);
-    printf("csi_status->rssi_0: %d\n", package->rssi_0);
-    printf("csi_status->rssi_1: %d\n", package->rssi_1);
-    printf("csi_status->rssi_2: %d\n", package->rssi_2);
-    printf("csi_status->payload_len: %d\n", package->payload_len);
-    printf("csi_status->csi_len: %d\n", package->csi_len);
-    printf("csi_status->phyerr: %d\n", package->phyerr);
-    printf("csi_status->noise: %d\n", package->noise);
-    printf("csi_status->nr: %d\n", package->nr);
-    printf("csi_status->nc: %d\n", package->nc);
-    printf("csi_status->num_tones: %d\n", package->num_tones);
-    printf("csi_status->chanBW: %d\n", package->chanBW);
-}
-
-
 int read_csi_buf(unsigned char* buf_addr,int fd, int BUFSIZE){
     int cnt;
     /* listen to the port
@@ -166,6 +122,7 @@ int read_csi_buf(unsigned char* buf_addr,int fd, int BUFSIZE){
     else
         return 0;
 }
+
 void record_status(unsigned char* buf_addr, int cnt, csi_struct* csi_status){
     if (is_big_endian()){
         csi_status->tstamp  =

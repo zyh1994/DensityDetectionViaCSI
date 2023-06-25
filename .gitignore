@@ -5,7 +5,6 @@
 
 *.o
 *.pyc
-
 *.mp4
 *.avi
 *.csv

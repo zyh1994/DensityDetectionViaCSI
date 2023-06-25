@@ -1,4 +1,5 @@
 from AtheroPlotter import *
+import sys
 import time
 
 from ReadLogFile import read_log_file
@@ -32,8 +33,8 @@ def update_chart(ax, csi_matrix):
     plt.pause(0.01)
 
 
-def main():
-    csi_frames = read_log_file('csi.dat')
+def main(csi_raw: str):
+    csi_frames = read_log_file(csi_raw)
 
     # prepare the chart
     ax = prepare_chart("CSI Amplitude")
@@ -55,4 +56,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) != 2:
+        print("Usage: python PlayCSIRaw.py <csi_raw_file>")
+        sys.exit(1)
+
+    main(sys.argv[1])
