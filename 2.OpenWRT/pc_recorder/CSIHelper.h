@@ -52,6 +52,4 @@ extern void  record_csi_payload(unsigned char* buf_addr,
                                 unsigned char* data_buf,
                                 COMPLEX(* csi_buf)[3][114]);
 
-extern void print_csi_status(csi_struct *package);
-
 #endif //DENSITYDETECTION_CSIHELPER_H

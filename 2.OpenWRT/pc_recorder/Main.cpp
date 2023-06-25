@@ -125,6 +125,52 @@ void write_data(std::ofstream &file, unsigned char* buf_addr, int size)
 }
 
 
+void print_status(csi_struct *package, int increase_size)
+{
+    /**
+     * An example of the output:
+     * csi_status->tstamp: 108
+     * csi_status->buf_len: 11525
+     * csi_status->channel: 40457
+     * csi_status->rate: 149
+     * csi_status->rssi: 52
+     * csi_status->rssi_0: 50
+     * csi_status->rssi_1: 41
+     * csi_status->rssi_2: 46
+     * csi_status->payload_len: 10240
+     * csi_status->csi_len: 60420
+     * csi_status->phyerr: 0
+     * csi_status->noise: 0
+     * csi_status->nr: 3
+     * csi_status->nc: 3
+     * csi_status->num_tones: 56
+     * csi_status->chanBW: 0
+     */
+
+    /* Clear the screen */
+    printf("\033[2J");
+
+    /* Print the CSI status */
+    printf("Increased size: %.2f KB\n\n", increase_size / 1024.0);
+    printf("csi_status->tstamp: %ld\n", package->tstamp);
+    printf("csi_status->buf_len: %d\n", package->buf_len);
+    printf("csi_status->channel: %d\n", package->channel);
+    printf("csi_status->rate: %d\n", package->rate);
+    printf("csi_status->rssi: %d\n", package->rssi);
+    printf("csi_status->rssi_0: %d\n", package->rssi_0);
+    printf("csi_status->rssi_1: %d\n", package->rssi_1);
+    printf("csi_status->rssi_2: %d\n", package->rssi_2);
+    printf("csi_status->payload_len: %d\n", package->payload_len);
+    printf("csi_status->csi_len: %d\n", package->csi_len);
+    printf("csi_status->phyerr: %d\n", package->phyerr);
+    printf("csi_status->noise: %d\n", package->noise);
+    printf("csi_status->nr: %d\n", package->nr);
+    printf("csi_status->nc: %d\n", package->nc);
+    printf("csi_status->num_tones: %d\n", package->num_tones);
+    printf("csi_status->chanBW: %d\n", package->chanBW);
+}
+
+
 /**
  * @brief Record the CSI status
  * @param buf_addr
@@ -152,7 +198,7 @@ int main(int argc, char* argv[])
     cap.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
 
     /* Set to grayscale mode */
-    cap.set(CV_CAP_PROP_CONVERT_RGB, 0);
+//    cap.set(CV_CAP_PROP_CONVERT_RGB, 0);
 #else
     #if CV_VERSION_MAJOR >= 4
         /* New version API */
@@ -163,7 +209,7 @@ int main(int argc, char* argv[])
         cap.set(CAP_PROP_FRAME_HEIGHT, 240);
 
         /* Set to grayscale mode */
-        cap.set(CAP_PROP_CONVERT_RGB, 0);
+//        cap.set(CAP_PROP_CONVERT_RGB, 0);
     #endif
 #endif
 
@@ -207,6 +253,13 @@ int main(int argc, char* argv[])
         Mat frame;
         cap >> frame;
 
+        /* Convert the RGB frame to grayscale */
+#if CV_VERSION_EPOCH == 2
+        cvtColor(frame, frame, CV_RGB2GRAY);
+#else
+        cvtColor(frame, frame, COLOR_RGB2GRAY);
+#endif
+
         /* keep listening to the kernel and waiting for the csi report */
         long recvd = recvfrom(sockfd, buf_addr, BUFSIZE, 0,
                              (struct sockaddr*)&senderAddr, &senderLen);
@@ -215,9 +268,6 @@ int main(int argc, char* argv[])
 
             /* fill the status struct with information about the rx packet */
             record_status(buf_addr, recvd, csi_status);
-
-            /* Print the information of the CSI packet */
-//            print_csi_status(csi_status);
 
             /* Get current timestamp */
             auto now = std::chrono::system_clock::now();
@@ -243,8 +293,7 @@ int main(int argc, char* argv[])
             /* Check the file size, if it is continuously increasing, print the increasing rate */
             file_size = bin.tellp();
             if (file_size > last_file_size) {
-                std::cout << "File size: " << file_size << " bytes" << std::endl;
-                std::cout << "Increasing rate: " << (file_size - last_file_size) / 1024.0 << " KB/s" << std::endl;
+                print_status(csi_status, file_size - last_file_size);
                 last_file_size = file_size;
             }
         }
