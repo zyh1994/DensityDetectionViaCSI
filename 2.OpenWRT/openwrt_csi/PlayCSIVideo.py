@@ -1,36 +1,8 @@
-from AtheroPlotter import *
 import struct
+import sys
+
 from VideoWriter import VideoWriter
-
 from CSIConverter import CSIConverter
-
-
-def prepare_chart(title):
-    # Set up real-time plotting
-    plt.ion()
-
-    # Create a figure and an axis
-    fig, ax = plt.subplots()
-
-    # Change the figue title
-    fig.canvas.manager.set_window_title(title)
-
-    return ax
-
-
-def update_chart(ax, csi_matrix):
-    # Clear the previous plot
-    ax.clear()
-
-    # Plot the CSI matrix
-    ax.plot(20 * np.log10(np.abs(csi_matrix.T)))
-
-    # Set the legend and the axis labels
-    ax.set_xlabel('Subcarrier index')
-    ax.set_ylabel('SNR [dB]')
-
-    # Pause for 0.01 second
-    plt.pause(0.01)
 
 
 def data_separator(csi_raw_video: str):
@@ -111,7 +83,7 @@ def data_separator(csi_raw_video: str):
         # Write the frame to the video file
         csi_video.write(frame, timestamp)
 
-        # try to read the csi matrix
+        # try to convert the csi info to csv
         csi_converter.write(csi_raw, csi_size, timestamp)
 
         # Increase the number of data blocks read
@@ -123,42 +95,10 @@ def data_separator(csi_raw_video: str):
     # Close the video file
     csi_video.release()
 
-    # Close the csi matrix file
-    # csi_raw.close()
-
-    return None, None
-
-
-# def main(raw_data: str):
-#
-#     # get the video and csi matrix
-#     csi_video, csi_raw = data_separator(raw_data)
-#
-#     # get the csi matrix from the raw data
-#     csi_frames = read_log_file(csi_raw)
-#
-#     # prepare the chart
-#     ax = prepare_chart("CSI Amplitude")
-#
-#     # plot each frame in the signal frame
-#     for frame in csi_frames:
-#
-#         # get the number of receive antennas, transmit antennas and subcarriers
-#         nr, nc, tones = frame['csi'].shape
-#
-#         # convert the shape of the CSI matrix to (channels, subcarriers)
-#         csi_matrix = np.reshape(frame['csi'], (nr * nc, tones))
-#
-#         # plot the amplitude of the CSI
-#         update_chart(ax, csi_matrix)
-#
-#         # sleep for 0.5 second
-#         plt.pause(0.5)
-
 
 if __name__ == '__main__':
-    # if len(sys.argv) != 2:
-    #     print("Usage: python PlayCSIVideo.py <csi_video_file>")
-    #     sys.exit(1)
+    if len(sys.argv) != 2:
+        print("Usage: python PlayCSIVideo.py <csi_video_file>")
+        sys.exit(1)
 
-    data_separator(r"C:\Users\Seagosoft\Downloads\csi_videoc.dat")
+    data_separator(sys.argv[1])
