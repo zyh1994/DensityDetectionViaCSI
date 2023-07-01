@@ -122,26 +122,26 @@ int read_csi_buf(unsigned char* buf_addr,int fd, int BUFSIZE){
  * Read the CSI from the file
  */
 void record_status(unsigned char* buf_addr, int cnt, csi_struct* csi_status) {
-    uint64_t tstamp = 0;
+//    uint64_t tstamp = 0;
     uint16_t csi_len = 0;
     uint16_t channel = 0;
     uint16_t buf_len = 0;
     uint16_t payload_len = 0;
 
     if (is_big_endian()) {
-        tstamp = ((uint64_t)buf_addr[0] << 56) | ((uint64_t)buf_addr[1] << 48) |
-                 ((uint64_t)buf_addr[2] << 40) | ((uint64_t)buf_addr[3] << 32) |
-                 ((uint64_t)buf_addr[4] << 24) | ((uint64_t)buf_addr[5] << 16) |
-                 ((uint64_t)buf_addr[6] << 8) | buf_addr[7];
+//        tstamp = ((uint64_t)buf_addr[0] << 56) | ((uint64_t)buf_addr[1] << 48) |
+//                 ((uint64_t)buf_addr[2] << 40) | ((uint64_t)buf_addr[3] << 32) |
+//                 ((uint64_t)buf_addr[4] << 24) | ((uint64_t)buf_addr[5] << 16) |
+//                 ((uint64_t)buf_addr[6] << 8) | buf_addr[7];
         csi_len = (buf_addr[8] << 8) | buf_addr[9];
         channel = (buf_addr[10] << 8) | buf_addr[11];
         buf_len = (buf_addr[cnt - 2] << 8) | buf_addr[cnt - 1];
         payload_len = (buf_addr[csi_st_len] << 8) | buf_addr[csi_st_len + 1];
     } else {
-        tstamp = ((uint64_t)buf_addr[7] << 56) | ((uint64_t)buf_addr[6] << 48) |
-                 ((uint64_t)buf_addr[5] << 40) | ((uint64_t)buf_addr[4] << 32) |
-                 ((uint64_t)buf_addr[3] << 24) | ((uint64_t)buf_addr[2] << 16) |
-                 ((uint64_t)buf_addr[1] << 8) | buf_addr[0];
+//        tstamp = ((uint64_t)buf_addr[7] << 56) | ((uint64_t)buf_addr[6] << 48) |
+//                 ((uint64_t)buf_addr[5] << 40) | ((uint64_t)buf_addr[4] << 32) |
+//                 ((uint64_t)buf_addr[3] << 24) | ((uint64_t)buf_addr[2] << 16) |
+//                 ((uint64_t)buf_addr[1] << 8) | buf_addr[0];
         csi_len = (buf_addr[9] << 8) | buf_addr[8];
         channel = (buf_addr[11] << 8) | buf_addr[10];
         buf_len = (buf_addr[cnt - 1] << 8) | buf_addr[cnt - 2];
@@ -169,28 +169,49 @@ void record_status(unsigned char* buf_addr, int cnt, csi_struct* csi_status) {
 }
 
 /*
- * Record the CSI data to the data buffer
+ * Print the CSI meta information
  */
-//void record_csi_payload(unsigned char* buf_addr, csi_struct* csi_status, unsigned char* data_buf,
-// COMPLEX(* csi_matrix)[3][114]){
-//    int i;
-//    int nr,nc,num_tones;
-//    u_int8_t* csi_addr;
-//    u_int16_t payload_len, csi_len;
-//
-//    nr          = csi_status->nr;
-//    nc          = csi_status->nc;
-//    num_tones   = csi_status->num_tones;
-//    payload_len = csi_status->payload_len;
-//    csi_len     = csi_status->csi_len;
-//
-//    /* record the data to the data buffer*/
-//    for (i=1;i<=payload_len;i++){
-//        //    printf("i is: %d \n",i);
-//        data_buf[i-1] = buf_addr[csi_st_len + csi_len + i + 1];
-//    }
-//
-//    /* extract the CSI and fill the complex matrix */
-//    csi_addr = buf_addr + csi_st_len + 2;
-//    fill_csi_matrix(csi_addr,nr,nc,num_tones, csi_matrix);
-//}
+void print_status(csi_struct *package, int increase_size)
+{
+    /**
+     * An example of the output:
+     * csi_status->tstamp: 108
+     * csi_status->buf_len: 11525
+     * csi_status->channel: 40457
+     * csi_status->rate: 149
+     * csi_status->rssi: 52
+     * csi_status->rssi_0: 50
+     * csi_status->rssi_1: 41
+     * csi_status->rssi_2: 46
+     * csi_status->payload_len: 10240
+     * csi_status->csi_len: 60420
+     * csi_status->phyerr: 0
+     * csi_status->noise: 0
+     * csi_status->nr: 3
+     * csi_status->nc: 3
+     * csi_status->num_tones: 56
+     * csi_status->chanBW: 0
+     */
+
+    /* Clear the screen */
+    printf("\033[2J");
+
+    /* Print the CSI status */
+    printf("Increased size: %.2f KB\n\n", increase_size / 1024.0);
+    printf("csi_status->tstamp: %ld\n", package->tstamp);
+    printf("csi_status->buf_len: %d\n", package->buf_len);
+    printf("csi_status->channel: %d\n", package->channel);
+    printf("csi_status->rate: %d\n", package->rate);
+    printf("csi_status->rssi: %d\n", package->rssi);
+    printf("csi_status->rssi_0: %d\n", package->rssi_0);
+    printf("csi_status->rssi_1: %d\n", package->rssi_1);
+    printf("csi_status->rssi_2: %d\n", package->rssi_2);
+    printf("csi_status->payload_len: %d\n", package->payload_len);
+    printf("csi_status->csi_len: %d\n", package->csi_len);
+    printf("csi_status->phyerr: %d\n", package->phyerr);
+    printf("csi_status->noise: %d\n", package->noise);
+    printf("csi_status->nr: %d\n", package->nr);
+    printf("csi_status->nc: %d\n", package->nc);
+    printf("csi_status->num_tones: %d\n", package->num_tones);
+    printf("csi_status->chanBW: %d\n", package->chanBW);
+}

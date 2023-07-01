@@ -1,17 +1,11 @@
-#include <stdio.h>
-#include <unistd.h>
 #include <signal.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <fcntl.h>
-
 #include <iostream>
 #include <fstream>
 #include <chrono>
 
 #include "../inc/VideoHelper.h"
 #include "../inc/CSIHelper.h"
+#include "../inc/Network.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/version.hpp>
@@ -43,60 +37,6 @@ void sig_handler(int signo)
     }
 }
 
-/**
- * @brief Create a UDP socket for receiving broadcast packets
- * @return
- */
-int create_broadcast_socket()
-{
-    /* Set the socket */
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd == -1) {
-        perror("socket");
-        exit(1);
-    }
-
-    /* Set the socket options */
-    int broadcastEnable = 1;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST,
-                   &broadcastEnable, sizeof(broadcastEnable)) == -1) {
-        perror("setsockopt");
-        exit(1);
-    }
-
-    /* Set the socket as non-blocking */
-    int flags = fcntl(sockfd, F_GETFL, 0);
-    if (flags == -1) {
-        perror("fcntl");
-        exit(1);
-    }
-
-    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
-        perror("Failed to set socket as non-blocking");
-        exit(1);
-    }
-
-    return sockfd;
-}
-
-/**
- * @brief Bind the socket to the specified port
- * @param sockfd
- * @param port
- */
-void bind_addr(int sockfd, int port)
-{
-    struct sockaddr_in localAddr;
-    memset(&localAddr, 0, sizeof(localAddr));
-    localAddr.sin_family = AF_INET;
-    localAddr.sin_port = htons(port);
-    localAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (bind(sockfd, (struct sockaddr*)&localAddr, sizeof(localAddr)) == -1) {
-        perror("bind");
-        exit(1);
-    }
-}
-
 
 void write_data(std::ofstream &file, unsigned char* buf_addr, int size)
 {
@@ -125,52 +65,6 @@ void write_data(std::ofstream &file, unsigned char* buf_addr, int size)
 }
 
 
-void print_status(csi_struct *package, int increase_size)
-{
-    /**
-     * An example of the output:
-     * csi_status->tstamp: 108
-     * csi_status->buf_len: 11525
-     * csi_status->channel: 40457
-     * csi_status->rate: 149
-     * csi_status->rssi: 52
-     * csi_status->rssi_0: 50
-     * csi_status->rssi_1: 41
-     * csi_status->rssi_2: 46
-     * csi_status->payload_len: 10240
-     * csi_status->csi_len: 60420
-     * csi_status->phyerr: 0
-     * csi_status->noise: 0
-     * csi_status->nr: 3
-     * csi_status->nc: 3
-     * csi_status->num_tones: 56
-     * csi_status->chanBW: 0
-     */
-
-    /* Clear the screen */
-    printf("\033[2J");
-
-    /* Print the CSI status */
-    printf("Increased size: %.2f KB\n\n", increase_size / 1024.0);
-    printf("csi_status->tstamp: %ld\n", package->tstamp);
-    printf("csi_status->buf_len: %d\n", package->buf_len);
-    printf("csi_status->channel: %d\n", package->channel);
-    printf("csi_status->rate: %d\n", package->rate);
-    printf("csi_status->rssi: %d\n", package->rssi);
-    printf("csi_status->rssi_0: %d\n", package->rssi_0);
-    printf("csi_status->rssi_1: %d\n", package->rssi_1);
-    printf("csi_status->rssi_2: %d\n", package->rssi_2);
-    printf("csi_status->payload_len: %d\n", package->payload_len);
-    printf("csi_status->csi_len: %d\n", package->csi_len);
-    printf("csi_status->phyerr: %d\n", package->phyerr);
-    printf("csi_status->noise: %d\n", package->noise);
-    printf("csi_status->nr: %d\n", package->nr);
-    printf("csi_status->nc: %d\n", package->nc);
-    printf("csi_status->num_tones: %d\n", package->num_tones);
-    printf("csi_status->chanBW: %d\n", package->chanBW);
-}
-
-
 /**
  * @brief Record the CSI status
  * @param buf_addr
@@ -189,7 +83,7 @@ int main(int argc, char* argv[])
     /* Open the OpenCV VideoCapture */
     VideoCapture cap = VideoHelper::openCamera();
 
-#if CV_VERSION_EPOCH == 2
+#ifdef CV_VERSION_EPOCH
     // If using the older version of OpenCV, use the following code
     auto codec = CV_FOURCC('M', 'J', 'P', 'G');
 
@@ -197,20 +91,14 @@ int main(int argc, char* argv[])
     cap.set(CV_CAP_PROP_FRAME_WIDTH, 320);
     cap.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
 
-    /* Set to grayscale mode */
-//    cap.set(CV_CAP_PROP_CONVERT_RGB, 0);
 #else
-    #if CV_VERSION_MAJOR >= 4
-        /* New version API */
-        auto codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
+    /* New version API */
+    auto codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
 
-        /* Set the video resolution to 320 x 240 */
-        cap.set(CAP_PROP_FRAME_WIDTH, 320);
-        cap.set(CAP_PROP_FRAME_HEIGHT, 240);
+    /* Set the video resolution to 320 x 240 */
+    cap.set(CAP_PROP_FRAME_WIDTH, 320);
+    cap.set(CAP_PROP_FRAME_HEIGHT, 240);
 
-        /* Set to grayscale mode */
-//        cap.set(CAP_PROP_CONVERT_RGB, 0);
-    #endif
 #endif
 
     /* Create the socket */
@@ -254,7 +142,7 @@ int main(int argc, char* argv[])
         cap >> frame;
 
         /* Convert the RGB frame to grayscale */
-#if CV_VERSION_EPOCH == 2
+#ifdef CV_VERSION_EPOCH
         cvtColor(frame, frame, CV_RGB2GRAY);
 #else
         cvtColor(frame, frame, COLOR_RGB2GRAY);
@@ -282,13 +170,13 @@ int main(int argc, char* argv[])
             /* Write the data into file
              * total_size | frame_size | csi_size | timestamp | frame | csi_data | \r\n
             */
-            write_data(bin, (unsigned char*)&total_size, sizeof(total_size));
-            write_data(bin, (unsigned char*)&frame_size, sizeof(frame_size));
-            write_data(bin, (unsigned char*)&recvd, sizeof(recvd));
-            write_data(bin, (unsigned char*)&now_ms, sizeof(now_ms));
-            write_data(bin, (unsigned char*)frame.data, frame_size);
-            write_data(bin, (unsigned char*)buf_addr, recvd);
-            write_data(bin, (unsigned char*)"\r\n", 2);
+            write_data(bin, (unsigned char*)&total_size, sizeof(total_size));   // total size
+            write_data(bin, (unsigned char*)&frame_size, sizeof(frame_size));   // frame size
+            write_data(bin, (unsigned char*)&recvd, sizeof(recvd));             // csi size
+            write_data(bin, (unsigned char*)&now_ms, sizeof(now_ms));           // timestamp
+            write_data(bin, (unsigned char*)frame.data, frame_size);                            // frame
+            write_data(bin, (unsigned char*)buf_addr, recvd);                   // csi data
+            write_data(bin, (unsigned char*)"\r\n", 2);                         // \r\n
 
             /* Check the file size, if it is continuously increasing, print the increasing rate */
             file_size = bin.tellp();

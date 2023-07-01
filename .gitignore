@@ -48,3 +48,6 @@
 */cmake-build-release-wsl/
 */cmake-build-release/
 */.idea/
+*/build/
+*/release/
+*/debug/
