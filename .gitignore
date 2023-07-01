@@ -43,7 +43,8 @@
 *.iml
 *.ipr
 *.iws
-*/cmake-build-debug-wsl
-*/cmake-build-debug
-*/cmake-build-release-wsl
-*/cmake-build-release
+*/cmake-build-debug-wsl/
+*/cmake-build-debug/
+*/cmake-build-release-wsl/
+*/cmake-build-release/
+*/.idea/

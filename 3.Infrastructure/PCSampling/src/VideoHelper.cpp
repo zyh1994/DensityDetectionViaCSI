@@ -2,7 +2,7 @@
 // Created by Seagosoft on 6/11/2023.
 //
 
-#include "VideoHelper.h"
+#include "../inc/VideoHelper.h"
 
 #include <bitset>
 

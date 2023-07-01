@@ -10,8 +10,8 @@
 #include <fstream>
 #include <chrono>
 
-#include "VideoHelper.h"
-#include "CSIHelper.h"
+#include "../inc/VideoHelper.h"
+#include "../inc/CSIHelper.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/version.hpp>

@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.10)
-project(pc_recorder)
+project(pc_sampling)
 
 # Set the CPP standard, we use C++14 here
 set(CMAKE_CXX_STANDARD 14)
 
 # Allow to include all necessary files
 file(GLOB all_SRCS
-        "${PROJECT_SOURCE_DIR}/*.h"
-        "${PROJECT_SOURCE_DIR}/*.cpp"
-        "${PROJECT_SOURCE_DIR}/*.c"
+        "${PROJECT_SOURCE_DIR}/inc/*.h"
+        "${PROJECT_SOURCE_DIR}/src/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/*.c"
         )
 
-add_executable(pc_recorder ${all_SRCS})
+add_executable(pc_sampling ${all_SRCS})
 
 # include opencv's header files
 # -I/usr/include/opencv4
