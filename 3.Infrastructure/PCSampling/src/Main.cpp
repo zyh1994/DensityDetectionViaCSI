@@ -1,26 +1,24 @@
 #include <signal.h>
 #include <iostream>
-#include <fstream>
 #include <chrono>
 
 #include "../inc/VideoHelper.h"
 #include "../inc/CSIHelper.h"
 #include "../inc/Network.h"
+#include "../inc/FileStorage.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/version.hpp>
 
 #define BUFSIZE             4096
 #define BROADCAST_PORT      8080
-#define BIN_FILENAME        "csi_videoc.dat"
+
 
 using namespace cv;
 
 int             quit;               // quit flag
 unsigned char   buf_addr[BUFSIZE];  // buffer for storing the received data
-
-//COMPLEX csi_matrix[3][3][114];
-csi_struct*   csi_status;           // CSI status
+csi_struct*     csi_status;         // CSI status
 
 /**
  * @brief Handle the Ctrl+C signal
