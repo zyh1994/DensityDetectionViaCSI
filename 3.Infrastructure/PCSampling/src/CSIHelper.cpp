@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <cstdint>
 #include <stdio.h>
 
 #include "../inc/CSIHelper.h"
