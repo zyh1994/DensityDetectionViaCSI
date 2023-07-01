@@ -10,6 +10,7 @@
 #include <chrono>
 #include <ctime>
 #include <thread>
+#include <mutex>
 
 #define BIN_FILENAME        "csi_videoc"
 #define BIN_SUFFIX          ".bin"
@@ -55,6 +56,8 @@ public:
     void flush();
 
 private:
+
+    // file stream
     std::ofstream file;
 
     // current filename

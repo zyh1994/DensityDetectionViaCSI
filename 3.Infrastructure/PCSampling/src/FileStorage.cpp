@@ -122,6 +122,9 @@ void FileStorage::open_file()
         // then generate the new filename
         filename = generate_filename();
     }
+
+    // Open the file
+    file.open(filename, std::ios::out | std::ios::binary);
 }
 
 /**
@@ -129,7 +132,10 @@ void FileStorage::open_file()
  */
 void FileStorage::close_file()
 {
-    // increase the file count
+    // Close the file
+    file.close();
+
+    // Increase the file count
     file_count++;
 }
 
@@ -140,7 +146,38 @@ void FileStorage::close_file()
  */
 void FileStorage::write_data(unsigned char* data, size_t size)
 {
-    
+    // safe margin is 10% of the total buffer size
+    auto safe_margin = (size_t)(BUF_SIZE * 0.1);
+
+    // get the current time
+    auto current_time = get_time_long();
+
+    // if the buffer is not enough or the last update time is over 1 second
+    if (buf_left_size < size + safe_margin || current_time - file_last_time > 1000) {
+        // flush the buffer to the file
+        flush();
+
+        // if the last update time is over 1 second
+        if (current_time - file_last_time > 1000) {
+            // then close the file
+            close_file();
+
+            // then generate the new filename
+            filename = generate_filename();
+
+            // create a new file
+            open_file();
+        }
+    }
+
+    // get the current buffer position
+    auto buf_pos = BUF_SIZE - buf_left_size;
+
+    // copy the data to the buffer
+    memcpy(temp_buf + buf_pos, data, size);
+
+    // update the buffer left size
+    buf_left_size -= size;
 }
 
 /**
@@ -148,7 +185,20 @@ void FileStorage::write_data(unsigned char* data, size_t size)
  */
 void FileStorage::flush()
 {
+    // swap the buffer
+    std::swap(temp_buf, temp_buf_swap);
 
+    // update to write size
+    write_size = BUF_SIZE - buf_left_size;
+
+    // use a thread to write the buffer to the file
+    std::thread t(&FileStorage::flush_buffer, this);
+
+    // detach the thread
+    t.detach();
+
+    // update the buffer left size
+    buf_left_size = BUF_SIZE;
 }
 
 /**
@@ -158,5 +208,12 @@ void FileStorage::flush()
  */
 void FileStorage::flush_buffer()
 {
+    // use the mutex lock to protect the buffer and file
+    std::lock_guard<std::mutex> lock(mutex);
 
+    // write the buffer to the file
+    file.write((char*)temp_buf_swap, write_size);
+
+    // print the debug information
+    std::cout << "Write " << write_size << " bytes to " << filename << std::endl;
 }
