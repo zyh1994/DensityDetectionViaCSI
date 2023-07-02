@@ -6,9 +6,12 @@ set(CMAKE_CXX_STANDARD 14)
 
 # Allow to include all necessary files
 file(GLOB all_SRCS
-        "${PROJECT_SOURCE_DIR}/inc/*.h"
-        "${PROJECT_SOURCE_DIR}/src/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/*.c"
+        "${PROJECT_SOURCE_DIR}/csi/*"
+        "${PROJECT_SOURCE_DIR}/cv/*"
+        "${PROJECT_SOURCE_DIR}/network/*"
+        "${PROJECT_SOURCE_DIR}/security/*"
+        "${PROJECT_SOURCE_DIR}/storage/*"
+        "${PROJECT_SOURCE_DIR}/Main.cpp"
         )
 
 add_executable(pc_sampling ${all_SRCS})
@@ -112,6 +115,17 @@ elseif(${UBUNTU_VERSION} MATCHES "20.04")
             opencv_imgproc
             opencv_core
             )
+elseif(APPLE)
+    message(STATUS "Configuring for macOS")
+
+    # Set the include directories and libraries obtained from pkg-config
+    set(OpenCV_INCLUDE_DIRS "/usr/local/opt/opencv/include/opencv4")
+    set(OpenCV_LIBRARIES "-L/usr/local/opt/opencv/lib -lopencv_gapi -lopencv_stitching -lopencv_alphamat -lopencv_aruco -lopencv_bgsegm -lopencv_bioinspired -lopencv_ccalib -lopencv_dnn_objdetect -lopencv_dnn_superres -lopencv_dpm -lopencv_face -lopencv_freetype -lopencv_fuzzy -lopencv_hfs -lopencv_img_hash -lopencv_intensity_transform -lopencv_line_descriptor -lopencv_mcc -lopencv_quality -lopencv_rapid -lopencv_reg -lopencv_rgbd -lopencv_saliency -lopencv_sfm -lopencv_stereo -lopencv_structured_light -lopencv_phase_unwrapping -lopencv_superres -lopencv_optflow -lopencv_surface_matching -lopencv_tracking -lopencv_highgui -lopencv_datasets -lopencv_text -lopencv_plot -lopencv_videostab -lopencv_videoio -lopencv_viz -lopencv_wechat_qrcode -lopencv_xfeatures2d -lopencv_shape -lopencv_ml -lopencv_ximgproc -lopencv_photo -lopencv_imgproc -lopencv_core")
+
+    # Set the include directories and link the libraries
+    include_directories(${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(pc_sampling ${OpenCV_LIBRARIES})
+
 else()
     message(FATAL_ERROR "Unsupported Ubuntu version: ${UBUNTU_VERSION}")
 endif()

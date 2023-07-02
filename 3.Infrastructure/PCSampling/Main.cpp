@@ -2,10 +2,10 @@
 #include <iostream>
 #include <chrono>
 
-#include "../inc/VideoHelper.h"
-#include "../inc/CSIHelper.h"
-#include "../inc/Network.h"
-#include "../inc/FileStorage.h"
+#include "cv/VideoHelper.h"
+#include "csi/CSIHelper.h"
+#include "network/Network.h"
+#include "storage/FileStorage.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/version.hpp>
@@ -32,33 +32,6 @@ void sig_handler(int signo)
 
         /* close the log file */
         quit = 1;
-    }
-}
-
-
-void write_data(std::ofstream &file, unsigned char* buf_addr, int size)
-{
-    if (!file.is_open()) {
-        perror("File is not open");
-        return;
-    }
-
-    /* Write the data to the file */
-    while (true) {
-        file.write((char*)buf_addr, size);
-        file.flush();
-
-        if (!file.fail()) {
-            break;
-        }
-
-        /* Reopen the file */
-        file.close();
-        file.open(BIN_FILENAME, std::ios::out | std::ios::binary | std::ios::app);
-        if (!file.is_open()) {
-            perror("File is not open");
-            return;
-        }
     }
 }
 
@@ -122,11 +95,7 @@ int main(int argc, char* argv[])
     printf("Waiting for the first packet...\n");
 
     /* Try to record the video frame and the CSI status */
-    std::ofstream bin(BIN_FILENAME, std::ios::out | std::ios::binary);
-    if (!bin.is_open()) {
-        std::cout << "Failed to open the file" << std::endl;
-        return -1;
-    }
+    sge::FileStorage fs("csi");
 
     /* size of the file */
     unsigned long file_size = 0;
@@ -160,28 +129,28 @@ int main(int argc, char* argv[])
             auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
 
             /* Get the video frame size */
-            unsigned long frame_size = frame.total() * frame.elemSize();
+            size_t frame_size = frame.total() * frame.elemSize();
 
             /* Compute the total size */
-            unsigned long total_size = sizeof(long) * 3 + sizeof(now_ms) + frame_size + recvd + 2;
+            size_t total_size = sizeof(long) * 3 + sizeof(now_ms) + frame_size + recvd + 2;
 
             /* Write the data into file
              * total_size | frame_size | csi_size | timestamp | frame | csi_data | \r\n
             */
-            write_data(bin, (unsigned char*)&total_size, sizeof(total_size));   // total size
-            write_data(bin, (unsigned char*)&frame_size, sizeof(frame_size));   // frame size
-            write_data(bin, (unsigned char*)&recvd, sizeof(recvd));             // csi size
-            write_data(bin, (unsigned char*)&now_ms, sizeof(now_ms));           // timestamp
-            write_data(bin, (unsigned char*)frame.data, frame_size);                            // frame
-            write_data(bin, (unsigned char*)buf_addr, recvd);                   // csi data
-            write_data(bin, (unsigned char*)"\r\n", 2);                         // \r\n
+            fs.write((unsigned char*)&total_size, sizeof(total_size));   // total size
+            fs.write((unsigned char*)&frame_size, sizeof(frame_size));   // frame size
+            fs.write((unsigned char*)&recvd, sizeof(recvd));             // csi size
+            fs.write((unsigned char*)&now_ms, sizeof(now_ms));           // timestamp
+            fs.write((unsigned char*)frame.data, frame_size);            // frame
+            fs.write((unsigned char*)buf_addr, recvd);                   // csi data
+            fs.write((unsigned char*)"\r\n", 2);                         // \r\n
 
-            /* Check the file size, if it is continuously increasing, print the increasing rate */
-            file_size = bin.tellp();
-            if (file_size > last_file_size) {
-                print_status(csi_status, file_size - last_file_size);
-                last_file_size = file_size;
-            }
+//            /* Check the file size, if it is continuously increasing, print the increasing rate */
+//            file_size = bin.tellp();
+//            if (file_size > last_file_size) {
+//                print_status(csi_status, file_size - last_file_size);
+//                last_file_size = file_size;
+//            }
         }
 
         /* Display the video frame */
@@ -192,9 +161,6 @@ int main(int argc, char* argv[])
             quit = 1;
         }
     }
-
-    /* Close the file */
-    bin.close();
 
     /* Close the video capture */
     cap.release();

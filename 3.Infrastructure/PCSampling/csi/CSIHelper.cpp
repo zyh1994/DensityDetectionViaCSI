@@ -20,7 +20,7 @@
 #include <cstdint>
 #include <stdio.h>
 
-#include "../inc/CSIHelper.h"
+#include "CSIHelper.h"
 
 #define csi_st_len 23
 
@@ -148,7 +148,7 @@ void record_status(unsigned char* buf_addr, int cnt, csi_struct* csi_status) {
         payload_len = (buf_addr[csi_st_len + 1] << 8) | buf_addr[csi_st_len];
     }
 
-    csi_status->tstamp = tstamp;
+    csi_status->tstamp = 0;
     csi_status->csi_len = csi_len;
     csi_status->channel = channel;
     csi_status->buf_len = buf_len;
@@ -198,7 +198,7 @@ void print_status(csi_struct *package, int increase_size)
 
     /* Print the CSI status */
     printf("Increased size: %.2f KB\n\n", increase_size / 1024.0);
-    printf("csi_status->tstamp: %ld\n", package->tstamp);
+    printf("csi_status->tstamp: %llu\n", package->tstamp);
     printf("csi_status->buf_len: %d\n", package->buf_len);
     printf("csi_status->channel: %d\n", package->channel);
     printf("csi_status->rate: %d\n", package->rate);

@@ -2,7 +2,7 @@
 // Created by Seagosoft on 7/1/2023.
 //
 
-#include "../inc/Network.h"
+#include "Network.h"
 
 /**
  * @brief Create a UDP socket for receiving broadcast packets
