@@ -112,6 +112,10 @@ def move_files_to_folder(path: str):
 
     # pictures folder
     pictures_folder = os.path.join(folder, 'png')
+    if not os.path.exists(pictures_folder):
+        os.mkdir(pictures_folder)
+
+    print('folder is: {}'.format(pictures_folder))
 
     # # move the files to the folder
     for file in os.listdir():
