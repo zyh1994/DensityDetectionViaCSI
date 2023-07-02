@@ -16,6 +16,12 @@ file(GLOB all_SRCS
 
 add_executable(pc_sampling ${all_SRCS})
 
+# Add the pthread library
+find_package(Threads REQUIRED)
+
+# Link the pthread library
+target_link_libraries(pc_sampling Threads::Threads)
+
 # Get Ubuntu version using lsb_release command
 execute_process(COMMAND lsb_release -rs
         OUTPUT_VARIABLE UBUNTU_VERSION

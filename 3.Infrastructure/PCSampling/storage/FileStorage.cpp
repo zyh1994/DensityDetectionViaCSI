@@ -98,8 +98,9 @@ namespace sge {
 
         // 格式化时间为指定格式，并将其写入字符串流
         ss << basename << "_"
-           << std::put_time(localTime, "%Y%m%d%H%M%S")
-           << ".bin";
+        //    << std::put_time(localTime, "%Y%m%d%H%M%S")
+            << std::put_time(localTime, "%Y%m%d%H%M") // We don't need seconds here
+            << ".bin";
 
         // 从字符串流中获取格式化后的时间字符串
         std::string formattedTime = ss.str();
