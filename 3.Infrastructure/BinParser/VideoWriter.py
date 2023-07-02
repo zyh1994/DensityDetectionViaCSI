@@ -25,6 +25,9 @@ class VideoWriter:
         # reshape the numpy array to a grayscale image
         frame = frame.reshape((self.height, self.width))
 
+        # save the image to a file and using the timestamp as the filename
+        cv2.imwrite(str(timestamp) + '.png', frame)
+
         # convert the timestamp (long integer) to yyyy-mm-dd hh:mm:ss
         # timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp))
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp / 1000))  # timestamp is in milliseconds
@@ -40,19 +43,17 @@ class VideoWriter:
         # if the video writer is not opened
         elif not self.video_writer.isOpened():
             print("VideoWriter is not opened")
-
             exit(1)
         
         # if the frame is empty
         elif frame is None:
             print("Frame is empty")
-
             exit(1)
         
         else:
             print("Unknown error")
-
             exit(1)
 
     def release(self):
         self.video_writer.release()
+

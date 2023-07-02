@@ -127,7 +127,6 @@ class CSIStatus:
 
     def get_matrix(self):
 
-        # Convert the matrix into a json array object        
         matrix = []
         for nr_idx in range(self.receiver_antennas):
             antennas_data = []
@@ -142,9 +141,8 @@ class CSIStatus:
                 antennas_data.append(tones_data)
             matrix.append(antennas_data)
 
-        # Convert the matrix to JSON
-        json_matrix = json.dumps(matrix)
-        return json_matrix
+        # Convert the matrix to a json string
+        return json.dumps(matrix)
 
 
 class CSIConverter:
@@ -175,7 +173,7 @@ class CSIConverter:
         with open(self.filename, 'a', newline='') as csvfile:
 
             # Get csv writer
-            writer = csv.writer(csvfile, , delimiter='\t')
+            writer = csv.writer(csvfile, delimiter='\t')
 
             # Write row
             writer.writerow([csi.timestamp, csi.csi_length, csi.channel_number, csi.buffer_length, csi.payload_length,

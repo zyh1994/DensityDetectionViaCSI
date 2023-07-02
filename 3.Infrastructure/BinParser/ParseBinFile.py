@@ -5,7 +5,7 @@ from VideoWriter import VideoWriter
 from CSIConverter import CSIConverter
 
 
-def data_separator(csi_raw_video: str):
+def data_separator(csi_raw_video: str, width: int = 320, height: int = 240, fps: int = 30):
     # Open the file
     f = open(csi_raw_video, 'rb')
 
@@ -32,7 +32,7 @@ def data_separator(csi_raw_video: str):
     endian_format = '<'
 
     # Create a video writer 320 x 240, 30 fps
-    csi_video = VideoWriter('csi_video.mp4', 30, 320, 240)
+    csi_video = VideoWriter('csi_video.mp4', fps, width, height)
 
     # Create a file to store the csi matrix
     csi_converter = CSIConverter("csi_data.csv")
@@ -96,9 +96,42 @@ def data_separator(csi_raw_video: str):
     csi_video.release()
 
 
-if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print("Usage: python ParseCSIData.py <csi_video_file>")
-        sys.exit(1)
+def move_files_to_folder(path: str):
+    import os
+    import shutil
 
-    data_separator(sys.argv[1])
+    # Extract the file name from the path
+    file_name = os.path.basename(path)
+
+    # Remove the file extension from the name
+    folder = os.path.splitext(file_name)[0]
+
+    # # create a folder to store the files
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    # # move the files to the folder
+    for file in os.listdir():
+        if file.endswith('.mp4'):
+            shutil.move(file, folder)
+        if file.endswith('.csv'):
+            shutil.move(file, folder)
+        if file.endswith('.png'):
+            shutil.move(file, folder)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Usage: python ParseCSIData.py <csi_video_file> <width> <height> <fps>")
+        sys.exit(1)
+    
+    # Get the data from the bin file
+    if len(sys.argv) == 5:
+        data_separator(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
+    elif len(sys.argv) == 4:
+        data_separator(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]))
+    else:
+        data_separator(sys.argv[1])
+
+    # Move the files to a folder
+    move_files_to_folder(sys.argv[1])
