@@ -46,9 +46,18 @@ int main(int argc, char* argv[])
 {
     /* If the user doesn't specify the port, use the default 8080 */
     int port = BROADCAST_PORT;
+    int width = 320;
+    int height = 240;
 
     if (argc == 2) {
         port = atoi(argv[1]);
+    } else if (argc == 4) {
+        port = atoi(argv[1]);
+        width = atoi(argv[2]);
+        height = atoi(argv[3]);
+    } else {
+        std::cout << "Usage: " << argv[0] << " [port] [width] [height]" << std::endl;
+        return 0;
     }
 
     /* Open the OpenCV VideoCapture */
@@ -58,17 +67,17 @@ int main(int argc, char* argv[])
     // If using the older version of OpenCV, use the following code
     auto codec = CV_FOURCC('M', 'J', 'P', 'G');
 
-    /* Set the video resolution to 320 x 240 */
-    cap.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+    /* Set the video resolution to width x height */
+    cap.set(CV_CAP_PROP_FRAME_WIDTH, width);
+    cap.set(CV_CAP_PROP_FRAME_HEIGHT, height);
 
 #else
     /* New version API */
     auto codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
 
-    /* Set the video resolution to 320 x 240 */
-    cap.set(CAP_PROP_FRAME_WIDTH, 320);
-    cap.set(CAP_PROP_FRAME_HEIGHT, 240);
+    /* Set the video resolution to width x height */
+    cap.set(CAP_PROP_FRAME_WIDTH, width);
+    cap.set(CAP_PROP_FRAME_HEIGHT, height);
 
 #endif
 
