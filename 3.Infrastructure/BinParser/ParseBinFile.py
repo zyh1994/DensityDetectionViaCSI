@@ -106,9 +106,12 @@ def move_files_to_folder(path: str):
     # Remove the file extension from the name
     folder = os.path.splitext(file_name)[0]
 
-    # # create a folder to store the files
+    # create a folder to store the files
     if not os.path.exists(folder):
         os.mkdir(folder)
+
+    # pictures folder
+    pictures_folder = os.path.join(folder, 'png')
 
     # # move the files to the folder
     for file in os.listdir():
@@ -117,7 +120,7 @@ def move_files_to_folder(path: str):
         if file.endswith('.csv'):
             shutil.move(file, folder)
         if file.endswith('.png'):
-            shutil.move(file, folder)
+            shutil.move(file, pictures_folder)
 
 
 if __name__ == '__main__':
