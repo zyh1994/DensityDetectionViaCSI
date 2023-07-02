@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <iomanip>
 
 constexpr int BUF_SIZE = 512 * 1024 * 1024; // 缓存大小，单位为字节
 constexpr int FLUSH_INTERVAL = 60; // 刷新间隔，单位为秒
