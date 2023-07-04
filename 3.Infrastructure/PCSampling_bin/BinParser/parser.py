@@ -1,8 +1,8 @@
 import struct
 import sys
 
-from VideoWriter import VideoWriter
-from CSIConverter import CSIConverter
+from video.VideoWriter import VideoWriter
+from csi.CSIConverter import CSIConverter
 
 
 def data_separator(csi_raw_video: str, width: int = 320, height: int = 240, fps: int = 30):
@@ -128,7 +128,9 @@ def move_files_to_folder(path: str):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+
+    # print out the usage
+    if len(sys.argv) == 2 and sys.argv[1] == '-h': 
         print("Usage: python ParseCSIData.py <csi_video_file> <width> <height> <fps>")
         sys.exit(1)
     

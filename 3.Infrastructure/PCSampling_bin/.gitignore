@@ -2,3 +2,4 @@
 cmake-build-debug/*
 CMakeFiles/*
 CMakeCache.txtcmake-build-debug-wsl/
+./.idea/*
