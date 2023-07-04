@@ -1,30 +1,11 @@
 import csv
 import json
 
-class CSIData:
 
-    def __init__(self):
-        # get the CSI status
-        self.timestamp = None
-        self.csi_length = None
-        self.channel_number = None
-        self.buffer_length = None
-        self.payload_length = None
-        self.physical_error = None
-        self.noise_level = None
-        self.transmission_rate = None
-        self.channel_bandwidth = None
-        self.number_of_tones = None
-        self.receiver_antennas = None
-        self.transmitter_antennas = None
-        self.received_signal_strength = None
-        self.rssi_antenna_0 = None
-        self.rssi_antenna_1 = None
-        self.rssi_antenna_2 = None
-        self.csi_matrix = None
+from csi.BaseData import CSIBaseData
 
 
-class CSIDataFromCSV(CSIData):
+class CSIDataFromCSV(CSIBaseData):
 
     """
     timestamp: 时间戳
@@ -69,6 +50,7 @@ class CSIDataFromCSV(CSIData):
         self.rssi_antenna_2 = int(row[15])
         self.csi_matrix = json.loads(row[16])
 
+    
     def __str__(self):
         return "timestamp {}, csi_length {}, channel_number {}, buffer_length {}, payload_length {}, " \
                 "physical_error {}, noise_level {}, transmission_rate {}, channel_bandwidth {}, " \
@@ -81,15 +63,7 @@ class CSIDataFromCSV(CSIData):
             self.rssi_antenna_2, self.csi_matrix)
 
 
-class CSIDataFromBin(CSIData):
-
-    def __init__(self):
-        super().__init__()
-
-        raise NotImplementedError
-
-
-def loard_csi_from_csv(csi_file: str):
+def load_csi_from_csv(csi_file: str):
 
     csi_data = []
 
