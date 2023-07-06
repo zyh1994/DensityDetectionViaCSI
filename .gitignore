@@ -46,6 +46,7 @@
 
 # CLion specific files and directories
 /.idea/
+/.vscode/
 *.iml
 *.ipr
 *.iws

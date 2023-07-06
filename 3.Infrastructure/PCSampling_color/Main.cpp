@@ -61,24 +61,16 @@ int main(int argc, char* argv[])
     }
 
     /* Open the OpenCV VideoCapture */
-    VideoCapture cap = VideoHelper::openCamera();
+    VideoCapture cap = sge::VideoHelper::openCamera();
 
 #ifdef CV_VERSION_EPOCH
-    // If using the older version of OpenCV, use the following code
-    auto codec = CV_FOURCC('M', 'J', 'P', 'G');
-
     /* Set the video resolution to width x height */
     cap.set(CV_CAP_PROP_FRAME_WIDTH, width);
     cap.set(CV_CAP_PROP_FRAME_HEIGHT, height);
-
 #else
-    /* New version API */
-    auto codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
-
     /* Set the video resolution to width x height */
     cap.set(CAP_PROP_FRAME_WIDTH, width);
     cap.set(CAP_PROP_FRAME_HEIGHT, height);
-
 #endif
 
     /* Create the socket */

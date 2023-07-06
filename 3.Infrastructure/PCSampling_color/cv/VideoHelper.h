@@ -8,29 +8,20 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
+using namespace cv;
+
 namespace sge {
 
     enum VideoTypeFourCC {
-
-        // H.264/AVC codec
-        H264 = cv::VideoWriter::fourcc('H', '2', '6', '4'),
-
-        // H.265/HEVC codec
-        H265 = cv::VideoWriter::fourcc('H', 'E', 'V', 'C'),
-
-        // MPEG4-based
-        MPEG_4 = cv::VideoWriter::fourcc('M', 'P', '4', 'V'),
-
-        // Motion JPEG codec
-        MJPEG = cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
-
-        // Uncompressed YUV format
-        YUV = cv::VideoWriter::fourcc('I', '4', '2', '0'),
-
-        // Windows Media Video (WMV) 1 codec
-        WMV1 = cv::VideoWriter::fourcc('W', 'M', 'V', '1'),
+        H264,
+        H265,
+        MPEG_4,
+        MJPEG,
+        YUV,
+        WMV1,
     };
 
+    extern const int get_fourcc(VideoTypeFourCC fourcc);
 
     class VideoHelper {
 
@@ -51,8 +42,8 @@ namespace sge {
          * @param fps
          * @param frameSize
          */
-        static cv::Writer openVideoWriter(const std::string &path, VideoTypeFourCC fourcc,
-                                          double fps, cv::Size frameSize);
+        static cv::VideoWriter openVideoWriter(const std::string &path, int fourcc, 
+                double fps, cv::Size frameSize);
 
     };
 }

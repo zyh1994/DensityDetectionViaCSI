@@ -4,12 +4,66 @@
 
 #include "VideoHelper.h"
 
-#include <bitset>
+#include <iostream>
 
 using namespace cv;
 using namespace std;
 
 namespace sge {
+
+    const int get_fourcc(VideoTypeFourCC fourcc) {
+        switch (fourcc)
+        {
+#ifdef CV_VERSION_EPOCH
+            case VideoTypeFourCC::H264:
+                return CV_FOURCC('H', '2', '6', '4');
+            
+            case VideoTypeFourCC::H265:
+                return CV_FOURCC('H', 'E', 'V', 'C');
+
+            case VideoTypeFourCC::MPEG_4:
+                return CV_FOURCC('M', 'P', '4', 'V');
+
+            case VideoTypeFourCC::MJPEG:
+                return CV_FOURCC('M', 'J', 'P', 'G');
+
+            case VideoTypeFourCC::YUV:
+                return CV_FOURCC('I', '4', '2', '0');
+
+            case VideoTypeFourCC::WMV1:
+                return CV_FOURCC('W', 'M', 'V', '1'),
+
+            default:
+                std::cerr << "Unknown fourcc!" << std::endl;
+                break;
+
+#else
+        case VideoTypeFourCC::H264:
+            return VideoWriter::fourcc('H', '2', '6', '4');
+
+        case VideoTypeFourCC::H265:
+            return VideoWriter::fourcc('H', 'E', 'V', 'C');
+
+        case VideoTypeFourCC::MPEG_4:
+            return VideoWriter::fourcc('M', 'P', '4', 'V');
+        
+        case VideoTypeFourCC::MJPEG:
+            return VideoWriter::fourcc('M', 'J', 'P', 'G');
+        
+        case VideoTypeFourCC::YUV:
+            return VideoWriter::fourcc('I', '4', '2', '0');
+
+        case VideoTypeFourCC::WMV1:
+            return VideoWriter::fourcc('W', 'M', 'V', '1');
+
+        default:
+            std::cerr << "Unknown fourcc!" << std::endl;
+            break;
+#endif
+        }
+
+        return -1;
+    }
 
     VideoCapture VideoHelper::openCamera(int cameraId) {
 
@@ -26,14 +80,16 @@ namespace sge {
         return cap;
     }
 
-    cv::Writer VideoHelper::openVideoWriter(const std::string &path, VideoTypeFourCC fourcc,
+    cv::VideoWriter VideoHelper::openVideoWriter(const std::string &path, int fourcc,
                                             double fps, cv::Size frameSize) {
-
-        // Convert the fourcc to integer.
-        int fourccInt = static_cast<int>(fourcc);
-
         // Check the fourcc.
-        VideoWriter writer(path, fourccInt, fps, frameSize);
+        if (fourcc == -1) {
+            cout << "Unknown fourcc!" << endl;
+            exit(-1);
+        }
+
+        // Open the writer.
+        VideoWriter writer(path, fourcc, fps, frameSize);
 
         // Check the writer.
         if (!writer.isOpened()) {
