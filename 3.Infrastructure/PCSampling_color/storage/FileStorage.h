@@ -30,12 +30,11 @@ namespace sge {
 
     private:
         std::string basename;           // 基础文件名
-        std::ofstream csv_file;             // 文件流
+        std::ofstream csv_file;         // 文件流
         std::mutex mutex;               // 互斥锁
-        bool isFlushing;                // 是否正在刷新
-        std::chrono::time_point<std::chrono::system_clock> lastFlushTime; // 上次刷新时间
 
     private:
+        // Use the VideoWriter class object to record the video
         cv::VideoWriter writer;
 
     public:
@@ -54,11 +53,6 @@ namespace sge {
         void close_file();
 
         /**
-         * 将缓存中的数据写入文件
-         */
-        void flush();
-
-        /**
          * 写入数据
          * @param timestamp
          * @param mat
@@ -70,10 +64,6 @@ namespace sge {
     private:
 
         std::string new_filename();
-
-        bool is_time_to_flush();
-
-        void write_data(unsigned char* data, int size);
     };
 }
 

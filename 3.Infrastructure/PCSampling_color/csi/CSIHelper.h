@@ -13,8 +13,6 @@ typedef struct
     int imag;
 } COMPLEX;
 
-#define Kernel_CSI_ST_LEN 23
-
 typedef struct
 {
     u_int64_t tstamp;         /* h/w assigned time stamp */
@@ -38,15 +36,14 @@ typedef struct
     u_int16_t   payload_len;  /*  payload length (bytes) */
     u_int16_t   csi_len;      /*  csi data length (bytes) */
     u_int16_t   buf_len;      /*  data length in buffer */
-}csi_struct;
+} csi_struct;
 
 extern bool  is_big_endian();
 
 
-extern void  record_status(unsigned char* buf_addr,
-                           int cnt,
-                           csi_struct* csi_status);
+extern csi_struct*  get_csi_metadata(const unsigned char* buf,
+                              int buf_size);
 
-extern void print_status(csi_struct *package, int increase_size);
+extern COMPLEX* get_csi_matrix(const unsigned char* buf);
 
 #endif //DENSITYDETECTION_CSIHELPER_H
