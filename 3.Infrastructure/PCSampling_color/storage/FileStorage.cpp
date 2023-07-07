@@ -14,21 +14,22 @@ namespace sge {
         std::stringstream ss;
 
         // Convert the one-dimensional matrix to a three-dimensional matrix
-        for (int k = 0; k < tones; k++) {
-
+        ss << "[";
+        for (int nc_idx = 0; nc_idx < nc; nc_idx++) {
             ss << "[";
-            for (int nc_idx = 0; nc_idx < nc; nc_idx++) {
+            for (int nr_idx = 0; nr_idx < nr; nr_idx++) {
                 ss << "[";
-                for (int nr_idx = 0; nr_idx < nr; nr_idx++) {
+                for (int k = 0; k < tones; k++) {
                     // Calculate the index of the current element
                     int idx = k * nc * nr + nc_idx * nr + nr_idx;
+
                     ss << "["
-                    << matrix[idx].real
-                    << ", "
-                    << matrix[idx].imag;
+                       << matrix[idx].real
+                       << ", "
+                       << matrix[idx].imag;
 
                     // if the last element, remove the comma
-                    if (nr_idx == nr - 1) {
+                    if (k == tones - 1) {
                         ss << "]";
                     } else {
                         ss << "],";
@@ -36,7 +37,7 @@ namespace sge {
                 }
 
                 // if the last element, remove the comma
-                if (nc_idx == nc - 1) {
+                if (nr_idx == nr - 1) {
                     ss << "]";
                 } else {
                     ss << "],";
@@ -44,12 +45,13 @@ namespace sge {
             }
 
             // if the last element, remove the comma
-            if (k == tones - 1) {
+            if (nc_idx == nc - 1) {
                 ss << "]";
             } else {
                 ss << "],";
             }
         }
+        ss << "]";
 
         return ss.str();
     }
@@ -138,7 +140,8 @@ namespace sge {
         // Open new video writer for a new mp4 file
         writer = VideoHelper::openVideoWriter(filename + ".avi",
                                               get_fourcc(VideoTypeFourCC::MPEG_4),
-                                              30, cv::Size(640, 480));
+                                              30,
+                                              cv::Size(1280, 720));
     }
 
 
