@@ -107,15 +107,15 @@ COMPLEX get_complex_data(const unsigned char* buf,
 }
 
 
-COMPLEX* get_csi_matrix(const unsigned char* buf) {
+COMPLEX* get_csi_matrix(const unsigned char* buf, csi_struct* csi_status) {
 
     int bits_left = 16;
     uint32_t current_data = buf[0] | (buf[1] << 8);
     buf += 2;
 
-    for (uint8_t k = 0; k < csi_meta.num_tones; k++) {
-        for (uint8_t nc_idx = 0; nc_idx < csi_meta.nc; nc_idx++) {
-            for (uint8_t nr_idx = 0; nr_idx < csi_meta.nr; nr_idx++) {
+    for (uint8_t k = 0; k < csi_status->num_tones; k++) {
+        for (uint8_t nc_idx = 0; nc_idx < csi_status->nc; nc_idx++) {
+            for (uint8_t nr_idx = 0; nr_idx < csi_status->nr; nr_idx++) {
                 COMPLEX data = get_complex_data(buf, bits_left, current_data);
                 csi_matrix[nr_idx][nc_idx][k].real = data.real;
                 csi_matrix[nr_idx][nc_idx][k].imag = data.imag;

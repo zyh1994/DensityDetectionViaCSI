@@ -9,14 +9,79 @@
 
 namespace sge {
 
-    std::string convert_csi_bytes(unsigned char* data, size_t size) {
+    std::string convert_csi_matrix(COMPLEX* matrix, int nc, int nr, int tones) {
         std::stringstream ss;
 
-        // Use the csi_struct to parse the metadata
-        csi_struct* csi_meta = get_csi_metadata(data, static_cast<int>(size));
-        COMPLEX* csi_matrix  = get_csi_matrix(data, static_cast<int>(size)); 
+        // Convert the one-dimensional matrix to a three-dimensional matrix
+        for (int k = 0; k < tones; k++) {
 
+            ss << "[";
+            for (int nc_idx = 0; nc_idx < nc; nc_idx++) {
+                ss << "[";
+                for (int nr_idx = 0; nr_idx < nr; nr_idx++) {
+                    // Calculate the index of the current element
+                    int idx = k * nc * nr + nc_idx * nr + nr_idx;
+                    ss << "["
+                    << matrix[idx].real
+                    << ", "
+                    << matrix[idx].imag;
 
+                    // if the last element, remove the comma
+                    if (nr_idx == nr - 1) {
+                        ss << "]";
+                    } else {
+                        ss << "],";
+                    }
+                }
+
+                // if the last element, remove the comma
+                if (nc_idx == nc - 1) {
+                    ss << "]";
+                } else {
+                    ss << "],";
+                }
+            }
+
+            // if the last element, remove the comma
+            if (k == tones - 1) {
+                ss << "]";
+            } else {
+                ss << "],";
+            }
+        }
+
+        return ss.str();
+    }
+
+    std::string convert_csi_bytes(csi_struct* csi_meta,
+                              COMPLEX* csi_matrix,
+                              long long timestamp,
+                              std::string delimiter="\t") {
+        std::stringstream ss;
+
+        // Write the row data
+        ss << std::to_string(timestamp) << delimiter;
+        ss << std::to_string(csi_meta->csi_len) << delimiter;
+        ss << std::to_string(csi_meta->channel) << delimiter;
+        ss << std::to_string(csi_meta->buf_len) << delimiter;
+        ss << std::to_string(csi_meta->payload_len) << delimiter;
+        ss << std::to_string(csi_meta->phyerr) << delimiter;
+        ss << std::to_string(csi_meta->noise) << delimiter;
+        ss << std::to_string(csi_meta->rate) << delimiter;
+        ss << std::to_string(csi_meta->chanBW) << delimiter;
+        ss << std::to_string(csi_meta->num_tones) << delimiter;
+        ss << std::to_string(csi_meta->nr) << delimiter;
+        ss << std::to_string(csi_meta->nc) << delimiter;
+        ss << std::to_string(csi_meta->rssi) << delimiter;
+        ss << std::to_string(csi_meta->rssi_0) << delimiter;
+        ss << std::to_string(csi_meta->rssi_1) << delimiter;
+        ss << std::to_string(csi_meta->rssi_2) << delimiter;
+        ss << convert_csi_matrix(csi_matrix,
+                                csi_meta->nc,
+                                csi_meta->nr,
+                                csi_meta->num_tones) << "\n";
+
+        // Return the string
         return ss.str();
     }
 
