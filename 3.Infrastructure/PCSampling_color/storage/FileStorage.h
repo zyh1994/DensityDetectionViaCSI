@@ -19,42 +19,53 @@
 #include <iostream>
 #include <iomanip>
 
+#include <opencv2/opencv.hpp>
+
 constexpr int BUF_SIZE = 512 * 1024 * 1024; // 缓存大小，单位为字节
-constexpr int FLUSH_INTERVAL = 60; // 刷新间隔，单位为秒
-constexpr std::string FILE_EXT = ".csv"; // 文件扩展名
+constexpr int FLUSH_INTERVAL = 60;          // 刷新间隔，单位为秒
 
 namespace sge {
 
     class FileStorage {
 
     private:
-        std::string basename; // 基础文件名
-        std::ofstream file; // 文件流
-        unsigned char* temp_buf; // 缓存数据
-        unsigned char* temp_buf_swap; // 交换缓存
-        std::mutex mutex; // 互斥锁
-        bool isFlushing; // 是否正在刷新
+        std::string basename;           // 基础文件名
+        std::ofstream csv_file;             // 文件流
+        std::mutex mutex;               // 互斥锁
+        bool isFlushing;                // 是否正在刷新
         std::chrono::time_point<std::chrono::system_clock> lastFlushTime; // 上次刷新时间
-        int write_size; // 写入文件的数据大小
-        int buf_left_size; // 缓存剩余空间大小
-        std::vector<std::string> filenames; // 文件名列表
+
+    private:
+        cv::VideoWriter writer;
 
     public:
         explicit FileStorage(std::string basename);
 
         ~FileStorage();
 
+        /**
+         * 打开文件
+         */
         void open_file();
 
+        /**
+         * 关闭文件
+         */
         void close_file();
 
-        inline std::vector<std::string> get_filenames() { return filenames; }
-
+        /**
+         * 将缓存中的数据写入文件
+         */
         void flush();
 
-        void write(const unsigned char* data, size_t size);
-
-        void write(const std::string& data);
+        /**
+         * 写入数据
+         * @param timestamp
+         * @param mat
+         * @param data
+         */
+        void write(long long timestamp, cv::Mat& mat,
+                   unsigned char* data, size_t size);
 
     private:
 

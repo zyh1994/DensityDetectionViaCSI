@@ -11,7 +11,7 @@ using namespace std;
 
 namespace sge {
 
-    const int get_fourcc(VideoTypeFourCC fourcc) {
+    int get_fourcc(VideoTypeFourCC fourcc) {
         switch (fourcc)
         {
 #ifdef CV_VERSION_EPOCH
@@ -80,6 +80,13 @@ namespace sge {
         return cap;
     }
 
+
+    void VideoHelper::closeCamera(cv::VideoCapture &cap) {
+        // Release the camera.
+        cap.release();
+    }
+
+
     cv::VideoWriter VideoHelper::openVideoWriter(const std::string &path, int fourcc,
                                             double fps, cv::Size frameSize) {
         // Check the fourcc.
@@ -99,6 +106,25 @@ namespace sge {
 
         // Return the writer.
         return writer;
+    }
+
+
+    void VideoHelper::closeVideoWriter(cv::VideoWriter &writer) {
+        // Release the writer.
+        writer.release();
+    }
+
+
+    void VideoHelper::setCameraResolution(VideoCapture &cap, int width, int height) {
+#ifdef CV_VERSION_EPOCH
+        /* Set the video resolution to width x height */
+        cap.set(CV_CAP_PROP_FRAME_WIDTH, width);
+        cap.set(CV_CAP_PROP_FRAME_HEIGHT, height);
+#else
+        /* Set the video resolution to width x height */
+        cap.set(CAP_PROP_FRAME_WIDTH, width);
+        cap.set(CAP_PROP_FRAME_HEIGHT, height);
+#endif
     }
 
 };

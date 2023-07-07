@@ -9,37 +9,28 @@ namespace sge {
     FileStorage::FileStorage(std::string basename) :
         basename(std::move(basename)),
         isFlushing(false) {
-        temp_buf = new unsigned char[BUF_SIZE];
-        temp_buf_swap = new unsigned char[BUF_SIZE];
-        buf_left_size = BUF_SIZE;
         lastFlushTime = std::chrono::system_clock::now();
-        write_size = 0;
     }
 
     FileStorage::~FileStorage() {
         close_file();
-        delete[] temp_buf;
-        delete[] temp_buf_swap;
     }
 
     void FileStorage::open_file() {
-        if (file.is_open()) {
-            file.close();
+        if (csv_file.is_open()) {
+            csv_file.close();
         }
 
         // 生成新的文件名
         auto filename = new_filename();
 
-        // 文件名添加到列表
-        filenames.push_back(filename);
-
         // 创建新的文件
-        file.open(filename, std::ios::binary | std::ios::app);
+        csv_file.open(filename, std::ios::binary | std::ios::app);
     }
 
     void FileStorage::close_file() {
-        if (file.is_open()) {
-            file.close();
+        if (csv_file.is_open()) {
+            csv_file.close();
         }
 
         if (!isFlushing) {
@@ -53,42 +44,38 @@ namespace sge {
             return; // 如果已经在刷新，则不执行操作
         }
 
-        if (write_size == 0) {
-            return; // 如果缓存为空，则不执行操作
-        }
-
         // 设置刷新标志
         isFlushing = true;
 
-        // 交换缓存
-        std::swap(temp_buf, temp_buf_swap);
-
         // 将交换后的缓存写入文件
-        auto flushThread = std::thread(&FileStorage::write_data, this, temp_buf_swap, write_size);
+//        auto flushThread = std::thread(&FileStorage::write_data, this, temp_buf_swap, write_size);
 
-        // 重置数据
-        buf_left_size = BUF_SIZE;
-        write_size = 0;
+//        // 重置数据
+//        buf_left_size = BUF_SIZE;
+//        write_size = 0;
 
         // 分离线程
-        flushThread.detach();
+//        flushThread.detach();
     }
 
-    void FileStorage::write(const std::string& data) {
-        write((const unsigned char*) data.c_str(), data.size());
+
+    void FileStorage::write(long long timestamp, cv::Mat& mat,
+               unsigned char* data, size_t size) {
+
     }
 
-    void FileStorage::write(const unsigned char* data, size_t size) {
-        std::lock_guard<std::mutex> lock(mutex);
-        if (size > buf_left_size || is_time_to_flush()) {
-            flush();
-        }
+//    void FileStorage::write(const unsigned char* data, size_t size) {
+//        std::lock_guard<std::mutex> lock(mutex);
+//        if (size > buf_left_size || is_time_to_flush()) {
+//            flush();
+//        }
+//
+//        // 将数据拷贝到缓存中
+//        std::memcpy(temp_buf + (BUF_SIZE - buf_left_size), data, size);
+//        buf_left_size -= size;
+//        write_size += size;
+//    }
 
-        // 将数据拷贝到缓存中
-        std::memcpy(temp_buf + (BUF_SIZE - buf_left_size), data, size);
-        buf_left_size -= size;
-        write_size += size;
-    }
 
     std::string FileStorage::new_filename() {
         // 获取当前时间
@@ -103,8 +90,7 @@ namespace sge {
         // 格式化时间为指定格式，并将其写入字符串流
         ss << basename << "_"
         //    << std::put_time(localTime, "%Y%m%d%H%M%S")  // We don't need seconds here
-            << std::put_time(localTime, "%Y%m%d%H%M")
-            << FILE_EXT;
+            << std::put_time(localTime, "%Y%m%d%H%M");
 
         // 从字符串流中获取格式化后的时间字符串
         std::string formattedTime = ss.str();
@@ -122,8 +108,8 @@ namespace sge {
     void FileStorage::write_data(unsigned char* data, int size) {
         open_file();
         mutex.lock();
-        if (file.is_open()) {
-            file.write(reinterpret_cast<char*>(data), size);
+        if (csv_file.is_open()) {
+            csv_file.write(reinterpret_cast<char*>(data), size);
 
         }
         mutex.unlock();

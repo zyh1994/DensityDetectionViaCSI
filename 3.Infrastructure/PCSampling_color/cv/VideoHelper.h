@@ -21,7 +21,7 @@ namespace sge {
         WMV1,
     };
 
-    extern const int get_fourcc(VideoTypeFourCC fourcc);
+    extern int get_fourcc(VideoTypeFourCC fourcc);
 
     class VideoHelper {
 
@@ -36,6 +36,20 @@ namespace sge {
         static cv::VideoCapture openCamera(int cameraId = 0);
 
         /**
+         * Close the camera.
+         * @param cap
+         */
+        static void closeCamera(cv::VideoCapture &cap);
+
+        /**
+         * Set the camera resolution.
+         * @param cap
+         * @param width
+         * @param height
+         */
+        static void setCameraResolution(cv::VideoCapture &cap, int width, int height);
+
+        /**
          * Open the video file with the given path.
          * @param path
          * @param fourcc
@@ -44,6 +58,13 @@ namespace sge {
          */
         static cv::VideoWriter openVideoWriter(const std::string &path, int fourcc, 
                 double fps, cv::Size frameSize);
+
+
+        /**
+         * Close the video writer.
+         * @param writer
+         */
+        static void closeVideoWriter(cv::VideoWriter &writer);
 
     };
 }
