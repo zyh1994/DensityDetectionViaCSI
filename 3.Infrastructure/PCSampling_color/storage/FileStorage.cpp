@@ -7,6 +7,7 @@
 #include "../cv/VideoHelper.h"
 #include "../csi/CSIHelper.h"
 
+
 namespace sge {
 
     std::string convert_csi_matrix(COMPLEX* matrix, int nc, int nr, int tones) {
@@ -138,7 +139,6 @@ namespace sge {
         writer = VideoHelper::openVideoWriter(filename + ".avi",
                                               get_fourcc(VideoTypeFourCC::MPEG_4),
                                               30, cv::Size(640, 480));
-        // writer.set(VIDEOWRITER_PROP_X264_OPTS, "preset=medium");
     }
 
 
