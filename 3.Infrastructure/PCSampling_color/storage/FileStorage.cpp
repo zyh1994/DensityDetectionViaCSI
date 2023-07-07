@@ -140,8 +140,7 @@ namespace sge {
         // Open new video writer for a new mp4 file
         writer = VideoHelper::openVideoWriter(filename + ".avi",
                                               get_fourcc(VideoTypeFourCC::MPEG_4),
-                                              30,
-                                              cv::Size(1280, 720));
+                                              30, cv::Size(1280, 720));
     }
 
 
@@ -161,6 +160,10 @@ namespace sge {
 
     void FileStorage::write(long long timestamp, cv::Mat &mat,
                             unsigned char *data, size_t size) {
+
+        // Get the frame size
+        std::cout << "Frame size: " << mat.size() << std::endl;
+
         // Get the current time
         auto now = std::chrono::system_clock::now();
 

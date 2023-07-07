@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
     VideoCapture cap = sge::VideoHelper::openCamera();
 
     /* Set the camera resolution */
-    // sge::VideoHelper::setCameraResolution(cap, width, height);
+     sge::VideoHelper::setCameraResolution(cap, 1280, 720);
 
     /* Create the socket */
     int sock_fd = create_broadcast_socket();
@@ -114,7 +114,6 @@ int main(int argc, char* argv[])
                               (struct sockaddr*)&sock_recv_addr_in, &senderLen);
 
         if (recvd > 0){
-
             /* Write the CSI status to the file */
             fs.write(milliseconds(), frame, buf_addr, recvd);
         }
