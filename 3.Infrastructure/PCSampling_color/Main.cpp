@@ -55,25 +55,26 @@ int main(int argc, char* argv[])
 {
     /* If the user doesn't specify the port, use the default 8080 */
     int port = BROADCAST_PORT;
-    int width = 320;
-    int height = 240;
+    // int width = 320;
+    // int height = 240;
 
     if (argc == 2) {
         port = static_cast<int>(strtol(argv[1], nullptr, 10)); // atoi(argv[1]
-    } else if (argc == 4) {
-        port = static_cast<int>(strtol(argv[1], nullptr, 10)); // atoi(argv[1]
-        width = static_cast<int>(strtol(argv[2], nullptr, 10)); // atoi(argv[2]
-        height = static_cast<int>(strtol(argv[3], nullptr, 10)); // atoi(argv[3]
-    } else {
-        std::cout << "Usage: " << argv[0] << " [port] [width] [height]" << std::endl;
-        return 0;
-    }
+    } 
+    // else if (argc == 4) {
+    //     port = static_cast<int>(strtol(argv[1], nullptr, 10)); // atoi(argv[1]
+    //     // width = static_cast<int>(strtol(argv[2], nullptr, 10)); // atoi(argv[2]
+    //     // height = static_cast<int>(strtol(argv[3], nullptr, 10)); // atoi(argv[3]
+    // } else {
+    //     std::cout << "Usage: " << argv[0] << " [port]" << std::endl;
+    //     return 0;
+    // }
 
     /* Open the OpenCV VideoCapture */
     VideoCapture cap = sge::VideoHelper::openCamera();
 
     /* Set the camera resolution */
-    sge::VideoHelper::setCameraResolution(cap, width, height);
+    // sge::VideoHelper::setCameraResolution(cap, width, height);
 
     /* Create the socket */
     int sock_fd = create_broadcast_socket();
@@ -98,7 +99,8 @@ int main(int argc, char* argv[])
     printf("Waiting for the first packet...\n");
 
     /* Try to record the video frame and the CSI status */
-    sge::FileStorage fs("csi");
+    // sge::FileStorage fs("csi");
+    sge::FileStorage fs;
 
     /* Keep listening to the kernel and waiting for the csi report */
     while(!quit) {

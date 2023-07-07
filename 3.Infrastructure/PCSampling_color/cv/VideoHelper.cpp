@@ -31,7 +31,7 @@ namespace sge {
                 return CV_FOURCC('I', '4', '2', '0');
 
             case VideoTypeFourCC::WMV1:
-                return CV_FOURCC('W', 'M', 'V', '1'),
+                return CV_FOURCC('W', 'M', 'V', '1');
 
             default:
                 std::cerr << "Unknown fourcc!" << std::endl;

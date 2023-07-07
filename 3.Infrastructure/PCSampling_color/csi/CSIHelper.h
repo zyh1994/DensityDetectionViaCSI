@@ -40,9 +40,7 @@ typedef struct
 
 extern bool  is_big_endian();
 
-
-extern csi_struct*  get_csi_metadata(const unsigned char* buf,
-                              int buf_size);
+extern csi_struct*  get_csi_metadata(const unsigned char* buf, int buf_size);
 
 extern COMPLEX* get_csi_matrix(const unsigned char* buf, csi_struct* csi_status);
 

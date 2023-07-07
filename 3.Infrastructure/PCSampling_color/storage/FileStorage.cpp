@@ -85,30 +85,62 @@ namespace sge {
         return ss.str();
     }
 
-    FileStorage::FileStorage(std::string basename) {
-        basename = std::move(basename);
+
+    FileStorage::FileStorage() {
+        // basename = std::move(basename);
+
+        // Update the last timestamp
+        last_updated = std::chrono::system_clock::now();
+
+        // Open a new file
+        open_file();
     }
+
 
     FileStorage::~FileStorage() {
         close_file();
     }
+
 
     void FileStorage::open_file() {
         if (csv_file.is_open()) {
             csv_file.close();
         }
 
+        std::cout << "Opening new file..." << std::endl;
+
         // 生成新的文件名
         auto filename = new_filename();
 
         // 创建新的文件
-        csv_file.open(filename, std::ios::binary | std::ios::app);
+        csv_file.open(filename + ".csv", std::ios::binary | std::ios::app);
+
+        // Write the header
+        csv_file << "timestamp" << "\t"
+                << "csi_len" << "\t"
+                << "channel_number" << "\t"
+                << "buffer_length" << "\t"
+                << "payload_length" << "\t"
+                << "physical_error" << "\t"
+                << "noise_level" << "\t"
+                << "transmission_rate" << "\t"
+                << "channel_bandwidth" << "\t"
+                << "number_of_tones" << "\t"
+                << "receiver_antennas" << "\t"
+                << "transmitter_antennas" << "\t"
+                << "received_signal_strength" << "\t"
+                << "rssi_antenna_0" << "\t"
+                << "rssi_antenna_1" << "\t"
+                << "rssi_antenna_2" << "\t"
+                << "csi_matrix" << "\n";
 
         // Open new video writer for a new mp4 file
-        writer = VideoHelper::openVideoWriter(filename + ".mp4",
+        writer = VideoHelper::openVideoWriter(filename + ".avi",
                                               get_fourcc(VideoTypeFourCC::MPEG_4),
                                               30, cv::Size(640, 480));
+        // writer.set(VIDEOWRITER_PROP_X264_OPTS, "preset=medium");
     }
+
 
     void FileStorage::close_file() {
         if (csv_file.is_open()) {
@@ -119,12 +151,56 @@ namespace sge {
             // Close the video writer
             VideoHelper::closeVideoWriter(writer);
         }
+
+        std::cout << "Closed file." << std::endl;
     }
+
 
     void FileStorage::write(long long timestamp, cv::Mat &mat,
                             unsigned char *data, size_t size) {
+        // Get the current time
+        auto now = std::chrono::system_clock::now();
 
+        // If the time difference is greater than 1 minute, create a new file
+        if (is_time_to_flush()) {
+            // Close the current file
+            close_file();
+
+            // Open a new file
+            open_file();
+
+            // Update the last timestamp
+            last_updated = now;
+        }
+
+        // Update the mp4 file
+        if (writer.isOpened()) {
+            // Write the frame to the video
+            writer.write(mat);
+        }
+
+        // Update the CSV file
+        if (csv_file.is_open()) {
+
+            // Get the CSI metadata and matrix
+            auto csi_metadata = get_csi_metadata(data, size);
+            auto csi_matrix = get_csi_matrix(data, csi_metadata);
+
+            // Write the row data
+            auto row = convert_csi_bytes(csi_metadata, csi_matrix, timestamp);
+
+            // Write the row to the file
+            csv_file << row;
+        }
     }
+
+
+    bool FileStorage::is_time_to_flush() {
+        auto currentTime = std::chrono::system_clock::now();
+        auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(currentTime - last_updated).count();
+        return elapsedSeconds >= FLUSH_INTERVAL;
+    }
+
 
     std::string FileStorage::new_filename() {
         // 获取当前时间
@@ -137,8 +213,7 @@ namespace sge {
         std::stringstream ss;
 
         // 格式化时间为指定格式，并将其写入字符串流
-        ss << basename << "_"
-           << std::put_time(localTime, "%Y%m%d%H%M");
+        ss << std::put_time(localTime, "%Y%m%d%H%M");
 
         // 从字符串流中获取格式化后的时间字符串
         std::string formattedTime = ss.str();

@@ -26,17 +26,17 @@ csi_struct* get_csi_metadata(const unsigned char* buf_addr, int cnt) {
     uint16_t buf_len;
     uint16_t payload_len;
 
-    if (is_big_endian()) {
+//    if (is_big_endian()) {
         csi_len = (buf_addr[8] << 8) | buf_addr[9];
         channel = (buf_addr[10] << 8) | buf_addr[11];
         buf_len = (buf_addr[cnt - 2] << 8) | buf_addr[cnt - 1];
         payload_len = (buf_addr[CSI_META_LEN] << 8) | buf_addr[CSI_META_LEN + 1];
-    } else {
-        csi_len = (buf_addr[9] << 8) | buf_addr[8];
-        channel = (buf_addr[11] << 8) | buf_addr[10];
-        buf_len = (buf_addr[cnt - 1] << 8) | buf_addr[cnt - 2];
-        payload_len = (buf_addr[CSI_META_LEN + 1] << 8) | buf_addr[CSI_META_LEN];
-    }
+//    } else {
+//        csi_len = (buf_addr[9] << 8) | buf_addr[8];
+//        channel = (buf_addr[11] << 8) | buf_addr[10];
+//        buf_len = (buf_addr[cnt - 1] << 8) | buf_addr[cnt - 2];
+//        payload_len = (buf_addr[CSI_META_LEN + 1] << 8) | buf_addr[CSI_META_LEN];
+//    }
 
     csi_meta.tstamp = 0;
     csi_meta.csi_len = csi_len;
@@ -61,15 +61,15 @@ csi_struct* get_csi_metadata(const unsigned char* buf_addr, int cnt) {
 }
 
 
-int bit_convert(int data, int max_bit)
-{
-    if ( data & (1 << (max_bit - 1)))
-    {
-        /* negative */
-        data -= (1 << max_bit);
-    }
-    return data;
-}
+//int bit_convert(int data, int max_bit)
+//{
+//    if ( data & (1 << (max_bit - 1)))
+//    {
+//        /* negative */
+//        data -= (1 << max_bit);
+//    }
+//    return data;
+//}
 
 
 COMPLEX get_complex_data(const unsigned char* buf,
