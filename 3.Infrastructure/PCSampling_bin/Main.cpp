@@ -49,16 +49,18 @@ int main(int argc, char* argv[])
     int width = 320;
     int height = 240;
 
-    if (argc == 2) {
-        port = atoi(argv[1]);
+    /* Print the usage, if the user entered the -h option */
+    if (argc == 2 && strcmp(argv[1], "-h") == 0) {
+        std::cout << "Usage: " << argv[0] << " [port] [width] [height]" << std::endl;
+        return 0;
     } else if (argc == 4) {
         port = atoi(argv[1]);
         width = atoi(argv[2]);
         height = atoi(argv[3]);
-    } else {
+    } else if (argc != 1) {
         std::cout << "Usage: " << argv[0] << " [port] [width] [height]" << std::endl;
         return 0;
-    }
+    } 
 
     /* Open the OpenCV VideoCapture */
     VideoCapture cap = VideoHelper::openCamera();
