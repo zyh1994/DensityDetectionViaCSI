@@ -1,5 +1,6 @@
 import csv
 import json
+import numpy as np
 
 
 from csi.BaseData import CSIBaseData
@@ -48,7 +49,10 @@ class CSIDataFromCSV(CSIBaseData):
         self.rssi_antenna_0 = int(row[13])
         self.rssi_antenna_1 = int(row[14])
         self.rssi_antenna_2 = int(row[15])
-        self.csi_matrix = json.loads(row[16])
+        self.csi_matrix = np.array(json.loads(row[16]))
+
+        # print out the csi matrix shape
+        # print("csi matrix shape: {}".format(self.csi_matrix.shape))
 
     
     def __str__(self):

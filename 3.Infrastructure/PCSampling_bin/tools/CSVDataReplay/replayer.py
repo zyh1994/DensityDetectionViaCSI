@@ -1,13 +1,12 @@
 import sys
 import os
 import matplotlib.pyplot as plt
-import numpy as np
 import cv2
 import time
 
 from csi.CSVDataLoader import load_csi_from_csv
 from plot.MatrixPreprocessor import preprocess_matrix, db_matrix
-from plot.CSISignalPlotter import prepare_chart, update_chart
+from plot.LinearSignalChart import gen_linear_chart
 
 
 def load_frames_from_folder(folder_path: str):
@@ -20,70 +19,17 @@ def load_frames_from_folder(folder_path: str):
     return img_data_list
 
 
-def draw_curve(ax, data, frame_ind, timestamp, image):
-    # convert the data of CSI to 9 * 56
-    data = data.reshape(9, -1)
+def prepare_chart():
+    # Set up real-time plotting
+    plt.switch_backend('Agg')  # 设置Matplotlib的后端为非交互式模式
 
-    # get the updated chart buffer
-    chart_buf = update_chart(ax, data.T)
-    chart_data = np.frombuffer(chart_buf.getvalue(), dtype=np.uint8)
-    chart_image = cv2.imdecode(chart_data, cv2.IMREAD_COLOR)
+    # Create a figure and an axis
+    _, ax = plt.subplots()
 
-    # Convert the grayscale image to color
-    image_color = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-
-    # add the frame index to the right bottom corner of the frame
-    cv2.putText(image_color, "index:" + str(frame_ind), 
-                (image.shape[1] - 100, image.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                (255, 255, 255), 1, cv2.LINE_AA)
-
-    # add the timestamp the left top corner of the frame, flowing the frame index
-    cv2.putText(image_color, timestamp, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                (255, 255, 255), 1, cv2.LINE_AA)
-
-    # Resize the chart image to match the size of the image
-    chart_image = cv2.resize(chart_image, (image.shape[1], image.shape[0]))
-
-    # Combine the color image and the chart image horizontally
-    combined_image = cv2.hconcat([image_color, chart_image])
-
-    return combined_image
-
-    # # Set the alpha value for the chart image
-    # alpha = 0.5
-
-    # # Combine the image and the chart image with transparency
-    # combined_image = cv2.addWeighted(image_color, 1-alpha, chart_image, alpha, 0)
-
-    # # Add the timestamp to the top left corner of the frame
-    # cv2.putText(combined_image, timestamp, (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-    #             (255, 255, 255), 1, cv2.LINE_AA)
-
-    # return combined_image
+    return ax
 
 
-def main(folder_path: str, start_frame: int = 0, end_frame: int = 0):
-    # if the folder path is not valid, exit the program
-    if not os.path.isdir(folder_path):
-        print("The folder path is not valid!")
-        sys.exit(1)
-
-    # assemble the full path of the folder
-    img_path = os.path.join(folder_path, "png")
-
-    # load the image list
-    frames_list = load_frames_from_folder(img_path)
-
-    # assemble the full path of the csi file
-    csi_file_path = os.path.join(folder_path, "csi_data.csv")
-
-    # load the csi data from the csv file
-    csi_info_list = load_csi_from_csv(csi_file_path)
-
-    # prepare the chart
-    ax = prepare_chart("CSI Signal")
-
-    # if the end_second is not specified, set it to the last second
+def time_window(start_frame, end_frame, frames_list):
     if end_frame == 0:
         end_frame = len(frames_list)
     else:
@@ -93,6 +39,88 @@ def main(folder_path: str, start_frame: int = 0, end_frame: int = 0):
     if start_frame >= end_frame:
         print("The start frame index is larger than the end frame index!")
         sys.exit(1)
+
+    return start_frame, end_frame
+
+
+def load_images(folder_path: str):
+    img_path = os.path.join(folder_path, "png")
+    frames_list = load_frames_from_folder(img_path)
+    print("Load the image list successfully!")
+
+    return frames_list
+
+
+def load_csi(folder_path: str):
+    csi_file_path = os.path.join(folder_path, "csi_data.csv")
+    csi_info_list = load_csi_from_csv(csi_file_path)
+    if len(csi_info_list) == 0:
+        print("The csi_info_list is empty!")
+        sys.exit(1)
+    else:
+        print("Load the csi file successfully!")
+
+    return csi_info_list
+
+
+def draw_charts(ax, data, frame_ind, timestamp, image):
+    # generate linear chart from the data
+    chart_image = gen_linear_chart(data, ax)
+
+    # Convert the grayscale image to color
+    image_color = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
+    # add the frame index to the right bottom corner of the frame
+    cv2.putText(image_color, 
+                "index:" + str(frame_ind), 
+                (image.shape[1] - 100, image.shape[0] - 10), 
+                cv2.FONT_HERSHEY_SIMPLEX, 
+                0.5,
+                (255, 255, 255), 
+                1, 
+                cv2.LINE_AA)
+
+    # add the timestamp the left top corner of the frame, flowing the frame index
+    cv2.putText(image_color, 
+                timestamp, 
+                (10, 20), 
+                cv2.FONT_HERSHEY_SIMPLEX, 
+                0.5,
+                (255, 255, 255), 
+                1, 
+                cv2.LINE_AA)
+    
+    # Check if the chart_image is empty
+    if chart_image is not None:
+        # Resize the chart image to match the size of the image
+        chart_image = cv2.resize(chart_image, (image.shape[1], image.shape[0]))
+
+        # Combine the color image and the chart image horizontally
+        combined_image = cv2.hconcat([image_color, chart_image])
+
+        return combined_image
+    else:
+        # If chart_image is empty, return only the color image
+        return image_color
+
+
+def main(folder_path: str, start_frame: int = 0, end_frame: int = 0):
+    # if the folder path is not valid, exit the program
+    if not os.path.isdir(folder_path):
+        print("The folder path is not valid!")
+        sys.exit(1)
+
+    # load the image list
+    frames_list = load_images(folder_path)
+
+    # load the csi data from the csv file
+    csi_info_list = load_csi(folder_path)
+
+    # prepare the chart
+    ax = prepare_chart()
+
+    # if the end_second is not specified, set it to the last second
+    start_frame, end_frame = time_window(start_frame, end_frame, frames_list)
 
     # display each image frame by frame
     for ind in range(start_frame, end_frame):
@@ -112,7 +140,7 @@ def main(folder_path: str, start_frame: int = 0, end_frame: int = 0):
                                   time.localtime(csi_data.meta().timestamp / 1000 - 7 * 3600))
 
         # draw the curve
-        img = draw_curve(ax, csi_db_matrix, ind, timestamp, img)
+        img = draw_charts(ax, csi_db_matrix, ind, timestamp, img)
 
         # Display the image
         cv2.imshow("CSI Signal", img)

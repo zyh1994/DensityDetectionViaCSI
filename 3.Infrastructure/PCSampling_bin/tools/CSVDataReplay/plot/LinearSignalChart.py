@@ -1,18 +1,8 @@
 import matplotlib.pyplot as plt
 from io import BytesIO
 
-
-def prepare_chart(title):
-    # Set up real-time plotting
-    plt.switch_backend('Agg')  # 设置Matplotlib的后端为非交互式模式
-
-    # Create a figure and an axis
-    fig, ax = plt.subplots()
-
-    # Change the figure title
-    # fig.canvas.manager.set_window_title(title)
-
-    return ax
+import numpy as np
+import cv2
 
 
 def update_chart(ax, csi_matrix):
@@ -33,3 +23,16 @@ def update_chart(ax, csi_matrix):
 
     # Return the BytesIO object
     return buffer
+
+
+def gen_linear_chart(data: np.ndarray, ax):
+    # convert the data to a two-dimensional array
+    _, _, nsubcarrier = data.shape
+    data = data.reshape(-1, nsubcarrier)
+
+    # get the updated chart buffer
+    chart_buf = update_chart(ax, data.T)
+    chart_data = np.frombuffer(chart_buf.getvalue(), dtype=np.uint8)
+    chart_image = cv2.imdecode(chart_data, cv2.IMREAD_COLOR)
+
+    return chart_image
