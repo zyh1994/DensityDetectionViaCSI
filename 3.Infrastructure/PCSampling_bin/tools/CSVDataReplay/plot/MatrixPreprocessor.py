@@ -48,7 +48,38 @@ def phase_matrix(csi_matrix):
 
 def padding_csi_matrix(csi_list, nrx = 3, ntx = 3, nsubcarrier = 56):
 
+    # temporary CSI list
+    csi_list_temp = []
+
     # padding the csi data to the same size
-    # for csi_data in csi_list:
-        # csi_
-    pass
+    for csi_data in csi_list:
+        
+        # get the shape of the CSI matrix
+        nrx_temp, ntx_temp, nsubcarrier_temp, complex = csi_data.csi_matrix.shape
+
+        # if the number of rx antenna is not equal to the number of tx antenna
+        if nrx_temp != nrx or ntx_temp != ntx:
+
+            # get the number of antenna
+            nrx_max = max(nrx_temp, nrx)
+            ntx_max = max(ntx_temp, ntx)
+
+            # get the number of subcarrier
+            subcarrier_max = max(nsubcarrier_temp, nsubcarrier)
+
+            # create a new CSI matrix
+            csi_data_temp = np.zeros((nrx_max, ntx_max, subcarrier_max, complex), dtype=np.int32)
+
+            # copy the data from the original CSI matrix to the new CSI matrix
+            csi_data_temp[:nrx_temp, :ntx_temp, :nsubcarrier_temp, :] = csi_data.csi_matrix
+
+            # update the CSI data
+            csi_data.csi_matrix = csi_data_temp
+        
+        # print out the shape of the CSI matrix
+        # print(csi_data.csi_matrix.shape)
+        
+        # append the CSI data to the temporary CSI list
+        csi_list_temp.append(csi_data)
+
+    return csi_list_temp

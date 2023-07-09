@@ -115,7 +115,7 @@ def main(folder_path: str, start_frame: int = 0, end_frame: int = 0):
 
     # load the csi data from the csv file
     csi_info_list = load_csi(folder_path)
-
+    
     # prepare the chart
     ax = prepare_chart()
 
