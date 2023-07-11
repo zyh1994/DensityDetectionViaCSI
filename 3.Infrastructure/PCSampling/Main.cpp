@@ -111,14 +111,19 @@ void print_usage(char* argv[]) {
 int main(int argc, char* argv[])
 {
     /* If the user doesn't specify the port, use the default 8080 */
-    int port = BROADCAST_PORT;
+    int port;
 
     /* Parse the command line arguments */
-    if (argc != 2 || strcmp(argv[1], "-h") == 0) {
+    if (argc == 2 && strcmp(argv[1], "-h") == 0) {
         print_usage(argv);
         return 0;
-    } else {
+    } else if (argc == 1) {
+        port = BROADCAST_PORT;
+    } else if (argc == 2) {
         port = static_cast<int>(strtol(argv[1], nullptr, 10));
+    } else {
+        std::cout << "Invalid arguments. Use -h for help." << std::endl;
+        exit(1);
     }
 
     /* File storage */
@@ -146,7 +151,7 @@ int main(int argc, char* argv[])
         /* Get the CSI data from the UDP broadcast */
         struct sockaddr_in addr_in{};
         socklen_t senderLen = sizeof(addr_in);
-        size_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
+        ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
                                   (struct sockaddr*)&addr_in, &senderLen);
 
         if (received_size > 0){

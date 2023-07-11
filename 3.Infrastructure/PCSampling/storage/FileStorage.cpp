@@ -52,7 +52,7 @@ namespace sge {
 
         // Allocate memory for the bin frame
         // if it is not allocated or the size is not enough
-        if (*bin_frame_out == nullptr || frame_size > sizeof(*bin_frame_out)) {
+        if (*bin_frame_out == nullptr || frame_size > *bin_frame_size_available_out) {
 
             // Delete the old memory
             if (*bin_frame_out != nullptr) {
@@ -64,6 +64,8 @@ namespace sge {
 
             // Update the size of the bin frame
             *bin_frame_size_available_out = frame_size;
+
+            std::cout << "Allocated new memory for bin frame, size: " << frame_size << std::endl;
         }
 
         // Assemble the bin frame
@@ -71,22 +73,36 @@ namespace sge {
         memcpy(*bin_frame_out + offset, &frame_size, sizeof(frame_size));
         offset += sizeof(frame_size);
 
+//        std::cout << "Copied frame size: " << frame_size << std::endl;
+
         memcpy(*bin_frame_out + offset, &thumbnail_size, sizeof(thumbnail_size));
         offset += sizeof(thumbnail_size);
+
+//        std::cout << "Copied thumbnail size: " << thumbnail_size << std::endl;
 
         memcpy(*bin_frame_out + offset, &csi_raw_size, sizeof(csi_raw_size));
         offset += sizeof(csi_raw_size);
 
+//        std::cout << "Copied csi raw size: " << csi_raw_size << std::endl;
+
         memcpy(*bin_frame_out + offset, &timestamp, sizeof(timestamp));
         offset += sizeof(timestamp);
+
+//        std::cout << "Copied timestamp: " << timestamp << std::endl;
 
         memcpy(*bin_frame_out + offset, thumbnail_data, thumbnail_size);
         offset += thumbnail_size;
 
+//        std::cout << "Copied thumbnail data..." << std::endl;
+
         memcpy(*bin_frame_out + offset, csi_raw_data, csi_raw_size);
         offset += csi_raw_size;
 
+//        std::cout << "Copied csi raw data..." << std::endl;
+
         memcpy(*bin_frame_out + offset, "\r\n", sizeof(u_int8_t) * 2);
+
+//        std::cout << "Copied \\r\\n" << std::endl;
 
         return frame_size;
     }
@@ -116,9 +132,6 @@ namespace sge {
 
         // The size of the left buffer
         buf_left_size = BUF_SIZE;
-
-        // Open a new file
-        open_file();
     }
 
     FileStorage::~FileStorage() {
@@ -165,18 +178,24 @@ namespace sge {
     }
 
     void FileStorage::write(long long timestamp, cv::Mat &mat,
-                            unsigned char *data, size_t size) {
+                            unsigned char *data, ssize_t size) {
 
         if (size > buf_left_size || is_time_up_to_flush()) {
+//            std::cout << "Flushing..." << std::endl;
             flush();
         }
 
+        // Write the image to the video
+        writer.write(mat);
+
         // Compress the 720p image to 320x180 grayscale image
+//        std::cout << "Compressing..." << std::endl;
         cv::Mat compressedMat;
         cv::resize(mat, compressedMat, cv::Size(320, 180));
         cv::cvtColor(compressedMat, compressedMat, cv::COLOR_BGR2GRAY);
 
         // Get the bin frame data by passing the raw data
+//        std::cout << "Generating bin frame..." << std::endl;
         size_t updated_size = generate_data_for_bin_file(
                 timestamp,
                 compressedMat.data,
@@ -190,6 +209,7 @@ namespace sge {
         int frame_size = static_cast<int>(updated_size);
 
         // Copy the bin frame data to the buffer
+//        std::cout << "Copying bin frame data to the buffer..." << std::endl;
         std::memcpy(temp_buf + (BUF_SIZE - buf_left_size),
                     bin_frame_buf,
                     bin_frame_size);

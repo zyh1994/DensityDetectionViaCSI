@@ -1,7 +1,7 @@
 import struct
 import sys
 
-from video.VideoWriter import VideoWriter
+# from video.VideoWriter import VideoWriter
 from csi.CSIConverter import CSIConverter
 
 
@@ -32,7 +32,7 @@ def data_separator(csi_raw_video: str, width: int = 320, height: int = 180, fps:
     endian_format = '<'
 
     # Create a video writer 320 x 240, 30 fps
-    csi_video = VideoWriter('csi_video.mp4', fps, width, height)
+    # csi_video = VideoWriter('csi_video.mp4', fps, width, height)
 
     # Create a file to store the csi matrix
     csi_converter = CSIConverter("csi_data.csv")
@@ -93,7 +93,7 @@ def data_separator(csi_raw_video: str, width: int = 320, height: int = 180, fps:
     f.close()
 
     # Close the video file
-    csi_video.release()
+    # csi_video.release()
 
 
 def move_files_to_folder(path: str):
@@ -119,8 +119,8 @@ def move_files_to_folder(path: str):
 
     # # move the files to the folder
     for file in os.listdir():
-        if file.endswith('.mp4'):
-            shutil.move(file, folder)
+        # if file.endswith('.mp4'):
+        #     shutil.move(file, folder)
         if file.endswith('.csv'):
             shutil.move(file, folder)
         if file.endswith('.png'):

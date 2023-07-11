@@ -77,7 +77,7 @@ namespace sge {
          * @param data
          */
         void write(long long timestamp, cv::Mat& mat,
-                   unsigned char* data, size_t size);
+                   unsigned char* data, ssize_t size);
 
         /**
          * Flush the data to the file.
