@@ -21,7 +21,7 @@
 
 #include <opencv2/opencv.hpp>
 
-//constexpr int BUF_SIZE = 512 * 1024 * 1024; // 缓存大小，单位为字节
+constexpr int BUF_SIZE = 512 * 1024 * 1024; // 缓存大小，单位为字节
 constexpr int FLUSH_INTERVAL = 60;          // 刷新间隔，单位为秒
 
 namespace sge {
@@ -29,17 +29,33 @@ namespace sge {
     class FileStorage {
 
     private:
-        // std::string basename;           // 基础文件名
-        std::ofstream csv_file;         // 文件流
+        // 文件流
+        std::ofstream bin_file;
 
-        std::chrono::system_clock::time_point last_updated; // 上次刷新时间
+        // 缓存数据
+        unsigned char* temp_buf;
+        // 交换缓存
+        unsigned char* temp_buf_swap;
+        // temporary bin frame buffer
+        unsigned char* bin_frame_buf;
+        // 互斥锁
+        std::mutex mutex; 
+        // 是否正在刷新
+        bool isFlushing;
+        // 上次刷新时间
+        std::chrono::system_clock::time_point last_updated;
+        // 写入文件的数据大小
+        int write_size;
+        // 缓存剩余空间大小
+        int buf_left_size;
+        // 二进制帧大小
+        size_t bin_frame_size;
 
     private:
         // Use the VideoWriter class object to record the video
         cv::VideoWriter writer;
 
     public:
-        // explicit FileStorage(std::string basename);
         explicit FileStorage();
 
         ~FileStorage();
@@ -55,7 +71,7 @@ namespace sge {
         void close_file();
 
         /**
-         * 写入数据
+         * Write the data to the file
          * @param timestamp
          * @param mat
          * @param data
@@ -63,19 +79,29 @@ namespace sge {
         void write(long long timestamp, cv::Mat& mat,
                    unsigned char* data, size_t size);
 
+        /**
+         * Flush the data to the file.
+         * This will be called when the time interval is reached
+         * Or the buffer is going to be full.
+         *
+         * It will call a thread to write the data to the file (write_data_by_calling_thread)
+         */
+        void flush();
+
     private:
 
         /**
-         * 判断是否需要刷新
+         * When time is up, flush the data to the file
          * @return
          */
-        bool is_time_to_flush();
+        bool is_time_up_to_flush();
 
         /**
-         * 生成新的文件名
-         * @return
+         * Use the thread to write the data to the file
+         * @param data
+         * @param size
          */
-        std::string new_filename();
+        void write_data_by_calling_thread(unsigned char* data, int size);
     };
 }
 

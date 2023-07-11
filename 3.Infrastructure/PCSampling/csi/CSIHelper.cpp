@@ -4,20 +4,8 @@
 
 #define CSI_META_LEN 23
 
-Complex     csi_matrix[3][3][114];
+//CSIComplex   csi_matrix[3][3][114];
 CSIMetaInfo  csi_meta;
-
-
-//bool is_big_endian(){
-//    unsigned int test = 0xFF000000;
-//
-//    if ( *((unsigned char*)(&test)) == 0xFF)
-//    {
-//        return true;
-//    } else {
-//        return false;
-//    }
-//}
 
 
 CSIMetaInfo* get_csi_metadata(const unsigned char* buf_addr, int cnt) {
@@ -60,154 +48,145 @@ CSIMetaInfo* get_csi_metadata(const unsigned char* buf_addr, int cnt) {
     return &csi_meta;
 }
 
-
-//int bit_convert(int data, int max_bit)
+//
+//CSIComplex get_complex_data(const unsigned char* buf,
+//                         int& bits_left,
+//                         uint32_t& current_data)
 //{
-//    if ( data & (1 << (max_bit - 1)))
+//    uint8_t bitmask = (1 << 10) - 1;
+//    int imag, real;
+//
+//    if (bits_left < 10) {
+//        uint16_t h_data = buf[0] | (buf[1] << 8);
+//        current_data += h_data << bits_left;
+//        bits_left += 16;
+//        buf += 2;
+//    }
+//
+//    imag = current_data & bitmask;
+//    imag = (imag & (1 << 9)) ? imag - (1 << 10) : imag;
+//    bits_left -= 10;
+//    current_data >>= 10;
+//
+//    if (bits_left < 10) {
+//        uint16_t h_data = buf[0] | (buf[1] << 8);
+//        current_data += h_data << bits_left;
+//        bits_left += 16;
+//        buf += 2;
+//    }
+//
+//    real = current_data & bitmask;
+//    real = (real & (1 << 9)) ? real - (1 << 10) : real;
+//    bits_left -= 10;
+//    current_data >>= 10;
+//
+//    return {real, imag};
+//}
+//
+//
+//int bit_convert(int data, int maxbit)
+//{
+//    if ( data & (1 << (maxbit - 1)))
 //    {
 //        /* negative */
-//        data -= (1 << max_bit);
+//        data -= (1 << maxbit);
 //    }
 //    return data;
 //}
-
-
-Complex get_complex_data(const unsigned char* buf,
-                         int& bits_left,
-                         uint32_t& current_data)
-{
-    uint8_t bitmask = (1 << 10) - 1;
-    int imag, real;
-
-    if (bits_left < 10) {
-        uint16_t h_data = buf[0] | (buf[1] << 8);
-        current_data += h_data << bits_left;
-        bits_left += 16;
-        buf += 2;
-    }
-
-    imag = current_data & bitmask;
-    imag = (imag & (1 << 9)) ? imag - (1 << 10) : imag;
-    bits_left -= 10;
-    current_data >>= 10;
-
-    if (bits_left < 10) {
-        uint16_t h_data = buf[0] | (buf[1] << 8);
-        current_data += h_data << bits_left;
-        bits_left += 16;
-        buf += 2;
-    }
-
-    real = current_data & bitmask;
-    real = (real & (1 << 9)) ? real - (1 << 10) : real;
-    bits_left -= 10;
-    current_data >>= 10;
-
-    return {real, imag};
-}
-
-
-int bit_convert(int data, int maxbit)
-{
-    if ( data & (1 << (maxbit - 1)))
-    {
-        /* negative */
-        data -= (1 << maxbit);
-    }
-    return data;
-}
-
-
-void fill_csi_matrix(u_int8_t* csi_addr, int nr, int nc, int num_tones, Complex(* csi_matrix)[3][114]){
-    u_int8_t k;
-    u_int8_t bits_left, nr_idx, nc_idx;
-    u_int32_t bitmask, idx, current_data, h_data;
-    int real,imag;
-    /* init bits_left
-     * we process 16 bits at a time*/
-    bits_left = 16;
-
-    /* according to the h/w, we have 10 bit resolution
-     * for each real and imag value of the csi matrix H
-     */
-    bitmask = (1 << 10) - 1;
-    idx = 0;
-    /* get 16 bits for processing */
-    h_data = csi_addr[idx++];
-    h_data += (csi_addr[idx++] << 8);
-    current_data = h_data & ((1 << 16) -1);
-
-    /* loop for every subcarrier */
-    for(k = 0;k < num_tones;k++){
-        /* loop for each tx antenna */
-        for(nc_idx = 0;nc_idx < nc;nc_idx++){
-            /* loop for each rx antenna */
-            for(nr_idx = 0;nr_idx < nr;nr_idx++){
-                /* bits number less than 10, get next 16 bits */
-                if((bits_left - 10) < 0){
-                    h_data = csi_addr[idx++];
-                    h_data += (csi_addr[idx++] << 8);
-                    current_data += h_data << bits_left;
-                    bits_left += 16;
-                }
-
-                imag = current_data & bitmask;
-                imag = bit_convert(imag, 10);
-                //printf("imag is: %d | ",imag);
-                csi_matrix[nr_idx][nc_idx][k].imag = imag;
-                //printf("imag is: %d | ",csi_matrix[nr_idx][nc_idx][k].imag);
-
-
-                bits_left -= 10;
-                current_data = current_data >> 10;
-
-                /* bits number less than 10, get next 16 bits */
-                if((bits_left - 10) < 0){
-                    h_data = csi_addr[idx++];
-                    h_data += (csi_addr[idx++] << 8);
-                    current_data += h_data << bits_left;
-                    bits_left += 16;
-                }
-
-                real = current_data & bitmask;
-                real = bit_convert(real,10);
-                //printf("real is: %d |",real);
-                csi_matrix[nr_idx][nc_idx][k].real = real;
-                //printf("real is: %d \n",csi_matrix[nr_idx][nc_idx][k].real);
-
-                bits_left -= 10;
-                current_data = current_data >> 10;
-            }
-        }
-
-    }
-}
-
-
-Complex* get_csi_matrix(unsigned char* buf, CSIMetaInfo* csi_status) {
-
-//    int bits_left = 16;
-//    uint32_t current_data = buf[0] | (buf[1] << 8);
-//    buf += 2;
 //
-//    for (uint8_t k = 0; k < csi_status->num_tones; k++) {
-//        for (uint8_t nc_idx = 0; nc_idx < csi_status->nc; nc_idx++) {
-//            for (uint8_t nr_idx = 0; nr_idx < csi_status->nr; nr_idx++) {
-//                Complex data = get_complex_data(buf, bits_left, current_data);
-//                csi_matrix[nr_idx][nc_idx][k].real = data.real;
-//                csi_matrix[nr_idx][nc_idx][k].imag = data.imag;
+//
+//void fill_csi_matrix(u_int8_t* csi_addr,
+//                     int nr, int nc, int num_tones,
+//                     CSIComplex(* csi_matrix)[3][114]){
+//    u_int8_t k;
+//    u_int8_t bits_left, nr_idx, nc_idx;
+//    u_int32_t bitmask, idx, current_data, h_data;
+//    int real,imag;
+//    /* init bits_left
+//     * we process 16 bits at a time*/
+//    bits_left = 16;
+//
+//    /* according to the h/w, we have 10 bit resolution
+//     * for each real and imag value of the csi matrix H
+//     */
+//    bitmask = (1 << 10) - 1;
+//    idx = 0;
+//    /* get 16 bits for processing */
+//    h_data = csi_addr[idx++];
+//    h_data += (csi_addr[idx++] << 8);
+//    current_data = h_data & ((1 << 16) -1);
+//
+//    /* loop for every subcarrier */
+//    for(k = 0;k < num_tones;k++){
+//        /* loop for each tx antenna */
+//        for(nc_idx = 0;nc_idx < nc;nc_idx++){
+//            /* loop for each rx antenna */
+//            for(nr_idx = 0;nr_idx < nr;nr_idx++){
+//                /* bits number less than 10, get next 16 bits */
+//                if((bits_left - 10) < 0){
+//                    h_data = csi_addr[idx++];
+//                    h_data += (csi_addr[idx++] << 8);
+//                    current_data += h_data << bits_left;
+//                    bits_left += 16;
+//                }
+//
+//                imag = current_data & bitmask;
+//                imag = bit_convert(imag, 10);
+//                //printf("imag is: %d | ",imag);
+//                csi_matrix[nr_idx][nc_idx][k].imag = imag;
+//                //printf("imag is: %d | ",csi_matrix[nr_idx][nc_idx][k].imag);
+//
+//
+//                bits_left -= 10;
+//                current_data = current_data >> 10;
+//
+//                /* bits number less than 10, get next 16 bits */
+//                if((bits_left - 10) < 0){
+//                    h_data = csi_addr[idx++];
+//                    h_data += (csi_addr[idx++] << 8);
+//                    current_data += h_data << bits_left;
+//                    bits_left += 16;
+//                }
+//
+//                real = current_data & bitmask;
+//                real = bit_convert(real,10);
+//                //printf("real is: %d |",real);
+//                csi_matrix[nr_idx][nc_idx][k].real = real;
+//                //printf("real is: %d \n",csi_matrix[nr_idx][nc_idx][k].real);
+//
+//                bits_left -= 10;
+//                current_data = current_data >> 10;
 //            }
 //        }
+//
 //    }
-
-    /* extract the CSI and fill the complex matrix */
-    unsigned char* csi_addr = buf + CSI_META_LEN + 2;
-
-    fill_csi_matrix((u_int8_t*)csi_addr,
-                    csi_status->nr,
-                    csi_status->nc,
-                    csi_status->num_tones,
-                    csi_matrix);
-
-    return &csi_matrix[0][0][0];
-};
+//}
+//
+//
+//CSIComplex* get_csi_matrix(unsigned char* buf, CSIMetaInfo* csi_status) {
+//
+////    int bits_left = 16;
+////    uint32_t current_data = buf[0] | (buf[1] << 8);
+////    buf += 2;
+////
+////    for (uint8_t k = 0; k < csi_status->num_tones; k++) {
+////        for (uint8_t nc_idx = 0; nc_idx < csi_status->nc; nc_idx++) {
+////            for (uint8_t nr_idx = 0; nr_idx < csi_status->nr; nr_idx++) {
+////                Complex data = get_complex_data(buf, bits_left, current_data);
+////                csi_matrix[nr_idx][nc_idx][k].real = data.real;
+////                csi_matrix[nr_idx][nc_idx][k].imag = data.imag;
+////            }
+////        }
+////    }
+//
+//    /* extract the CSI and fill the complex matrix */
+//    unsigned char* csi_addr = buf + CSI_META_LEN + 2;
+//
+//    fill_csi_matrix((u_int8_t*)csi_addr,
+//                    csi_status->nr,
+//                    csi_status->nc,
+//                    csi_status->num_tones,
+//                    csi_matrix);
+//
+//    return &csi_matrix[0][0][0];
+//};

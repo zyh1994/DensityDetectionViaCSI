@@ -83,10 +83,10 @@ void release_params(VideoCapture& cap, int fd, CSIMetaInfo* csi) {
 
 
 /**
- * @brief Get the current time in milliseconds
+ * @brief Get the current time in current_ms
  * @return
  */
-long long milliseconds() {
+long long current_ms() {
     using namespace std::chrono;
     return duration_cast<std::chrono::milliseconds>(
             system_clock::now().time_since_epoch()).count();
@@ -140,22 +140,22 @@ int main(int argc, char* argv[])
     while(!quit) {
 
         /* Get the video frame */
-        Mat frame;
-        cap >> frame;
+        Mat cv_frame;
+        cap >> cv_frame;
 
         /* Get the CSI data from the UDP broadcast */
         struct sockaddr_in addr_in{};
         socklen_t senderLen = sizeof(addr_in);
-        long recvd = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
-                              (struct sockaddr*)&addr_in, &senderLen);
+        size_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
+                                  (struct sockaddr*)&addr_in, &senderLen);
 
-        if (recvd > 0){
+        if (received_size > 0){
             /* Write the CSI status to the file */
-            fs.write(milliseconds(), frame, temp_buf, recvd);
+            fs.write(current_ms(), cv_frame, temp_buf, received_size);
         }
 
         /* Display the video frame */
-        imshow("Real-time VideoCapture", frame);
+        imshow("Real-time VideoCapture", cv_frame);
 
         /* If the user presses the ESC key, quit the program */
         if (waitKey(1) == 27) {

@@ -7,11 +7,11 @@
 
 #include <cstdlib>
 
-typedef struct
-{
-    int real;
-    int imag;
-} Complex;
+// typedef struct
+// {
+//     int real;
+//     int imag;
+// } CSIComplex;
 
 typedef struct
 {
@@ -42,6 +42,6 @@ typedef struct
 
 extern CSIMetaInfo*  get_csi_metadata(const unsigned char* buf, int buf_size);
 
-extern Complex* get_csi_matrix(unsigned char* buf, CSIMetaInfo* csi_status);
+// extern CSIComplex* get_csi_matrix(unsigned char* buf, CSIMetaInfo* csi_status);
 
 #endif //DENSITYDETECTION_CSIHELPER_H
