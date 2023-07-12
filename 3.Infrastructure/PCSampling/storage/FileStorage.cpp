@@ -132,6 +132,9 @@ namespace sge {
 
         // The size of the left buffer
         buf_left_size = BUF_SIZE;
+
+        // Open the files
+//        open_file();
     }
 
     FileStorage::~FileStorage() {
@@ -149,20 +152,20 @@ namespace sge {
             bin_file.close();
         }
 
-        std::cout << "Opening new file..." << std::endl;
-
         // 生成新的文件名
         auto filename = generate_new_filename();
 
         // 创建新的文件
         bin_file.open(filename + ".bin",
                       std::ios::binary | std::ios::app);
+//        std::cout << "Opened file: " << filename << ".bin" << std::endl;
 
         // Open new video writer for a new mp4 file
-        writer = VideoHelper::openVideoWriter(filename + ".avi",
-                                              get_fourcc(VideoTypeFourCC::MPEG_4),
-                                              30,
-                                              cv::Size(1280, 720));
+//        writer = VideoHelper::openVideoWriter(filename + ".avi",
+//                                              get_fourcc(VideoTypeFourCC::MPEG_4),
+//                                              30,
+//                                              cv::Size(1280, 720));
+//        std::cout << "Opened file: " << filename << ".avi" << std::endl;
     }
 
     void FileStorage::close_file() {
@@ -170,11 +173,11 @@ namespace sge {
             bin_file.close();
         }
 
-        if (writer.isOpened()) {
-            VideoHelper::closeVideoWriter(writer);
-        }
+//        if (writer.isOpened()) {
+//            VideoHelper::closeVideoWriter(writer);
+//        }
 
-        std::cout << "Closed file." << std::endl;
+//        std::cout << "Closed file." << std::endl;
     }
 
     void FileStorage::write(long long timestamp, cv::Mat &mat,
@@ -186,7 +189,7 @@ namespace sge {
         }
 
         // Write the image to the video
-        writer.write(mat);
+//        writer.write(mat);
 
         // Compress the 720p image to 320x180 grayscale image
 //        std::cout << "Compressing..." << std::endl;
