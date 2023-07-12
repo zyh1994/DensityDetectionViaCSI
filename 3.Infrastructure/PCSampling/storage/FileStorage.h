@@ -51,6 +51,10 @@ namespace sge {
         // 二进制帧大小
         size_t bin_frame_size;
 
+        // Use a vector to store the video frames
+        std::vector<cv::Mat> video_frames;
+        std::vector<cv::Mat> video_frames_swap;
+
     private:
         // Use the VideoWriter class object to record the video
         cv::VideoWriter writer;
@@ -63,12 +67,12 @@ namespace sge {
         /**
          * 打开文件
          */
-        void open_file();
+        void open_files();
 
         /**
          * 关闭文件
          */
-        void close_file();
+        void close_files();
 
         /**
          * Write the data to the file
@@ -101,7 +105,8 @@ namespace sge {
          * @param data
          * @param size
          */
-        void write_data_by_calling_thread(unsigned char* data, int size);
+        void write_data_by_calling_thread(unsigned char* data, int size,
+                                          std::vector<cv::Mat>& vid_frames);
     };
 }
 

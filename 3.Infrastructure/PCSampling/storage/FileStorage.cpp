@@ -134,11 +134,11 @@ namespace sge {
         buf_left_size = BUF_SIZE;
 
         // Open the files
-//        open_file();
+//        open_files();
     }
 
     FileStorage::~FileStorage() {
-        close_file();
+        close_files();
 
         delete[] temp_buf;
         delete[] temp_buf_swap;
@@ -147,37 +147,36 @@ namespace sge {
         std::cout << "FileStorage destroyed." << std::endl;
     }
 
-    void FileStorage::open_file() {
+    void FileStorage::open_files() {
         if (bin_file.is_open()) {
             bin_file.close();
         }
 
         // 生成新的文件名
-        auto filename = generate_new_filename();
+        auto base_name = generate_new_filename();
 
         // 创建新的文件
-        bin_file.open(filename + ".bin",
+        bin_file.open(base_name + ".bin",
                       std::ios::binary | std::ios::app);
-//        std::cout << "Opened file: " << filename << ".bin" << std::endl;
+        std::cout << "Opened file: " << base_name << ".bin" << std::endl;
 
-        // Open new video writer for a new mp4 file
-//        writer = VideoHelper::openVideoWriter(filename + ".avi",
-//                                              get_fourcc(VideoTypeFourCC::MPEG_4),
-//                                              30,
-//                                              cv::Size(1280, 720));
-//        std::cout << "Opened file: " << filename << ".avi" << std::endl;
+        // Create a new video writer
+        writer = VideoHelper::openVideoWriter(base_name + ".avi",
+                                              get_fourcc(VideoTypeFourCC::MPEG_4),
+                                              30, cv::Size(1280, 720));
+        std::cout << "Opened file: " << base_name << ".avi" << std::endl;
     }
 
-    void FileStorage::close_file() {
+    void FileStorage::close_files() {
         if (bin_file.is_open()) {
             bin_file.close();
         }
 
-//        if (writer.isOpened()) {
-//            VideoHelper::closeVideoWriter(writer);
-//        }
+        if (writer.isOpened()) {
+            writer.release();
+        }
 
-//        std::cout << "Closed file." << std::endl;
+        std::cout << "Closed files." << std::endl;
     }
 
     void FileStorage::write(long long timestamp, cv::Mat &mat,
@@ -188,8 +187,8 @@ namespace sge {
             flush();
         }
 
-        // Write the image to the video
-//        writer.write(mat);
+        // Copy a new video frame and put it into the video vector
+        video_frames.push_back(mat.clone());
 
         // Compress the 720p image to 320x180 grayscale image
 //        std::cout << "Compressing..." << std::endl;
@@ -226,17 +225,30 @@ namespace sge {
         return elapsedSeconds >= FLUSH_INTERVAL;
     }
 
-    void FileStorage::write_data_by_calling_thread(unsigned char *data, int size) {
+    void FileStorage::write_data_by_calling_thread(
+            unsigned char *data,
+            int size,
+            std::vector<cv::Mat>& vid_frames) {
 
         // Write the data to the file
-        open_file();
+        open_files();
         mutex.lock();
+
+        // Write the bin file
         if (bin_file.is_open()) {
             bin_file.write(reinterpret_cast<char*>(data), size);
-
         }
+
+        // Write the video frames to the video file
+        for (auto &frame : vid_frames) {
+            writer.write(frame);
+        }
+
+        // Clear the video frames
+        video_frames.clear();
+
         mutex.unlock();
-        close_file();
+        close_files();
 
         // Update the last timestamp
         last_updated = std::chrono::system_clock::now();
@@ -262,11 +274,15 @@ namespace sge {
         // Swap the buffers
         std::swap(temp_buf, temp_buf_swap);
 
+        // Swap the vector of video frames
+        std::swap(video_frames, video_frames_swap);
+
         // We can write the data to the file
         auto flushThread = std::thread(&FileStorage::write_data_by_calling_thread,
                                        this,
                                        temp_buf_swap,
-                                       write_size);
+                                       write_size,
+                                       video_frames_swap);
 
         // Reset the buffer
         buf_left_size = BUF_SIZE;
