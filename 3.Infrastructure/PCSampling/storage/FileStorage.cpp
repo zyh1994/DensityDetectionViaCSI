@@ -226,9 +226,7 @@ namespace sge {
     }
 
     void FileStorage::write_data_by_calling_thread(
-            unsigned char *data,
-            int size,
-            std::vector<cv::Mat>& vid_frames) {
+            unsigned char *data, int size) {
 
         // Write the data to the file
         open_files();
@@ -240,12 +238,12 @@ namespace sge {
         }
 
         // Write the video frames to the video file
-        for (auto &frame : vid_frames) {
+        for (auto &frame : video_frames_swap) {
             writer.write(frame);
         }
 
         // Clear the video frames
-        video_frames.clear();
+        video_frames_swap.clear();
 
         mutex.unlock();
         close_files();
@@ -281,8 +279,7 @@ namespace sge {
         auto flushThread = std::thread(&FileStorage::write_data_by_calling_thread,
                                        this,
                                        temp_buf_swap,
-                                       write_size,
-                                       video_frames_swap);
+                                       write_size);
 
         // Reset the buffer
         buf_left_size = BUF_SIZE;

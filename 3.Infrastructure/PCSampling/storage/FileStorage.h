@@ -79,6 +79,7 @@ namespace sge {
          * @param timestamp
          * @param mat
          * @param data
+         * @param size
          */
         void write(long long timestamp, cv::Mat& mat,
                    unsigned char* data, ssize_t size);
@@ -105,8 +106,8 @@ namespace sge {
          * @param data
          * @param size
          */
-        void write_data_by_calling_thread(unsigned char* data, int size,
-                                          std::vector<cv::Mat>& vid_frames);
+        void write_data_by_calling_thread(unsigned char* data,
+                                          int size);
     };
 }
 
