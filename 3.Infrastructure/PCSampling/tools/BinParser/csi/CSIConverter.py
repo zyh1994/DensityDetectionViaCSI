@@ -26,7 +26,7 @@ class CSIStatus:
 
     def __init__(self):
         self.timestamp = None
-        self.csi_length = None
+        self.csi_length = None      
         self.channel_number = None
         self.buffer_length = None
         self.payload_length = None
