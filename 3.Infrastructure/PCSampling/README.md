@@ -135,16 +135,16 @@ tools/CSVDataReplay$ python3 replayer.py path/to/csi_202307021020
 
 使用`BinParser`解析`BIN`文件后，会得到有关CSI信息的`CSV`文件。其中各关键信息定义如下
 
-* timestamp	数据被采集的时间戳
-* physical_error 数值为0时，表示所记载的数据正确
-* channel_bandwidth 数值为0的时候表示带宽为20MHz；数值为1的时候表示带宽40MHz
-* channel_number 无线信道，单位Hz
-* transmission_rate 发送率
-* number_of_tones	子载波数
-* receiver_antennas	接收天线数
-* transmitter_antennas	发送天线数
-* received_signal_strength RSSI强度
-* rssi_antenna_0 RSSI 0号链路天线的信号强度
-* rssi_antenna_1 RSSI 1号链路天线的信号强度
-* rssi_antenna_2 RSSI 2号链路天线的信号强度
-* csi_matrix CSI数据矩阵，通常是一个3x3x56的三维矩阵，以Json格式存储，解析后三维数据的访问方式 csi_matrix[rx_idx][tx_idx][sub_idx]
+* **timestamp** 数据被采集的时间戳
+* **physical_error** 数值为0时，表示所记载的数据正确
+* **channel_bandwidth** 数值为0的时候表示带宽为20MHz；数值为1的时候表示带宽40MHz
+* **channel_number** 无线信道，单位Hz
+* **transmission_rate** 发送率
+* **number_of_tones** 子载波数
+* **receiver_antennas** 接收天线数
+* **transmitter_antennas** 发送天线数
+* **received_signal_strength** RSSI强度
+* **rssi_antenna_0** RSSI 0号链路天线的信号强度
+* **rssi_antenna_1** RSSI 1号链路天线的信号强度
+* **rssi_antenna_2** RSSI 2号链路天线的信号强度
+* **csi_matrix** CSI数据矩阵，通常是一个3x3x56的三维矩阵，以Json格式存储，解析后三维数据的访问方式 csi_matrix[rx_idx][tx_idx][sub_idx]
