@@ -55,15 +55,15 @@ void setup_udp_broadcast(int *socket_fd, struct sockaddr_in *server_addr, const 
     }
 
     /* Set the socket as non-blocking */
-    int flags = fcntl(sockfd, F_GETFL, 0);
+    int flags = fcntl(*socket_fd, F_GETFL, 0);
     if (flags == -1) {
         perror("Failed to get socket flags");
-        return 1;
+        exit(1);
     }
 
-    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
+    if (fcntl(*socket_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
         perror("Failed to set socket as non-blocking");
-        return 1;
+        exit(1);
     }
 
     /* Allow broadcast */
@@ -83,8 +83,8 @@ void setup_udp_broadcast(int *socket_fd, struct sockaddr_in *server_addr, const 
 
     /* Convert IP address to integer */
     if (inet_pton(AF_INET, ip_addr, &(server_addr->sin_addr)) <= 0) {
-        std::cerr << "Invalid IP address." << std::endl;
-        return 1;
+        perror("Invalid IP address.");
+        exit(1);
     }
 }
 
