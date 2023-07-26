@@ -5,8 +5,8 @@ import cv2
 import time
 
 from csi.CSVDataLoader import load_csi_from_csv
-from plot.MatrixPreprocessor import preprocess_matrix, db_matrix
 from plot.LinearSignalChart import gen_linear_chart
+from utilities.MatrixPreprocessor import preprocess_matrix, db_matrix
 from utilities.ImageLoader import load_frames_from_folder
 
 
@@ -32,18 +32,6 @@ def time_window(start_frame, end_frame, frames_list):
         sys.exit(1)
 
     return start_frame, end_frame
-
-
-def load_csi(folder_path: str):
-    csi_file_path = os.path.join(folder_path, "csi_data.csv")
-    csi_info_list = load_csi_from_csv(csi_file_path)
-    if len(csi_info_list) == 0:
-        print("The csi_info_list is empty!")
-        sys.exit(1)
-    else:
-        print("Load the csi file successfully!")
-
-    return csi_info_list
 
 
 def draw_charts(ax, data, frame_ind, timestamp, image):
@@ -95,9 +83,15 @@ def main(folder_path: str, start_frame: int = 0, end_frame: int = 0):
 
     # load the image list
     frames_list = load_frames_from_folder(os.path.join(folder_path, "png"))
+    if frames_list is None or len(frames_list) == 0:
+        print("The frames_list is empty!")
+        sys.exit(1)
 
     # load the csi data from the csv file
-    csi_info_list = load_csi(folder_path)
+    csi_info_list = load_csi_from_csv(os.path.join(folder_path, "csi_data.csv"))
+    if csi_info_list is None or len(csi_info_list) == 0:
+        print("The csi_info_list is empty!")
+        sys.exit(1)
     
     # prepare the chart
     ax = prepare_chart()

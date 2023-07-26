@@ -1,6 +1,6 @@
 import numpy as np
 
-from plot.MatrixPreprocessor import db_matrix, preprocess_matrix
+from utilities.MatrixPreprocessor import db_matrix, preprocess_matrix
 
 
 def gen_heatmap_matrix(csi_data: list):
