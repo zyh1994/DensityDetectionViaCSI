@@ -1,13 +1,13 @@
 import os
 import sys
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.widgets import Slider
 
 from csi.CSVDataLoader import load_csi_from_csv
-from utilities.MatrixPreprocessor import preprocess_matrix, amplitude_matrix, db_matrix
 from filter.KalmanFilter import kalman_filter
+from utilities.MatrixPreprocessor import preprocess_matrix, db_matrix
 
 
 def apply_kalman_filter(raw_signal):

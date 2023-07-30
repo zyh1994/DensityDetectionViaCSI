@@ -63,6 +63,9 @@ class CSIDataFromCSV(CSIBaseData):
             self.received_signal_strength, self.rssi_antenna_0, self.rssi_antenna_1,
             self.rssi_antenna_2, self.csi_matrix)
 
+    def __copy__(self):
+        copied = CSIDataFromCSV.__new__(CSIDataFromCSV)
+
 
 def load_csi_from_csv(csi_file: str):
     csi_data = []
