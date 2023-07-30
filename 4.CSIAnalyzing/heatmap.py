@@ -39,7 +39,7 @@ def gen_heatmap_matrix(csi_data: list):
 
     return matrix
 
-def main(folder_path: str):
+def show_map(folder_path: str, save = False):
     # if the folder path is not valid, exit the program
     if not os.path.isdir(folder_path):
         print("The folder path is not valid!")
@@ -78,12 +78,23 @@ def main(folder_path: str):
     ax.set_title('CSI Heatmap')
 
     # show the heat map
-    plt.show()
+    if save:
+        plt.savefig(os.path.join(folder_path, "heatmap.png"))
+    else:
+        plt.show()
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print("Usage: python3 heatmap.py <folder_path>")
+    if len(sys.argv) < 2:
+        print("Usage: python3 heatmap.py <folder_path> <other options>")
         sys.exit(1)
 
-    main(sys.argv[1])
+    if sys.argv[1] == '-h':
+        print("Usage: python3 heatmap.py <folder_path> <other options>")
+        sys.exit(1)
+    
+    if len(sys.argv) == 2:
+        show_map(sys.argv[1])
+
+    if len(sys.argv) == 3 and sys.argv[2] == '-s':
+        show_map(sys.argv[1], True)
