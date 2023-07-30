@@ -148,6 +148,16 @@ int main(int argc, char* argv[])
         Mat cv_frame;
         cap >> cv_frame;
 
+        /* If the frame is empty, skip it */
+        if (cv_frame.empty()) {
+            continue;
+        }
+
+        /* If the frame is not 720p, resize it */
+        if (cv_frame.rows != 720 || cv_frame.cols != 1280) {
+            resize(cv_frame, cv_frame, Size(1280, 720));
+        }
+
         /* Get the CSI data from the UDP broadcast */
         struct sockaddr_in addr_in{};
         socklen_t senderLen = sizeof(addr_in);

@@ -18,7 +18,6 @@ def data_separator(csi_raw_video: str, width: int = 320, height: int = 180, fps:
     # Move the file pointer to the end of the file to get the length of the file
     f.seek(0, 2)
     len = f.tell()
-    print('file length is: {}'.format(len))
 
     # Move the file pointer back to the beginning of the file to start reading the file
     f.seek(0, 0)
@@ -106,18 +105,19 @@ def move_files_to_folder(path: str):
     # Remove the file extension from the name
     folder = os.path.splitext(file_name)[0]
 
-    # create a folder to store the files
+    # Create a folder under the same directory as the file
+    folder = os.path.join(os.path.dirname(path), folder)
+
+    # Create a folder to store the files
     if not os.path.exists(folder):
         os.mkdir(folder)
 
-    # pictures folder
+    # Create a folder to store the pictures
     pictures_folder = os.path.join(folder, 'png')
     if not os.path.exists(pictures_folder):
         os.mkdir(pictures_folder)
 
-    print('folder is: {}'.format(pictures_folder))
-
-    # move the files to the folder
+    # Move the files to the folder
     for file in os.listdir():
         if file.endswith('.mp4'):
             shutil.move(file, folder)
@@ -126,8 +126,15 @@ def move_files_to_folder(path: str):
         if file.endswith('.png'):
             shutil.move(file, pictures_folder)
     
-    # move the bin file to the folder
+    # Move the bin file to the folder
     shutil.move(path, folder)
+
+    # Move the related avi file to the folder
+    if os.path.exists(os.path.splitext(path)[0] + '.avi'):
+        shutil.move(os.path.splitext(path)[0] + '.avi', folder)
+
+    # Print out the folder name
+    print("The files are moved to the folder: {}".format(folder))
 
 if __name__ == '__main__':
 
