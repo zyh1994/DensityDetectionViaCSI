@@ -1,30 +1,13 @@
 import os
 import sys
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.widgets import Slider
 
+from common import apply_kalman_filter
 from csi.CSVDataLoader import load_csi_from_csv
-from utilities.MatrixPreprocessor import preprocess_matrix, amplitude_matrix, db_matrix
-from filter.KalmanFilter import kalman_filter
-
-
-def apply_kalman_filter(raw_signal):
-    # Define the parameters of Kalman filter
-    initial_state_estimate = np.array([0.0])  # 初始状态估计值
-    initial_estimate_covariance = np.eye(1)  # 初始状态估计的协方差矩阵
-    process_noise_covariance = np.diag([0.01])  # 过程噪音协方差矩阵
-    measurement_noise_covariance = 0.04  # 测量噪音的方差
-
-    # Using Kalman filter to filter the raw signal
-    filtered_signal = kalman_filter(raw_signal,
-                                    initial_state_estimate,
-                                    initial_estimate_covariance,
-                                    process_noise_covariance,
-                                    measurement_noise_covariance)
-
-    return filtered_signal
+from utilities.MatrixPreprocessor import preprocess_matrix, db_matrix
 
 
 def using_kalman_filter(csi_db_matrix):
