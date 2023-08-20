@@ -25,17 +25,22 @@ private:
     int taskHead = 0;
     int taskTail = 0;
 
+    bool isThreadPoolEnd;
+
     pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_cond_t cond_var = PTHREAD_COND_INITIALIZER;
     pthread_t threads[THREAD_POOL_SIZE]{};
 
 public:
+    ThreadPool();
+
     void cleanup_thread_pool();
 
     void init_thread_pool();
 
     void enqueue_task(void (*function)(void* arg), void* arg);
-};
 
+    void *thread_func(void *arg);
+};
 
 #endif //PC_SAMPLING_THREADPOOL_H

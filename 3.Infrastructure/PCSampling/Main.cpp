@@ -72,7 +72,8 @@ void init_params(int port, VideoCapture& cap) {
  */
 void release_params(VideoCapture& cap, int fd, CSIMetaInfo* csi) {
     /* Close the video capture */
-    sge::VideoHelper::closeCamera(cap);
+    // sge::VideoHelper::closeCamera(cap);
+    VideoHelper::closeCamera(cap);
 
     /* Close the socket */
     close(fd);
@@ -127,10 +128,12 @@ int main(int argc, char* argv[])
     }
 
     /* File filesystem */
-    sge::FileStorage fs;
+    // sge::FileStorage fs;
+    FileStorage fs;
 
     /* Create the video capture */
-    VideoCapture cap = sge::VideoHelper::openCamera();
+    // VideoCapture cap = sge::VideoHelper::openCamera();
+     VideoCapture cap = VideoHelper::openCamera();
 
     /* Set the camera resolution */
     sge::VideoHelper::setCameraResolution(cap, 1280, 720);

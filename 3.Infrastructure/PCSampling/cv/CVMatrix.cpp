@@ -10,7 +10,7 @@
 // memcpy
 #include <cstring>
 
-namespace sge {
+// namespace sge {
 
     char* CVMatrix::mat2bytes(cv::Mat &mat) {
 
@@ -35,4 +35,4 @@ namespace sge {
         // Perform deep copy to detach the data from the original vector
         return mat.clone();
     }
-};
+// };

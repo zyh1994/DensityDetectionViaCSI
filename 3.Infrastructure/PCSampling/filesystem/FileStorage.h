@@ -24,7 +24,7 @@
 constexpr int BUF_SIZE = 512 * 1024 * 1024; // 缓存大小，单位为字节
 constexpr int FLUSH_INTERVAL = 60;          // 刷新间隔，单位为秒
 
-namespace sge {
+// namespace sge {
 
     class FileStorage {
 
@@ -109,6 +109,6 @@ namespace sge {
         void write_data_by_calling_thread(unsigned char* data,
                                           int size);
     };
-}
+// }
 
 #endif //PCSAMPLING_FILESTORAGE_H

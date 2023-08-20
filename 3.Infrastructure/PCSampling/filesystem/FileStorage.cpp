@@ -9,9 +9,10 @@
 #include <cstdlib>
 
 
-namespace sge {
+// namespace sge {
 
     std::string generate_new_filename() {
+        
         // 获取当前时间
         std::time_t now = std::time(nullptr);
 
@@ -288,4 +289,4 @@ namespace sge {
         // Detach the thread
         flushThread.detach();
     }
-}
+// }

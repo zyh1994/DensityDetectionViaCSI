@@ -4,19 +4,16 @@
 
 #include "ThreadPool.h"
 
-
+#include <iostream>
 #include <pthread.h>
 #include <unistd.h>
 
-#define THREAD_POOL_SIZE 5
-#define MAX_TASKS 20
 
+ThreadPool::ThreadPool() {
+    isThreadPoolEnd = true;
+}
 
-
-
-
-
-void* thread_func(void* arg) {
+void* ThreadPool::thread_func(void* arg) {
     while (1) {
         pthread_mutex_lock(&mutex);
 
@@ -34,7 +31,13 @@ void* thread_func(void* arg) {
     }
 }
 
-void enqueue_task(void (*function)(void* arg), void* arg) {
+void ThreadPool::init_thread_pool() {
+    for (unsigned long & thread : threads) {
+        pthread_create(&thread, NULL, thread_func, NULL);
+    }
+}
+
+void ThreadPool::enqueue_task(void (*function)(void* arg), void* arg) {
     pthread_mutex_lock(&mutex);
 
     taskQueue[taskTail].function = function;
@@ -46,35 +49,31 @@ void enqueue_task(void (*function)(void* arg), void* arg) {
     pthread_mutex_unlock(&mutex);
 }
 
-void init_thread_pool() {
-    for (int i = 0; i < THREAD_POOL_SIZE; i++) {
-        pthread_create(&threads[i], NULL, thread_func, NULL);
+
+void ThreadPool::cleanup_thread_pool() {
+    for (unsigned long thread : threads) {
+        pthread_cancel(thread);
+        pthread_join(thread, nullptr);
     }
 }
 
-void cleanup_thread_pool() {
-    for (int i = 0; i < THREAD_POOL_SIZE; i++) {
-        pthread_cancel(threads[i]);
-        pthread_join(threads[i], NULL);
-    }
-}
+//void sample_task(void* arg) {
+//    printf("Executing Task %d\n", *(int*)arg);
+//    sleep(1);
+//}
 
-void sample_task(void* arg) {
-    printf("Executing Task %d\n", *(int*)arg);
-    sleep(1);
-}
+//int main() {
+//    init_thread_pool();
+//
+//    for (int i = 0; i < 10; i++) {
+//        int* arg = malloc(sizeof(int));
+//        *arg = i;
+//        enqueue_task(sample_task, arg);
+//    }
+//
+//    sleep(12); // Give it some time to execute the tasks
+//
+//    cleanup_thread_pool();
+//    return 0;
+//}
 
-int main() {
-    init_thread_pool();
-
-    for (int i = 0; i < 10; i++) {
-        int* arg = malloc(sizeof(int));
-        *arg = i;
-        enqueue_task(sample_task, arg);
-    }
-
-    sleep(12); // Give it some time to execute the tasks
-
-    cleanup_thread_pool();
-    return 0;
-}

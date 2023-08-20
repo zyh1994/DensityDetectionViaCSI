@@ -9,7 +9,7 @@
 using namespace cv;
 using namespace std;
 
-namespace sge {
+// namespace sge {
 
     int get_fourcc(VideoTypeFourCC fourcc) {
         switch (fourcc)
@@ -127,5 +127,5 @@ namespace sge {
 #endif
     }
 
-};
+// };
 
