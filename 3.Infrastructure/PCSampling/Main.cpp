@@ -15,10 +15,10 @@
 
 using namespace cv;
 
-int             quit;               // quit flag
-int             sock_fd;            // socket file descriptor
-unsigned char   temp_buf[BUF_SIZE]; // buffer for storing the received data
-CSIMetaInfo*     csi_status;         // CSI status
+int                 quit;               // quit flag
+int                 sock_fd;            // socket file descriptor
+unsigned char       temp_buf[BUF_SIZE]; // buffer for storing the received data
+CSIMetaInfo*        csi_status;         // CSI status
 
 
 /**
@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    /* File storage */
+    /* File filesystem */
     sge::FileStorage fs;
 
     /* Create the video capture */

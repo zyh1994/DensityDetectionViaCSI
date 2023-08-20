@@ -7,12 +7,6 @@
 
 #include <cstdlib>
 
-// typedef struct
-// {
-//     int real;
-//     int imag;
-// } CSIComplex;
-
 typedef struct
 {
     u_int64_t tstamp;         /* h/w assigned time stamp */
