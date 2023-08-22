@@ -2,12 +2,11 @@ import csv
 import json
 import numpy as np
 
-
 from csi.BaseData import CSIBaseData
 
 
 class CSIDataFromCSV(CSIBaseData):
-
+    
     """
     timestamp: 时间戳
     csi_length: CSI的长度
@@ -29,7 +28,6 @@ class CSIDataFromCSV(CSIBaseData):
     """
 
     def __init__(self, row: str):
-
         super().__init__()
 
         # get the CSI status
@@ -54,21 +52,22 @@ class CSIDataFromCSV(CSIBaseData):
         # print out the csi matrix shape
         # print("csi matrix shape: {}".format(self.csi_matrix.shape))
 
-    
     def __str__(self):
         return "timestamp {}, csi_length {}, channel_number {}, buffer_length {}, payload_length {}, " \
-                "physical_error {}, noise_level {}, transmission_rate {}, channel_bandwidth {}, " \
-                "number_of_tones {}, receiver_antennas {}, transmitter_antennas {}, received_signal_strength {}, " \
-                "rssi_antenna_0 {}, rssi_antenna_1 {}, rssi_antenna_2 {}, csi_matrix {}".format(
+               "physical_error {}, noise_level {}, transmission_rate {}, channel_bandwidth {}, " \
+               "number_of_tones {}, receiver_antennas {}, transmitter_antennas {}, received_signal_strength {}, " \
+               "rssi_antenna_0 {}, rssi_antenna_1 {}, rssi_antenna_2 {}, csi_matrix {}".format(
             self.timestamp, self.csi_length, self.channel_number, self.buffer_length, self.payload_length,
             self.physical_error, self.noise_level, self.transmission_rate, self.channel_bandwidth,
             self.number_of_tones, self.receiver_antennas, self.transmitter_antennas,
             self.received_signal_strength, self.rssi_antenna_0, self.rssi_antenna_1,
             self.rssi_antenna_2, self.csi_matrix)
 
+    def __copy__(self):
+        copied = CSIDataFromCSV.__new__(CSIDataFromCSV)
+
 
 def load_csi_from_csv(csi_file: str):
-
     csi_data = []
 
     with open(csi_file, "r") as f:
