@@ -58,3 +58,6 @@
 */build/
 */release/
 */debug/
+
+
+3.Infrastructure/PCSampling/cmake-build-debug-wsl/*
