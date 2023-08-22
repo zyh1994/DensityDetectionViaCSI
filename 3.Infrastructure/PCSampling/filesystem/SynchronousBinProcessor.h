@@ -32,7 +32,8 @@ private:
     std::mutex mutex_lock;
 
     // flag for continuing the loop
-    bool is_continue;
+    bool b_thread_running;
+    bool b_thread_end;
 
     // time recorder for last time flashed
     std::chrono::system_clock::time_point last_updated;
@@ -42,8 +43,10 @@ private:
     size_t buf_data_swap;
 
     // backend thread
-    std::thread thread_backend_saver;
+    std::thread t_backend_saver;
 
+    // thread condition variable
+//    std::condition_variable cv;
 public:
 
     SynchronousBinProcessor();
@@ -59,7 +62,7 @@ public:
     void append_data(long long timestamp, char* buf, size_t data_size);
 
 private:
-    void save_data_to_bin(std::vector<cv::Mat> cv_frames, char* ptr_raw, size_t raw_size);
+    void save_data_to_bin();
 };
 
 
