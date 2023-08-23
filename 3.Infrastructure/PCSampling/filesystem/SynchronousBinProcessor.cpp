@@ -3,12 +3,10 @@
 //
 
 #include "SynchronousBinProcessor.h"
+#include "FileSystemUtils.h"
+
 
 SynchronousBinProcessor::SynchronousBinProcessor() {
-
-    // buffer for csi raw data
-    bin_buf_main = new char[BUF_SIZE];
-    bin_buf_swap = new char[BUF_SIZE];
 
     // flag for continuing the loop
     b_thread_running = b_thread_end = false;
@@ -17,7 +15,15 @@ SynchronousBinProcessor::SynchronousBinProcessor() {
     last_updated = std::chrono::system_clock::now();
 
     // reset the count of written data to be zero
-    buf_data_swap = buf_data_size = 0;
+    cv_buff_size = cv_swap_size = 0;
+    csi_buff_size = csi_swap_size = 0;
+
+    // malloc the buffer
+    cv_buff = new char[BUF_SIZE];
+    cv_swap = new char[BUF_SIZE];
+
+    csi_buff = new char[BUF_SIZE];
+    csi_swap = new char[BUF_SIZE];
 
     // start the backend thread
     t_backend_saver = std::thread(&SynchronousBinProcessor::save_data_to_bin, this);
@@ -25,6 +31,7 @@ SynchronousBinProcessor::SynchronousBinProcessor() {
     // detach the thread
     t_backend_saver.detach();
 }
+
 
 SynchronousBinProcessor::~SynchronousBinProcessor() {
 
@@ -36,29 +43,89 @@ SynchronousBinProcessor::~SynchronousBinProcessor() {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    // release the memory
-    delete bin_buf_main;
-    delete bin_buf_swap;
+    // free the buffer
+    delete[] cv_buff;
+    delete[] cv_swap;
+    delete[] csi_buff;
+    delete[] csi_swap;
 
     // close the file
     close_file();
 }
 
-void SynchronousBinProcessor::open_file() {
 
+void SynchronousBinProcessor::open_file() {
+    if (ofs.is_open()) {
+        ofs.close();
+    }
+
+    // generate the filename
+    auto filename = gen_filename();
+
+    // open the file
+    ofs.open(filename, std::ios::binary | std::ios::out);
+
+    // check if the file is opened
+    if (!ofs.is_open()) {
+        std::cout << "Error: cannot open file " << filename << std::endl;
+        exit(-1);
+    } else {
+        std::cout << "File " << filename << " opened successfully!" << std::endl;
+    }
 }
+
 
 void SynchronousBinProcessor::close_file() {
-
+    if (ofs.is_open()) {
+        ofs.close();
+    }
 }
 
-void SynchronousBinProcessor::append_data(long long int timestamp, cv::Mat &mat) {
 
+void SynchronousBinProcessor::append_data(cv::Mat &mat) {
+
+    // assign the information to the struct
+    OpenCVFrameInfo mat_info{};
+    mat_info.frame_size = sizeof(OpenCVFrameInfo) + mat.total() * mat.elemSize();
+    mat_info.raw_size = mat.total() * mat.elemSize();;
+    mat_info.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+    mat_info.width = mat.cols;
+    mat_info.height = mat.rows;
+    mat_info.channels = mat.channels();
+
+    // lock the mutex with unique_lock
+    std::unique_lock<std::mutex> lock(mutex_lock);
+
+    // copy the data into the buffer
+    memcpy(cv_buff + cv_buff_size, &mat_info, sizeof(OpenCVFrameInfo));
+    memcpy(cv_buff + cv_buff_size + sizeof(OpenCVFrameInfo), mat.data, mat_info.raw_size);
+
+    // update the buffer size
+    cv_buff_size += sizeof(OpenCVFrameInfo) + mat_info.raw_size;
 }
 
-void SynchronousBinProcessor::append_data(long long int timestamp, char *buf, size_t data_size) {
 
+void SynchronousBinProcessor::append_data(char *buf, size_t data_size) {
+
+    // assign the information to the struct
+    CSIDataFrameInfo csi_info{};
+    csi_info.frame_size = sizeof(CSIDataFrameInfo) + data_size;
+    csi_info.raw_size = data_size;
+    csi_info.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+
+    // lock the mutex with unique_lock
+    std::unique_lock<std::mutex> lock(mutex_lock);
+
+    // copy the data into the buffer
+    memcpy(csi_buff + csi_buff_size, &csi_info, sizeof(CSIDataFrameInfo));
+    memcpy(csi_buff + csi_buff_size + sizeof(CSIDataFrameInfo), buf, data_size);
+
+    // update the buffer size
+    csi_buff_size += sizeof(CSIDataFrameInfo) + data_size;
 }
+
 
 void SynchronousBinProcessor::save_data_to_bin(){
 
@@ -89,27 +156,29 @@ void SynchronousBinProcessor::save_data_to_bin(){
 
         // Use the mutex to swap the buffer
         {
-            // lock the mutex
+            // lock the mutex with unique_lock
             std::unique_lock<std::mutex> lock(mutex_lock);
 
             // swap the buffers
-            std::swap(bin_buf_main, bin_buf_swap);
-
-            // swap the data size
-            std::swap(buf_data_size, buf_data_swap);
+            std::swap(cv_buff, cv_swap);
+            std::swap(cv_buff_size, cv_swap_size);
 
             // swap the cv mat containers
-            std::swap(frames_container, frames_swap);
+            std::swap(csi_buff, csi_swap);
+            std::swap(csi_buff_size, csi_swap_size);
 
             // update the last updated time
             last_updated = std::chrono::system_clock::now();
 
-            // unlock the mutex
+            // reset the count of written data to be zero
+            cv_buff_size = csi_buff_size = 0;
         }
 
         // Then write the data to the file
         {
             // TODO: write the data to the file
+
+
         }
 
     }

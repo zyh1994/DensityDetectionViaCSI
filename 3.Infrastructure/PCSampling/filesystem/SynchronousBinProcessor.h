@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <chrono>
-
+#include <fstream>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -15,18 +15,38 @@
 #include <opencv2/opencv.hpp>
 
 
-constexpr int BUF_SIZE = 1024 * 1024 * 1024; // 缓存大小，单位为字节
-constexpr int FLUSH_INTERVAL = 60;           // 刷新间隔，单位为秒
+constexpr int BUF_SIZE = 1024 * 1024 * 1024; // buffer size, 1GB
+constexpr int FLUSH_INTERVAL = 60;           // refresh interval, 60s
+
+struct OpenCVFrameInfo {
+    size_t frame_size;
+    size_t raw_size;
+    long long timestamp;
+    int width;
+    int height;
+    int channels;
+};
+
+struct CSIDataFrameInfo {
+    size_t frame_size;
+    size_t raw_size;
+    long long timestamp;
+};
+
 
 class SynchronousBinProcessor {
 
 private:
+    // file stream
+    std::ofstream ofs;
+
     // vector for cv mat
-    std::vector<cv::Mat> frames_container, frames_swap;
+    char* cv_buff; size_t cv_buff_size;
+    char* cv_swap; size_t cv_swap_size;
 
     // buffer for csi raw data
-    char* bin_buf_main;
-    char* bin_buf_swap;
+    char* csi_buff; size_t csi_buff_size;
+    char* csi_swap; size_t csi_swap_size;
 
     // mutex when swapping the buffer
     std::mutex mutex_lock;
@@ -38,15 +58,9 @@ private:
     // time recorder for last time flashed
     std::chrono::system_clock::time_point last_updated;
 
-    // 写入文件的数据大小
-    size_t buf_data_size;
-    size_t buf_data_swap;
-
     // backend thread
     std::thread t_backend_saver;
 
-    // thread condition variable
-//    std::condition_variable cv;
 public:
 
     SynchronousBinProcessor();
@@ -57,9 +71,9 @@ public:
 
     void close_file();
 
-    void append_data(long long timestamp, cv::Mat& mat);
+    void append_data(cv::Mat& mat);
 
-    void append_data(long long timestamp, char* buf, size_t data_size);
+    void append_data(char* buf, size_t data_size);
 
 private:
     void save_data_to_bin();
