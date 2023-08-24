@@ -165,33 +165,24 @@ int main(int argc, char* argv[])
     // Keep listening to the kernel and waiting for the csi report
     while(!quit) {
 
-        // /* Get the video frame */
-        // Mat cv_frame;
-        // cap >> cv_frame;
+        // Get the CSI data from the UDP broadcast
+        struct sockaddr_in addr_in{};
+        socklen_t senderLen = sizeof(addr_in);
+        ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
+                                         (struct sockaddr*)&addr_in, &senderLen);
 
-        // /* If the frame is empty, skip it */
-        // if (cv_frame.empty()) {
-        //     continue;
-        // }
+        // If the received size is larger than 0, parse the CSI data
+        if (received_size < 0) {
+            std::cout << "Error: recvfrom() failed." << std::endl;
+            continue;
+        } else if (received_size == 0) {
+            std::cout << "Error: recvfrom() failed. No data received." << std::endl;
+            continue;
+        } else {
+            // TODO: parse the CSI data
 
-        // /* If the frame is not 720p, resize it */
-        // if (cv_frame.rows != 720 || cv_frame.cols != 1280) {
-        //     resize(cv_frame, cv_frame, Size(1280, 720));
-        // }
-
-        // /* Get the CSI data from the UDP broadcast */
-        // struct sockaddr_in addr_in{};
-        // socklen_t senderLen = sizeof(addr_in);
-        // ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
-        //                           (struct sockaddr*)&addr_in, &senderLen);
-
-        // /* Display the video frame */
-        // imshow("Real-time VideoCapture", cv_frame);
-
-        // /* If the user presses the ESC key, quit the program */
-        // if (waitKey(1) == 27) {
-        //     quit = 1;
-        // }
+            printf(".");
+        }
     }
 
     // Release the resources
