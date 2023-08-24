@@ -85,23 +85,40 @@ void release_params(VideoCapture& cap, int fd, CSIMetaInfo* csi) {
 
 
 /**
- * @brief Get the current time in current_ms
- * @return
+ * @brief Get the video frame
+ * 
+ * @param arg 
  */
-long long current_ms() {
-    using namespace std::chrono;
-    return duration_cast<std::chrono::milliseconds>(
-            system_clock::now().time_since_epoch()).count();
+void video_capture_task(void *arg) {
+
+    // Convert the arg to the VideoCapture
+    VideoCapture *cap = (VideoCapture *)arg;
+
+    while (!quit) {
+        /* Get the video frame */
+        Mat cv_frame;
+        *cap >> cv_frame;
+
+        /* If the frame is empty, skip it */
+        if (cv_frame.empty()) {
+            continue;
+        }
+
+        /* If the frame is not 720p, resize it */
+        if (cv_frame.rows != 720 || cv_frame.cols != 1280) {
+            resize(cv_frame, cv_frame, Size(1280, 720));
+        }
+
+        /* Display the video frame */
+        imshow("Real-time VideoCapture", cv_frame);
+
+        /* If the user presses the ESC key, quit the program */
+        if (waitKey(1) == 27) {
+            quit = 1;
+        }
+    }
 }
 
-
-/**
- * @brief Create a UDP socket
- * @return
- */
-void print_usage(char* argv[]) {
-    std::cout << "Usage: " << argv[0] << " [port]" << std::endl;
-}
 
 
 /**
@@ -117,7 +134,7 @@ int main(int argc, char* argv[])
 
     /* Parse the command line arguments */
     if (argc == 2 && strcmp(argv[1], "-h") == 0) {
-        print_usage(argv);
+        std::cout << "Usage: " << argv[0] << " [port]" << std::endl;
         return 0;
     } else if (argc == 1) {
         port = BROADCAST_PORT;
@@ -128,48 +145,54 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    /* Create the video capture */
+    // Create the video capture
      VideoCapture cap = VideoHelper::openCamera();
 
-    /* Set the camera resolution */
+    // Set the camera resolution
     VideoHelper::setCameraResolution(cap, 1280, 720);
 
-    /* Initialize the parameters */
+    // Initialize the parameters
     init_params(port, cap);
 
-    /* Print the waiting message */
+    // Create the thread pool with one thread
+    std::thread video_capture_thread(video_capture_task, &cap);
+
+    // Start the thread
+    video_capture_thread.detach();
+
+    // Print the waiting message
     printf("Waiting for the first packet...\n");
 
     /* Keep listening to the kernel and waiting for the csi report */
     while(!quit) {
 
-        /* Get the video frame */
-        Mat cv_frame;
-        cap >> cv_frame;
+        // /* Get the video frame */
+        // Mat cv_frame;
+        // cap >> cv_frame;
 
-        /* If the frame is empty, skip it */
-        if (cv_frame.empty()) {
-            continue;
-        }
+        // /* If the frame is empty, skip it */
+        // if (cv_frame.empty()) {
+        //     continue;
+        // }
 
-        /* If the frame is not 720p, resize it */
-        if (cv_frame.rows != 720 || cv_frame.cols != 1280) {
-            resize(cv_frame, cv_frame, Size(1280, 720));
-        }
+        // /* If the frame is not 720p, resize it */
+        // if (cv_frame.rows != 720 || cv_frame.cols != 1280) {
+        //     resize(cv_frame, cv_frame, Size(1280, 720));
+        // }
 
-        /* Get the CSI data from the UDP broadcast */
-        struct sockaddr_in addr_in{};
-        socklen_t senderLen = sizeof(addr_in);
-        ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
-                                  (struct sockaddr*)&addr_in, &senderLen);
+        // /* Get the CSI data from the UDP broadcast */
+        // struct sockaddr_in addr_in{};
+        // socklen_t senderLen = sizeof(addr_in);
+        // ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
+        //                           (struct sockaddr*)&addr_in, &senderLen);
 
-        /* Display the video frame */
-        imshow("Real-time VideoCapture", cv_frame);
+        // /* Display the video frame */
+        // imshow("Real-time VideoCapture", cv_frame);
 
-        /* If the user presses the ESC key, quit the program */
-        if (waitKey(1) == 27) {
-            quit = 1;
-        }
+        // /* If the user presses the ESC key, quit the program */
+        // if (waitKey(1) == 27) {
+        //     quit = 1;
+        // }
     }
 
     /* Release the resources */
