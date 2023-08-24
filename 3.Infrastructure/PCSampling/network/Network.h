@@ -8,9 +8,9 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <fcntl.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 #include <unistd.h>
 
 extern int create_broadcast_socket();

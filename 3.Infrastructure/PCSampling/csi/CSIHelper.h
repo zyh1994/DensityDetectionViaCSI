@@ -7,12 +7,6 @@
 
 #include <cstdlib>
 
-// typedef struct
-// {
-//     int real;
-//     int imag;
-// } CSIComplex;
-
 typedef struct
 {
     u_int64_t tstamp;         /* h/w assigned time stamp */
@@ -28,14 +22,14 @@ typedef struct
 
     u_int8_t  phyerr;          /* phy error code (set to 0 if correct)*/
 
-    u_int8_t    rssi;         /*  rx frame RSSI */
-    u_int8_t    rssi_0;       /*  rx frame RSSI [ctl, chain 0] */
-    u_int8_t    rssi_1;       /*  rx frame RSSI [ctl, chain 1] */
-    u_int8_t    rssi_2;       /*  rx frame RSSI [ctl, chain 2] */
+    u_int8_t  rssi;         /*  rx frame RSSI */
+    u_int8_t  rssi_0;       /*  rx frame RSSI [ctl, chain 0] */
+    u_int8_t  rssi_1;       /*  rx frame RSSI [ctl, chain 1] */
+    u_int8_t  rssi_2;       /*  rx frame RSSI [ctl, chain 2] */
 
-    u_int16_t   payload_len;  /*  payload length (bytes) */
-    u_int16_t   csi_len;      /*  csi data length (bytes) */
-    u_int16_t   buf_len;      /*  data length in buffer */
+    u_int16_t payload_len;  /*  payload length (bytes) */
+    u_int16_t csi_len;      /*  csi data length (bytes) */
+    u_int16_t buf_len;      /*  data length in buffer */
 } CSIMetaInfo;
 
 //extern bool  is_big_endian();

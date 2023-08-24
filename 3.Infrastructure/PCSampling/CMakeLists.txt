@@ -8,9 +8,10 @@ set(CMAKE_CXX_STANDARD 14)
 file(GLOB all_SRCS
         "${PROJECT_SOURCE_DIR}/csi/*"
         "${PROJECT_SOURCE_DIR}/cv/*"
+        "${PROJECT_SOURCE_DIR}/threads/*"
         "${PROJECT_SOURCE_DIR}/network/*"
         "${PROJECT_SOURCE_DIR}/security/*"
-        "${PROJECT_SOURCE_DIR}/storage/*"
+        "${PROJECT_SOURCE_DIR}/fs/*"
         "${PROJECT_SOURCE_DIR}/thread/*"
         "${PROJECT_SOURCE_DIR}/Main.cpp"
         )
@@ -122,6 +123,71 @@ elseif(${UBUNTU_VERSION} MATCHES "20.04")
             opencv_imgproc
             opencv_core
             )
+elseif(${UBUNTU_VERSION} MATCHES "22.04")
+    # Ubuntu 20.04 specific configuration
+    message(STATUS "Configuring for Ubuntu 22.04")
+
+    # include opencv's header files
+    include_directories(/usr/include/opencv4)
+
+    # link opencv's libraries
+    target_link_libraries(pc_sampling
+            opencv_stitching
+            opencv_alphamat
+            opencv_aruco
+            opencv_barcode
+            opencv_bgsegm
+            opencv_bioinspired
+            opencv_ccalib
+            opencv_dnn_objdetect
+            opencv_dnn_superres
+            opencv_dpm
+            opencv_face
+            opencv_freetype
+            opencv_fuzzy
+            opencv_hdf
+            opencv_hfs
+            opencv_img_hash
+            opencv_intensity_transform
+            opencv_line_descriptor
+            opencv_mcc
+            opencv_quality
+            opencv_rapid
+            opencv_reg
+            opencv_rgbd
+            opencv_saliency
+            opencv_shape
+            opencv_stereo
+            opencv_structured_light
+            opencv_phase_unwrapping
+            opencv_superres
+            opencv_optflow
+            opencv_surface_matching
+            opencv_tracking
+            opencv_highgui
+            opencv_datasets
+            opencv_text
+            opencv_plot
+            opencv_ml
+            opencv_videostab
+            opencv_videoio
+            opencv_viz
+            opencv_wechat_qrcode
+            opencv_ximgproc
+            opencv_video
+            opencv_xobjdetect
+            opencv_objdetect
+            opencv_calib3d
+            opencv_imgcodecs
+            opencv_features2d
+            opencv_dnn
+            opencv_flann
+            opencv_xphoto
+            opencv_photo
+            opencv_imgproc
+            opencv_core
+            )
+
 elseif(APPLE)
     message(STATUS "Configuring for macOS")
 

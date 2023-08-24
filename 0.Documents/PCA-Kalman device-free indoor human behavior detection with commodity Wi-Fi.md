@@ -24,12 +24,10 @@
 - [6 Conclusions](#6-conclusions)
 - [References](#references)
 
- <a id="Bibliography"></a>
 # Bibliography
 
 Dang X, Huang Y, Hao Z, et al. PCA-Kalman: device-free indoor human behavior detection with commodity Wi-Fi[J]. EURASIP Journal on Wireless Communications and Networking, 2018, 2018: 1-17.
 
-<a id="Abstract"></a>
 # Abstract
 
 Open Access Human behavior detection has become increasingly significant in various fields of application. In this paper, we propose a device-free indoor human behavior detection method with channel state information (CSI) and principal component analysis (PCA), respectively, in the line of sight environment, non-line-of-sight environment, and through the wall environment experiments. 
@@ -58,7 +56,6 @@ The experimental results show that this method is superior to other algorithms i
 
 **Keywords**: Principal component analysis, Human behavior detection, Channel state information, Support vector machine, Kalman filter
 
-<a id="1_Introduction"></a>
 # 1 Introduction
 
 Detecting human behavior has aroused increasing attention in many potential applications, such as indoor intrusion detection, campus security, supermarket customer tracking, patient care, and elderly safety monitoring.
@@ -159,10 +156,8 @@ The rest of the paper is organized as follows. We review the related works in Se
 
 > 本文的其余部分组织如下。在第2部分，我们简要回顾了相关工作。在第3部分，我们介绍了方法设计以及PCA-Kalman的设计细节。在第4部分，我们介绍了与PCA-Kalman的实验设置。第5部分报告了评估、比较、结果和讨论。最后，在第6部分，我们总结了这项工作。
 
-<a id="2_related_works"></a>
 # 2 Related works
 
-<a id="2_1_human_behavior"></a>
 ## 2.1 Human behavior detection with CSI
 
 With the rise of cloud computing and the Internet of Things, as an enabling technology, network physical systems (CPS) are almost everywhere today [33, 34]. Yang et al. [35] proposed a complete data replica manager solution called “Auto Replica,” working in distributed caching and data processing systems using SSD-HDD tier storages. Auto Replica balances the trade-off between the performance and fault tolerance by storing caches in replica nodes’ SSDs. 
@@ -181,7 +176,6 @@ Compared with the traditional method of human behavior detection, this method im
 
 >与传统的人类行为检测方法相比，此方法在很大程度上提高了检测率。王等人[40]使用CSI检测人体的基本动作，CSI可以在现实生活中应用。可以看出，使用CSI进行室内人员状态检测发展得非常快，这将是无线传感器网络的未来发展趋势。
 
-<a id="2_2_novel_applications"></a>
 ## 2.2 Novel applications based on CSI
 
 Zhu et al [41] used CSI to analyze a series of effects of human motion on CSI, so a more robust passive human motion detection method was proposed, which uses PCA algorithm and spatial diversity provided by multiple antennas. Through the study of the quality of each antenna, the best antenna combination is selected to improve the accuracy of detection. 
@@ -192,7 +186,6 @@ Yan Wang et al [42] presented device-free location-oriented activity identificat
 
 > Yan Wang等人[42]通过使用CSI，在家中提出了无设备的位置导向活动识别。Domenico等人[43]通过分析与在被监测环境中移动的人数相关的接收信号的多普勒谱的形状，提出了一个无设备的人群计数和占用估计系统。可以看出，使用CSI信号进行室内人类行为检测已成为未来无线传感器网络发展的趋势。
 
-<a id="2_3_csi_data">
 ## 2.3 CSI data collection
 
 With the popularity of wireless networks and advances in orthogonal frequency division multiplexing (OFDM) technology, the traditional landscape has changed [31]. Channel responses can be extracted from commercial Wi-Fi devices under 802.11/g/n standards, which reveals that a set of channel measurements depict the amplitude and phase of each subcarrier [44]. Because RSSI cannot distinguish multiple signal propagation paths one by one [45], different multipath propagation conditions may lead to different sensitivities based on human movement, which further affects the results of human detection [46].
@@ -255,7 +248,6 @@ In the formula above,$\|  H(k) \| e^{j∠H(k)}$ are amplitude and phase of the k
 
 > 在上面的公式中，$\|  H(k) \| e^{j∠H(k)}$ 分别是第k个子载波的幅度和相位，由于幅度信息更为稳定。此外，我们使用振幅去表示之后的特征值。
 
-<a id="2_3_csi_feature"></a>
 ## 2.4 CSI feature extraction
 
 In this paper, we collected CSI data in three different scenarios, and the data were obtained from common commercial Wi-Fi equipment, which is the real data. Because of the inherent noise of the environment and a series of electromagnetic interference, this will make the data unstable. In this paper, Kalman filter algorithm is used to reduce noise, and then PCA algorithm is used to extract the feature of the filtered eigenvalue. The combination of PCA algorithm and Kalman filter algorithm is the innovation of this paper. It not only make use of the better timeliness of Kalman filter algorithm, but also make use of the dimension reduction function of PCA algorithm.
@@ -284,7 +276,6 @@ We use the original position fingerprints of all reference points to make up an 
 
 > 我们使用所有参考点的原始位置指纹来组成一个$n \times N$维的原始位置指纹空间Q，其中Q是$Q = (Q_1, Q_2, ..., Q_N)^T$，Q表示为矩阵中的每一行向量。Q代表参考点的原始位置指纹。
 
-<a id="3_pca_kalman"></a>
 # 3. PCA-Kalman design
 
 This section presents the design of PCA-Kalman in a top-down manner, with emphasis on indoor human behavior detection. The architecture of PCA-Kalman mainly consists of two components: offline training phase and online testing phase. The working principle of using PCA-Kalman method to detect the behavior state of indoor personnel is shown in Fig. 5.
@@ -293,7 +284,6 @@ This section presents the design of PCA-Kalman in a top-down manner, with emphas
 
 > 本节从自上而下的方式介绍PCA-Kalman的设计，重点在室内人类行为检测上。PCA-Kalman的架构主要由两个部分组成：离线训练阶段和在线测试阶段。使用PCA-Kalman方法检测室内人员的行为状态的工作原理如图5所示。
 
-<a id="3_1_offline"></a>
 ## 3.1 Offline training phase
 
 In this section, we collect the position coordinates of each test area and process the received raw data of CSI. In this process, we leverage Kalman filter algorithm to reduce the noise of the original data and use the improved PCA algorithm to extract the most contributing features and reduce the dimensionality of CSI fingerprints. In other words, we extract the nonlinear feature of the original position fingerprint. Furthermore, we store the processed CSI signal in the fingerprint database and update the fingerprint data- base in real time according to the environment change.
@@ -380,7 +370,6 @@ Finally, we can get matrix $Q'$ after dimension reduction.
 
 > 最后，我们可以得到降维后的矩阵 $Q'$。
 
-<a id="3_2_online"></a>
 ## 3.2 Online behavior testing phase
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/b21a74e7ce3d4b1ba78368428d56b5a6.png#pic_center)
@@ -510,10 +499,8 @@ Step 9: We use real-time amplitude data collected and fingerprint data to match.
 
 > 步骤9：我们使用收集的实时幅度数据与指纹数据进行匹配。当测试者在测试区域对不同的动作进行实验时，幅度特性随着不同条件的变化而变化。从图6中可以清楚地看到，与不同动作相对应的幅度变化是完全不同的。
 
-<a id="4_experimental"></a>
 # 4 Experimental setup
 
-<a id="4_1_hardware"></a>
 ## 4.1 Hardware testbed
 
 Both the transmitter and the receiver have installed the Atheros AR 9380 NIC supporting the IEEE802.11n protocol to facilitate the acquisition of CSI from the device. As shown in Fig. 9. We have in- stalled an external antenna of about 1.5 m in length. And all transmitters are equipped with the Ubuntu 14.04 LTS 32-bit system and the 4.1.10 Linux kernel version. At the same time, we use open source drivers, Atheros-CSI-Tool, and Atheros NIC, developed by Hsieh and others.
@@ -526,7 +513,6 @@ The driver modules make it possible to obtain CSI from Linux kernel when it rece
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/31295772c4214ed9a5cddc7b8e2bedb6.png#pic_center)
 
-<a id="4_2_experimental"></a>
 ## 4.2 Experimental scenarios
 
 We conducted our experiments in a research laboratory (8m×9m) and a meeting room (6m×4m) both piled with desks and computers as well as a hall (10 m ×9 m) in our campus, which is piled with desks and computers in the laboratory and meeting room, thus creating a rather complex multipath environment, as shown in Figs. 7 and 8. We evaluated the performance of PCA-Kalman in three rooms’ surroundings (Tables 1 and 2).
@@ -540,7 +526,6 @@ In order to construct an offline histogram fingerprint, we gathered data first t
 
 > 为了构建一个离线直方图指纹，我们在早上最早的时候收集了数据，当时实验室里没有人。另外，为了行为检测的目的，我们生成了三个测试集，包括三个不同的测试区域。室内人体行为检测的基础设施由无线接入点（AP）组成，用于数据传输，监测点（MP）用于数据检索，以及一个用于数据处理的服务器。每个AP不断地广播信息，以帮助Wi-Fi设备找到一个接入点。为了完全覆盖感兴趣的区域，每对AP-MP都放置在角落或边缘，形成对角线[48]。每对发送-接收天线是一个链接（图9）。
 
-<a id="5_numerical"></a>
 # 5 Numerical results and discussion
 
 In this section, we interpret the experimental setups and the analysis of system performance and parameters.
@@ -549,13 +534,11 @@ In this section, we interpret the experimental setups and the analysis of system
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/0e4b2c408de04440aad1c545f36d6dd2.png#pic_center)
 
-<a id="5_1_feasibility"></a>
 ## 5.1 Feasibility of PCA-Kalman
 First of all, we evaluated the rate of detection of human activities in three different scenarios. As shown in Table 3, we listed five common behaviors of people in the table. We have chosen a total of three scenarios, as shown in Fig. 2. Furthermore, we com- pare the PCA-Kalman method with the other two methods. Clearly, Fig. 10 shows that the accuracy of PCA-Kalman in LOS, NLOS, and through one wall is much higher than the accuracy of other two methods. And Table 1 lists the detailed data of Fig. 10a. In Fig. 10a, the accuracy of PCA-Kalman declines with the increasing distance; however, the accuracy of PCA-Kalman shown in Fig. 10b, c is not significantly reduced. So, the reason for that is when the tester is far from the receiving end, they are closer to the transmitting end. The signal transmitted increases, but the reflected signal decreases.
 
 > 首先，我们评估了在三种不同场景中检测人类活动的速率。如表3所示，我们列出了表中人们的五种常见行为。我们选择了总共三种场景，如图2所示。此外，我们将PCA-Kalman方法与另外两种方法进行了比较。显然，图10显示，PCA-Kalman在LOS、NLOS和穿过一面墙的精度远高于其他两种方法的精度。而表1列出了图10a的详细数据。在图10a中，随着距离的增加，PCA-Kalman的准确性下降；然而，图10b、c中显示的PCA-Kalman的准确性没有显著降低。因此，原因是当测试者远离接收端时，他们离传输端更近。传输的信号增加，但反射的信号减少。
 
-<a id="5_2_robustness"></a>
 ## 5.2 Robustness verification
 Figure 10d–f shows the detection rate of human ac- tivity in three different scenarios. And Table 2 lists the detailed data of Fig. 10b. In each scene, the dis- tance between the AP and the computer is the same. The results show that the average accuracy of the PCA-Kalman method is 89% in the LOS environment, 87% in the NLOS environment, and 74% in the wall penetration environment. In these three scenarios, the accuracy of the open hall test was high, reaching up to 92, 85, and 77%.
 
@@ -569,7 +552,6 @@ On the other hand, we detect the activity of a tester at different distances bet
 
 > 另一方面，我们检测了在发射机和接收机之间不同距离的测试者的活动。我们发现距离越近意味着检测率越高。一般来说，AP离电脑越近，结果的准确性就越高。这是因为，随着通信距离的缩短，Wi-Fi信号的接收效果得到了增强，从而提供了更可靠的CSI特征提取来捕捉人体的不同动作。
 
-<a id="5_3_the_effect"></a>
 ## 5.3 The effect of different test areas on the detection
 
 In this section, we discuss the effect of different test areas on the detection rate. In order to detect the effect of the behavior state of different test areas on the detection rate, we divided the experimental area into 20 squares and numbered them in ascending order. Moreover, in this experiment, we have chosen a grid of 1 to 9 for testing. As shown in Fig. 11, obviously, we can see that the detection rate is the highest in the 4, 5, 6, and 7 grid regions. And Table 4 lists the detailed data corresponding to this figure.
@@ -581,7 +563,6 @@ The main reason is that the distance between the transmitter and the receiver in
 
 > 主要原因是这三个区域中发射机和接收机之间的距离相对较近，且没有过多的信号干扰。然而，前三个网格的检测率较低，因为这三个区域从接收端到发送端的距离较远，且旁边有如桌子和墙壁等多径效应的干扰。结果显示，PCA-Kalman方法的检测率高于其他两个系统。
 
-<a id="5_4_detection"></a>
 ## 5.4 Detection of different performance areas
 
 We focused on the following main metrics to evaluate our detection rate: (a) TP (true positive) for the prob- ability that the human behavior events are correctly detected and (b) FP (false positive) for the fraction of cases in which the system announced a “detected” event when there was no one moving.
@@ -612,7 +593,6 @@ At the same time, the detection rate is higher than that of FIMD method. The abo
 
 > 与此同时，其检测率也高于FIMD方法。上述实验结果证实，PCA-Kalman优于其他两种方法。在TP和FP的两个方面，比较可以显示出明显的优势。同样，PCA-Kalman是一种更稳定的方法，在每个实验环境中都可以获得更高的检测率。
 
-<a id="5_5_impact"></a>
 ## 5.5 Impact of different sliding window sizes
 
 Since the window size to a certain extent represents the size of the delay, it plays an important role in the overall performance of the detection rate. Additionally, the window size indicator is selected to evaluate the detection rate. Moreover, the window size and performance are proportional. The effect of time variance can be alleviated based on a large amount of data. As can be seen from Fig. 13, the detection rates of the three systems increase with the increase of the window size, but when the window size exceeds a certain set threshold, the time difference of the CSI will be caused by the different behavior states of the personnel. And Table 6 lists the detailed data of Fig. 13.
@@ -625,7 +605,6 @@ However, when the window is smaller, it is very dif- ficult for the system to de
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/4199a070873e46d093bbdd94e3912fcd.png#pic_center)
 
-<a id="5_6_impact_feature"></a>
 ## 5.6 Impact of feature number
 
 As shown in Fig. 14, when we use more features, it may produce a higher detection rate. Meanwhile, un- like the eigenvalues of the correlation matrix used in the FIMD, its principle is partially focused on the ei- genvalues. However, the covariance matrix we used in the PCA-Kalman method is more dispersed. And Table 7 lists the detailed data corresponding to Fig. 14.
@@ -639,7 +618,6 @@ Nevertheless, it can be shown from the figure that when different features are u
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/e1cce9d4eaa340d99440539a6ea221c7.png#pic_center)
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/7be29f5d6f1343a492d3e95fb65f845d.png#pic_center)
 
-<a id="5_7_impact_packet"></a>
 ## 5.7 Impact of packet number
 We observe that different data packets have a great influence on the detection accuracy of the experi- ment. Moreover, we choose different data packets for testing. As shown in Fig. 15, the true positive (TP) rate increases as the number of packets increases. The true negative (TN) rate is almost unaffected. The reason is that in the absence of a human being, most of the channel measurements remain stable enough for a short period of time to capture the feature.
 
@@ -649,7 +627,6 @@ On the contrary, inadequate samples cannot characterize human time changes becau
 
 > 相反，不足的样本不能表征人的时间变化，因为人的移动效应并不均匀分布。总的来说，TP和TN的比率都可以达到90%，所以这篇文章描述的方法效果很好。
 
-<a id="6_conclusion"></a>
 # 6 Conclusions
 
 In this paper, we propose a method for detecting indoor activity using ubiquitous Wi-Fi, called PCA-Kalman, and extract CSI signals from commercial off-the-shelf (COTS) Wi-Fi devices. We propose to extract a robust feature from the CSI signal to detect the behavior change of indoor personnel. In order to achieve it, we analyzed the limitations of Kalman filtering technique and PCA to improve denoising performance and capture the representative signals of human behavior. Therefore, the use of CSI is triggered, and the method proposed in this paper can obtain higher detection rate and robust- ness without any equipment. Meanwhile, a method of detecting human behavior without equipment based on CSI is proposed, by applying SVM to solve the human behavior detection problem. And we applied on CSI data to reduce noise and PCA is applied to extract feature and reduce dimensionality.
@@ -682,7 +659,6 @@ Springer Nature remains neutral with regard to jurisdictional claims in publishe
 Received: 10 March 2018 Accepted: 20 August 2018
 Published online 31 August 2018
 
-<a id="reference"></a>
 # References
 [1] L. Chen, X. Chen, L. Ni, Y. Peng, D. Fang, Human behavior recognition using Wi-Fi CSI: challenges and opportunities. IEEE Commun. Mag. 55(10), 112– 117 (2017)
 

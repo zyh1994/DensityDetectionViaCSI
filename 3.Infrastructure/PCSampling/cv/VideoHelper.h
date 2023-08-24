@@ -11,7 +11,7 @@
 
 using namespace cv;
 
-namespace sge {
+// namespace sge {
 
     enum VideoTypeFourCC {
         H264,
@@ -69,6 +69,6 @@ namespace sge {
          */
         static void closeVideoWriter(cv::VideoWriter &writer);
     };
-}
+// }
 
 #endif //DENSITYDETECTION_VIDEOHASH_H

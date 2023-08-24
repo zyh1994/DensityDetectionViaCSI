@@ -1,11 +1,35 @@
+**Table of Contents**
+- [Bibliography](#bibliography)
+- [Authors](#authors)
+- [0. ABSTRACT](#0-abstract)
+- [1. INTRODUCTION](#1-introduction)
+- [2 RELATED WORK](#2-related-work)
+- [3 METHODS](#3-methods)
+  - [3.1 Phase Sanitization](#31-phase-sanitization)
+  - [3.2 Modality Translation Network](#32-modality-translation-network)
+  - [3.3 WiFi-DensePose RCNN](#33-wifi-densepose-rcnn)
+  - [3.4 Transfer Learning](#34-transfer-learning)
+  - [3.5 Losses](#35-losses)
+- [4 EXPERIMENTS](#4-experiments)
+  - [4.1 Dataset](#41-dataset)
+  - [4.2 Training/Testing protocols and Metrics](#42-trainingtesting-protocols-and-metrics)
+  - [4.3 Implementation Details](#43-implementation-details)
+  - [4.4 WiFi-based DensePose under Same Layout](#44-wifi-based-densepose-under-same-layout)
+  - [4.5 Comparison with Image-based DensePose](#45-comparison-with-image-based-densepose)
+  - [4.6 Ablation Study](#46-ablation-study)
+  - [4.7 Performance in different layouts](#47-performance-in-different-layouts)
+  - [4.8 Failure cases](#48-failure-cases)
+- [5 CONCLUSION AND FUTURE WORK](#5-conclusion-and-future-work)
+- [REFERENCES](#references)
+
+# Bibliography
+Geng J, Huang D, De la Torre F. DensePose From WiFi[J]. arXiv preprint arXiv:2301.00250, 2022.
+
 # Authors
 
 * Jiaqi Geng jiaqigen@andrew.cmu.edu Carnegie Mellon University Pittsburgh, PA, USA
 * Dong Huang donghuang@cmu.edu Carnegie Mellon University Pittsburgh, PA, USA
 * Fernando De la Torre ftorre@cs.cmu.edu Carnegie Mellon University Pittsburgh, PA, USA
-
-# Bibtex
-Geng J, Huang D, De la Torre F. DensePose From WiFi[J]. arXiv preprint arXiv:2301.00250, 2022.
 
 # 0. ABSTRACT
 
