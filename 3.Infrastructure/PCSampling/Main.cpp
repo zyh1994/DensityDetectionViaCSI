@@ -19,7 +19,8 @@ using namespace cv;
 int                 quit;               // quit flag
 int                 sock_fd;            // socket file descriptor
 unsigned char       temp_buf[BUF_SIZE]; // buffer for storing the received data
-CSIMetaInfo*        csi_status;         // CSI status
+
+bool                b_video_capture_task;   // flag for continuing the loop
 
 
 /**
@@ -27,11 +28,11 @@ CSIMetaInfo*        csi_status;         // CSI status
  * @param sig
  */
 void sig_handler(int signal) {
-    if (signal == SIGQUIT) {
-        /* log the received data for off-line processing */
-        std::cout << "Received SIGQUIT. Quitting..." << std::endl;
+    if (signal == SIGINT) {
+        // log the received data for off-line processing
+        std::cout << "Received SIGINT. Quitting..." << std::endl;
 
-        /* close the log file */
+        // close the log file
         quit = 1;
     }
 }
@@ -44,8 +45,8 @@ void sig_handler(int signal) {
  */
 void init_params(int port, VideoCapture& cap) {
 
-    // Register the signal handler: ctrl + d
-    signal(SIGQUIT, sig_handler);
+    // Register the signal handler: ctrl + c
+    signal(SIGINT, sig_handler);
 
     // Initialize the quit flag
     quit = 0;
@@ -55,9 +56,6 @@ void init_params(int port, VideoCapture& cap) {
 
     // Bind the socket
     bind_addr(sock_fd, port);
-
-    // Allocate memory for the status struct
-    csi_status = (CSIMetaInfo*)malloc(sizeof(CSIMetaInfo));
 
     // Initialize the quit flag
     quit = 0;
@@ -71,15 +69,18 @@ void init_params(int port, VideoCapture& cap) {
  * @param fd
  * @param csi
  */
-void release_params(VideoCapture& cap, int fd, CSIMetaInfo* csi) {
+void release_params(VideoCapture& cap, int fd) {
+
+    // Wait b_video_capture_task to be false
+    while (b_video_capture_task) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
     // Close the video capture
     VideoHelper::closeCamera(cap);
 
     // Close the socket
     close(fd);
-
-    // Free the memory
-    free(csi);
 }
 
 
@@ -93,6 +94,10 @@ void video_capture_task(void *arg) {
     // Convert the arg to the VideoCapture
     auto *cap = (VideoCapture *)arg;
 
+    // Set the b_thread_running flag to be true
+    b_video_capture_task = true;
+
+    // Loop until the user presses the ESC key
     while (!quit) {
         // Get the video frame
         Mat cv_frame;
@@ -116,15 +121,16 @@ void video_capture_task(void *arg) {
             quit = 1;
         }
     }
+
+    b_video_capture_task = false;
 }
 
 
-
 /**
- * @brief Record the CSI status
- * @param buf_addr
- * @param cnt
- * @param csi_status
+ * @brief The main function
+ * @param argc
+ * @param argv
+ * @return
  */
 int main(int argc, char* argv[])
 {
@@ -171,22 +177,13 @@ int main(int argc, char* argv[])
         ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
                                          (struct sockaddr*)&addr_in, &senderLen);
 
-        // If the received size is larger than 0, parse the CSI data
-        if (received_size < 0) {
-            std::cout << "Error: recvfrom() failed." << std::endl;
-            continue;
-        } else if (received_size == 0) {
-            std::cout << "Error: recvfrom() failed. No data received." << std::endl;
-            continue;
-        } else {
-            // TODO: parse the CSI data
+        if (received_size > 0) {
 
-            printf(".");
         }
     }
 
     // Release the resources
-    release_params(cap, sock_fd, csi_status);
+    release_params(cap, sock_fd);
 
     // Exit the program
     return 0;
