@@ -1,11 +1,12 @@
 #include <csignal>
 #include <iostream>
 #include <chrono>
+#include <thread>
 
 #include "cv/VideoHelper.h"
 #include "csi/CSIHelper.h"
 #include "network/Network.h"
-#include "storage/FileStorage.h"
+#include "fs/SynchronousBinProcessor.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -127,16 +128,11 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    /* File filesystem */
-    // sge::FileStorage fs;
-    FileStorage fs;
-
     /* Create the video capture */
-    // VideoCapture cap = sge::VideoHelper::openCamera();
      VideoCapture cap = VideoHelper::openCamera();
 
     /* Set the camera resolution */
-    sge::VideoHelper::setCameraResolution(cap, 1280, 720);
+    VideoHelper::setCameraResolution(cap, 1280, 720);
 
     /* Initialize the parameters */
     init_params(port, cap);
@@ -166,11 +162,6 @@ int main(int argc, char* argv[])
         socklen_t senderLen = sizeof(addr_in);
         ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
                                   (struct sockaddr*)&addr_in, &senderLen);
-
-        if (received_size > 0){
-            /* Write the CSI status to the file */
-            fs.write(current_ms(), cv_frame, temp_buf, received_size);
-        }
 
         /* Display the video frame */
         imshow("Real-time VideoCapture", cv_frame);
