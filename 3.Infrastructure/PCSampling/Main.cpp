@@ -44,22 +44,22 @@ void sig_handler(int signal) {
  */
 void init_params(int port, VideoCapture& cap) {
 
-    /* Register the signal handler: ctrl + d */
+    // Register the signal handler: ctrl + d
     signal(SIGQUIT, sig_handler);
 
-    /* Initialize the quit flag */
+    // Initialize the quit flag
     quit = 0;
 
-    /* Create the socket */
+    // Create the socket
     sock_fd = create_broadcast_socket();
 
-    /* Bind the socket */
+    // Bind the socket
     bind_addr(sock_fd, port);
 
-    /* Allocate memory for the status struct */
+    // Allocate memory for the status struct
     csi_status = (CSIMetaInfo*)malloc(sizeof(CSIMetaInfo));
 
-    /* Initialize the quit flag */
+    // Initialize the quit flag
     quit = 0;
 }
 
@@ -72,14 +72,13 @@ void init_params(int port, VideoCapture& cap) {
  * @param csi
  */
 void release_params(VideoCapture& cap, int fd, CSIMetaInfo* csi) {
-    /* Close the video capture */
-    // sge::VideoHelper::closeCamera(cap);
+    // Close the video capture
     VideoHelper::closeCamera(cap);
 
-    /* Close the socket */
+    // Close the socket
     close(fd);
 
-    /* Free the memory */
+    // Free the memory
     free(csi);
 }
 
@@ -92,27 +91,27 @@ void release_params(VideoCapture& cap, int fd, CSIMetaInfo* csi) {
 void video_capture_task(void *arg) {
 
     // Convert the arg to the VideoCapture
-    VideoCapture *cap = (VideoCapture *)arg;
+    auto *cap = (VideoCapture *)arg;
 
     while (!quit) {
-        /* Get the video frame */
+        // Get the video frame
         Mat cv_frame;
         *cap >> cv_frame;
 
-        /* If the frame is empty, skip it */
+        // If the frame is empty, skip it
         if (cv_frame.empty()) {
             continue;
         }
 
-        /* If the frame is not 720p, resize it */
+        // If the frame is not 720p, resize it to 720p
         if (cv_frame.rows != 720 || cv_frame.cols != 1280) {
             resize(cv_frame, cv_frame, Size(1280, 720));
         }
 
-        /* Display the video frame */
+        // Display the video frame
         imshow("Real-time VideoCapture", cv_frame);
 
-        /* If the user presses the ESC key, quit the program */
+        // If the user presses the ESC key, quit the program
         if (waitKey(1) == 27) {
             quit = 1;
         }
@@ -129,10 +128,10 @@ void video_capture_task(void *arg) {
  */
 int main(int argc, char* argv[])
 {
-    /* If the user doesn't specify the port, use the default 8080 */
+    // If the user doesn't specify the port, use the default 8080
     int port;
 
-    /* Parse the command line arguments */
+    // Parse the command line arguments
     if (argc == 2 && strcmp(argv[1], "-h") == 0) {
         std::cout << "Usage: " << argv[0] << " [port]" << std::endl;
         return 0;
@@ -163,7 +162,7 @@ int main(int argc, char* argv[])
     // Print the waiting message
     printf("Waiting for the first packet...\n");
 
-    /* Keep listening to the kernel and waiting for the csi report */
+    // Keep listening to the kernel and waiting for the csi report
     while(!quit) {
 
         // /* Get the video frame */
@@ -195,9 +194,9 @@ int main(int argc, char* argv[])
         // }
     }
 
-    /* Release the resources */
+    // Release the resources
     release_params(cap, sock_fd, csi_status);
 
-    /* Exit the program */
+    // Exit the program
     return 0;
 }
