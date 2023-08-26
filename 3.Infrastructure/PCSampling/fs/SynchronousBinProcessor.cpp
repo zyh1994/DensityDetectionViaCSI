@@ -4,6 +4,7 @@
 
 #include "SynchronousBinProcessor.h"
 #include "FileSystemUtils.h"
+#include "../cv/VideoHelper.h"
 
 
 SynchronousBinProcessor::SynchronousBinProcessor() {
@@ -60,17 +61,34 @@ void SynchronousBinProcessor::open_file() {
     }
 
     // generate the filename
-    auto filename = gen_filename();
+    filename_handler = gen_filename();
+    auto bin_file = filename_handler + ".bin";
 
     // open the file
-    ofs.open(filename, std::ios::binary | std::ios::out);
+    ofs.open(bin_file, std::ios::binary | std::ios::out);
 
     // check if the file is opened
     if (!ofs.is_open()) {
-        std::cout << "Error: cannot open file " << filename << std::endl;
+        std::cout << "Error: cannot open file " << bin_file << std::endl;
         exit(-1);
     } else {
-        std::cout << "File " << filename << " opened successfully!" << std::endl;
+        std::cout << "File " << filename_handler << ".bin opened successfully!" << std::endl;
+    }
+
+
+    // create a new video writer
+    video_writer = VideoHelper::openVideoWriter(
+            filename_handler + ".avi",
+            get_fourcc(VideoTypeFourCC::MPEG_4),
+            30,
+            cv::Size(1280, 720));
+
+    // check if the video writer is opened
+    if (!video_writer.isOpened()) {
+        std::cout << "Error: cannot open video writer!" << std::endl;
+        exit(-1);
+    } else {
+        std::cout << "File " << filename_handler << ".avi opened successfully!" << std::endl;
     }
 }
 
@@ -79,6 +97,16 @@ void SynchronousBinProcessor::close_file() {
     if (ofs.is_open()) {
         ofs.close();
     }
+
+    if (video_writer.isOpened()) {
+        video_writer.release();
+    }
+
+    // print out the message
+    std::cout << "File " << filename_handler << ".bin closed successfully!" << std::endl;
+
+    // print out the message
+    std::cout << "File " << filename_handler << ".avi closed successfully!" << std::endl;
 }
 
 
@@ -110,10 +138,13 @@ void SynchronousBinProcessor::append_data(cv::Mat &mat) {
 
     // update the buffer size
     cv_buff_size += sizeof(OpenCVFrameInfo) + mat_info.raw_size;
+
+    // now append the original cv frame to the vector
+    cv_frames.push_back(mat.clone());
 }
 
 
-void SynchronousBinProcessor::append_data(char *buf, size_t data_size) {
+void SynchronousBinProcessor::append_data(unsigned char *buf, size_t data_size) {
 
     // assign the information to the struct
     CSIDataFrameInfo csi_info{};
@@ -174,6 +205,9 @@ void SynchronousBinProcessor::save_data_to_bin(){
             std::swap(csi_buff, csi_swap);
             std::swap(csi_buff_size, csi_swap_size);
 
+            // swap the cv mat containers
+            std::swap(cv_frames, cv_frames_swap);
+
             // update the last updated time
             last_updated = std::chrono::system_clock::now();
 
@@ -183,11 +217,22 @@ void SynchronousBinProcessor::save_data_to_bin(){
 
         // Then write the data to the file
         {
+            // report the memory usage first
+            auto cv_data_usage = (double)cv_swap_size / (1024 * 1024);
+            auto csi_data_usage = (double)csi_swap_size / (1024 * 1024);
+
+            std::cout << "CV memory usage " << cv_data_usage << " MB" << std::endl
+                     << "CSI memory usage " << csi_data_usage << " MB" << std::endl;
+
             // lock the mutex with unique_lock
             std::unique_lock<std::mutex> lock(mutex_lock);
 
+            // open the file
+            open_file();
+
             // check if the file is opened, and write the data to the file
             if (cv_swap_size > 0 && csi_swap_size > 0) {
+
                 // write the size of cv data
                 ofs.write(reinterpret_cast<char *>(&cv_swap_size), sizeof(size_t));
 
@@ -195,11 +240,26 @@ void SynchronousBinProcessor::save_data_to_bin(){
                 ofs.write(reinterpret_cast<char *>(&csi_swap_size), sizeof(size_t));
 
                 // write the cv data
-                ofs.write(cv_swap, cv_swap_size);
+                ofs.write(cv_swap, static_cast<long>(cv_swap_size));
 
                 // write the csi data
-                ofs.write(csi_swap, csi_swap_size);
+                ofs.write(csi_swap, static_cast<long>(csi_swap_size));
             }
+
+            // save the video
+            if (!cv_frames_swap.empty()) {
+
+                // write the frames to the video
+                for (auto &frame : cv_frames_swap) {
+                    video_writer.write(frame);
+                }
+
+                // clear the vector
+                cv_frames_swap.clear();
+            }
+
+            // close the file
+            close_file();
         }
     }
 

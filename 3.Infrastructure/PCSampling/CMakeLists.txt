@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 # Allow to include all necessary files
 file(GLOB all_SRCS
+        "${PROJECT_SOURCE_DIR}/local/*"
         "${PROJECT_SOURCE_DIR}/csi/*"
         "${PROJECT_SOURCE_DIR}/cv/*"
         "${PROJECT_SOURCE_DIR}/threads/*"
