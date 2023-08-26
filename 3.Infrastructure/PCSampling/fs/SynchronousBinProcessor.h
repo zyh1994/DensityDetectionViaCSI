@@ -59,9 +59,6 @@ private:
     std::vector<cv::Mat> cv_frames;
     std::vector<cv::Mat> cv_frames_swap;
 
-    // cv video writer
-    cv::VideoWriter cv_video_writer;
-
     // time recorder for last time flashed
     std::chrono::system_clock::time_point last_updated;
 

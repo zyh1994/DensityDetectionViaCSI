@@ -4,6 +4,7 @@
 
 #include "SynchronousBinProcessor.h"
 #include "FileSystemUtils.h"
+#include "../cv/VideoHelper.h"
 
 
 SynchronousBinProcessor::SynchronousBinProcessor() {
@@ -24,12 +25,6 @@ SynchronousBinProcessor::SynchronousBinProcessor() {
 
     csi_buff = new char[BUF_SIZE];
     csi_swap = new char[BUF_SIZE];
-
-    // create a video writer
-    cv_video_writer = cv::VideoWriter();
-
-    // Set the parameters for the video writer
-    cv_video_writer.set(cv::VideoWriterProperties::VIDEOWRITER_PROP_QUALITY, 100);
 
     // start the backend thread
     t_backend_saver = std::thread(&SynchronousBinProcessor::save_data_to_bin, this);
@@ -224,26 +219,28 @@ void SynchronousBinProcessor::save_data_to_bin(){
             // save the video
             if (cv_frames_swap.size() > 0) {
 
-                // if the video writer is not opened
-                if (!cv_video_writer.isOpened()) {
+                // generate the filename
+                auto filename = filename_handler + ".avi";
 
-                    // generate the filename
-                    auto filename = filename_handler + ".avi";
+                // get the FourCC
+                auto fourcc = get_fourcc(VideoTypeFourCC::MPEG_4);
 
-                    // open the video writer
-                    cv_video_writer.open(filename, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30,
-                                         cv::Size(cv_frames_swap[0].cols, cv_frames_swap[0].rows), false);
+                // create a video writer for saving the video
+                auto video_writer = VideoHelper::openVideoWriter(
+                    filename_handler,
+                    fourcc, 
+                    30, 
+                    cv::Size(1280, 720));
 
-                    // check if the video writer is opened
-                    if (!cv_video_writer.isOpened()) {
-                        std::cout << "Error: cannot open video writer!" << std::endl;
-                        exit(-1);
-                    }
+                // check if the video writer is opened
+                if (!video_writer.isOpened()) {
+                    std::cout << "Error: cannot open video writer!" << std::endl;
+                    exit(-1);
                 }
 
                 // write the frames to the video
                 for (auto &frame : cv_frames_swap) {
-                    cv_video_writer.write(frame);
+                    video_writer.write(frame);
                 }
 
                 // clear the vector
