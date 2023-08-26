@@ -61,6 +61,9 @@ private:
     // backend thread
     std::thread t_backend_saver;
 
+    // filename handler
+    std::string filename_handler;
+
 public:
 
     SynchronousBinProcessor();
@@ -73,7 +76,7 @@ public:
 
     void append_data(cv::Mat& mat);
 
-    void append_data(char* buf, size_t data_size);
+    void append_data(unsigned char* buf, size_t data_size);
 
 private:
     void save_data_to_bin();

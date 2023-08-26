@@ -18,6 +18,9 @@ using namespace cv;
 unsigned char       temp_buf[BUF_SIZE]; // buffer for storing the received data
 bool                b_quit;             // flag for quitting the program
 
+
+SynchronousBinProcessor bin_processor;  // create the synchronous bin processor
+
 /**
  * @brief Handle the Ctrl+C signal
  * @param sig
@@ -31,6 +34,7 @@ void sig_handler(int signal) {
         b_quit = true;
     }
 }
+
 
 /**
  * @brief Get the video frame
@@ -87,9 +91,6 @@ void csi_sampling_task() {
 
     // Bind the socket
     bind_addr(sock_fd, BROADCAST_PORT);
-    
-    // Create the synchronous bin processor
-    SynchronousBinProcessor bin_processor;
 
     // Loop until the user presses the ESC key
     while (!b_quit) {
@@ -100,10 +101,9 @@ void csi_sampling_task() {
         ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
                                         (struct sockaddr*)&addr_in, &senderLen);
 
+        // If the received data is valid
         if (received_size > 0) {
-            // TODO: Process the received data
-
-            std::cout << "." << std::endl;
+            bin_processor.append_data(temp_buf, received_size);
         }
     }
 

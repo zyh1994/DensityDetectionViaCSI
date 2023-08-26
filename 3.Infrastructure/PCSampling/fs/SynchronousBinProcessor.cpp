@@ -60,7 +60,8 @@ void SynchronousBinProcessor::open_file() {
     }
 
     // generate the filename
-    auto filename = gen_filename();
+    filename_handler = gen_filename();
+    auto filename = filename_handler + ".bin";
 
     // open the file
     ofs.open(filename, std::ios::binary | std::ios::out);
@@ -113,7 +114,7 @@ void SynchronousBinProcessor::append_data(cv::Mat &mat) {
 }
 
 
-void SynchronousBinProcessor::append_data(char *buf, size_t data_size) {
+void SynchronousBinProcessor::append_data(unsigned char *buf, size_t data_size) {
 
     // assign the information to the struct
     CSIDataFrameInfo csi_info{};
@@ -185,6 +186,9 @@ void SynchronousBinProcessor::save_data_to_bin(){
         {
             // lock the mutex with unique_lock
             std::unique_lock<std::mutex> lock(mutex_lock);
+
+            // open the file
+            open_file();
 
             // check if the file is opened, and write the data to the file
             if (cv_swap_size > 0 && csi_swap_size > 0) {

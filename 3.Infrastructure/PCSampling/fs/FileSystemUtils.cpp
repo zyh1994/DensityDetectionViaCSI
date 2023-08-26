@@ -25,5 +25,5 @@ std::string gen_filename() {
     std::string formattedTime = ss.str();
 
     // 返回格式化后的文件名
-    return formattedTime + ".bin";
+    return formattedTime;
 };
