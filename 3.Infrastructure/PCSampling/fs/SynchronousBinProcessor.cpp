@@ -25,6 +25,12 @@ SynchronousBinProcessor::SynchronousBinProcessor() {
     csi_buff = new char[BUF_SIZE];
     csi_swap = new char[BUF_SIZE];
 
+    // create a video writer
+    cv_video_writer = cv::VideoWriter();
+
+    // Set the parameters for the video writer
+    cv_video_writer.set(cv::VideoWriterProperties::VIDEOWRITER_PROP_QUALITY, 100);
+
     // start the backend thread
     t_backend_saver = std::thread(&SynchronousBinProcessor::save_data_to_bin, this);
 
@@ -114,6 +120,9 @@ void SynchronousBinProcessor::append_data(cv::Mat &mat) {
 
     // update the buffer size
     cv_buff_size += sizeof(OpenCVFrameInfo) + mat_info.raw_size;
+
+    // now append the original cv frame to the vector
+    cv_frames.push_back(mat.clone());
 }
 
 
@@ -178,6 +187,9 @@ void SynchronousBinProcessor::save_data_to_bin(){
             std::swap(csi_buff, csi_swap);
             std::swap(csi_buff_size, csi_swap_size);
 
+            // swap the cv mat containers
+            std::swap(cv_frames, cv_frames_swap);
+
             // update the last updated time
             last_updated = std::chrono::system_clock::now();
 
@@ -195,6 +207,7 @@ void SynchronousBinProcessor::save_data_to_bin(){
 
             // check if the file is opened, and write the data to the file
             if (cv_swap_size > 0 && csi_swap_size > 0) {
+
                 // write the size of cv data
                 ofs.write(reinterpret_cast<char *>(&cv_swap_size), sizeof(size_t));
 
@@ -206,6 +219,35 @@ void SynchronousBinProcessor::save_data_to_bin(){
 
                 // write the csi data
                 ofs.write(csi_swap, csi_swap_size);
+            }
+
+            // save the video
+            if (cv_frames_swap.size() > 0) {
+
+                // if the video writer is not opened
+                if (!cv_video_writer.isOpened()) {
+
+                    // generate the filename
+                    auto filename = filename_handler + ".avi";
+
+                    // open the video writer
+                    cv_video_writer.open(filename, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30,
+                                         cv::Size(cv_frames_swap[0].cols, cv_frames_swap[0].rows), false);
+
+                    // check if the video writer is opened
+                    if (!cv_video_writer.isOpened()) {
+                        std::cout << "Error: cannot open video writer!" << std::endl;
+                        exit(-1);
+                    }
+                }
+
+                // write the frames to the video
+                for (auto &frame : cv_frames_swap) {
+                    cv_video_writer.write(frame);
+                }
+
+                // clear the vector
+                cv_frames_swap.clear();
             }
 
             // close the file
