@@ -88,7 +88,7 @@ void SynchronousBinProcessor::open_file() {
         std::cout << "Error: cannot open video writer!" << std::endl;
         exit(-1);
     } else {
-        std::cout << "File" << filename_handler << ".avi opened successfully!" << std::endl;
+        std::cout << "File " << filename_handler << ".avi opened successfully!" << std::endl;
     }
 }
 
