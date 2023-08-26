@@ -3,16 +3,16 @@
 #include <chrono>
 #include <thread>
 
+#include <opencv2/opencv.hpp>
+
 #include "cv/VideoHelper.h"
 #include "csi/CSIHelper.h"
 #include "network/Network.h"
 #include "fs/SynchronousBinProcessor.h"
-
-#include <opencv2/opencv.hpp>
+#include "local/Keyboards.h"
 
 #define BUF_SIZE            4096
 #define BROADCAST_PORT      8080
-
 
 using namespace cv;
 
@@ -117,7 +117,7 @@ void video_capture_task(void *arg) {
         imshow("Real-time VideoCapture", cv_frame);
 
         // If the user presses the ESC key, quit the program
-        if (waitKey(1) == 27) {
+        if (waitKey(KEYBOARD_Q) == 27) {
             quit = 1;
         }
     }
@@ -178,7 +178,7 @@ int main(int argc, char* argv[])
                                          (struct sockaddr*)&addr_in, &senderLen);
 
         if (received_size > 0) {
-
+            // TODO: Process the received data
         }
     }
 

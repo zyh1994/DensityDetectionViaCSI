@@ -1,0 +1,66 @@
+#ifndef __KEYBOARDS_DEF_H__
+#define __KEYBOARDS_DEF_H__
+
+#define KEYBOARD_ESC 27
+
+// Keyboard KEYCODE from F1-F12
+#define KEYBOARD_F1 265
+#define KEYBOARD_F2 266
+#define KEYBOARD_F3 267
+#define KEYBOARD_F4 268
+#define KEYBOARD_F5 269
+#define KEYBOARD_F6 270
+#define KEYBOARD_F7 271
+#define KEYBOARD_F8 272
+#define KEYBOARD_F9 273
+#define KEYBOARD_F10 274
+#define KEYBOARD_F11 275
+#define KEYBOARD_F12 276
+
+// Keyboard KEYCODE for Arrows
+#define KEYBOARD_UP 2490368
+#define KEYBOARD_DOWN 2621440
+#define KEYBOARD_LEFT 2424832
+#define KEYBOARD_RIGHT 2555904
+
+// Keyboard KEYCODE from A-Z
+#define KEYBOARD_A 97
+#define KEYBOARD_B 98
+#define KEYBOARD_C 99
+#define KEYBOARD_D 100
+#define KEYBOARD_E 101
+#define KEYBOARD_F 102
+#define KEYBOARD_G 103
+#define KEYBOARD_H 104
+#define KEYBOARD_I 105
+#define KEYBOARD_J 106
+#define KEYBOARD_K 107
+#define KEYBOARD_L 108
+#define KEYBOARD_M 109
+#define KEYBOARD_N 110
+#define KEYBOARD_O 111
+#define KEYBOARD_P 112
+#define KEYBOARD_Q 113
+#define KEYBOARD_R 114
+#define KEYBOARD_S 115
+#define KEYBOARD_T 116
+#define KEYBOARD_U 117
+#define KEYBOARD_V 118
+#define KEYBOARD_W 119
+#define KEYBOARD_X 120
+#define KEYBOARD_Y 121
+#define KEYBOARD_Z 122
+
+// Keyboard KEYCODE from 0-9
+#define KEYBOARD_0 48
+#define KEYBOARD_1 49
+#define KEYBOARD_2 50
+#define KEYBOARD_3 51
+#define KEYBOARD_4 52
+#define KEYBOARD_5 53
+#define KEYBOARD_6 54
+#define KEYBOARD_7 55
+#define KEYBOARD_8 56
+#define KEYBOARD_9 57
+
+#endif // __KEYBOARDS_DEF_H__
