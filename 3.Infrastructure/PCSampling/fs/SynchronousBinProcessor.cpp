@@ -80,6 +80,9 @@ void SynchronousBinProcessor::close_file() {
     if (ofs.is_open()) {
         ofs.close();
     }
+
+    // print out the message
+    std::cout << "File " << filename_handler << ".bin closed successfully!" << std::endl;
 }
 
 
@@ -204,6 +207,9 @@ void SynchronousBinProcessor::save_data_to_bin(){
                 // write the csi data
                 ofs.write(csi_swap, csi_swap_size);
             }
+
+            // close the file
+            close_file();
         }
     }
 

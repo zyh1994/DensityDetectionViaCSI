@@ -66,6 +66,9 @@ void video_capture_task() {
             resize(frame, frame, Size(1280, 720));
         }
 
+        // Save the frame to the bin processor
+        bin_processor.append_data(frame);
+
         // Display the video frame
         imshow("Real-time VideoCapture", frame);
 
