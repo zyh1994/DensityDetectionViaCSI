@@ -21,6 +21,7 @@ int                 sock_fd;            // socket file descriptor
 unsigned char       temp_buf[BUF_SIZE]; // buffer for storing the received data
 
 bool                b_video_capture_task;   // flag for continuing the loop
+bool                b_csi_sampling_task;    // flag for continuing the loop
 
 
 /**
@@ -76,6 +77,11 @@ void release_params(VideoCapture& cap, int fd) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
+    // Wait b_csi_sampling_task to be false
+    while (b_csi_sampling_task) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
     // Close the video capture
     VideoHelper::closeCamera(cap);
 
@@ -94,7 +100,7 @@ void video_capture_task(void *arg) {
     // Convert the arg to the VideoCapture
     auto *cap = (VideoCapture *)arg;
 
-    // Set the b_thread_running flag to be true
+    // Set the threads flag to be true
     b_video_capture_task = true;
 
     // Loop until the user presses the ESC key
@@ -116,13 +122,41 @@ void video_capture_task(void *arg) {
         // Display the video frame
         imshow("Real-time VideoCapture", cv_frame);
 
-        // If the user presses the ESC key, quit the program
-        if (waitKey(KEYBOARD_Q) == 27) {
-            quit = 1;
+        // Wait for 30ms
+        if (waitKey(30) == KEYBOARD_Q) {
+            quit = true;
         }
     }
 
     b_video_capture_task = false;
+}
+
+
+void csi_sampling_task() {
+    
+        // Set the threads flag to be true
+        b_csi_sampling_task = true;
+    
+        // Create the synchronous bin processor
+        SynchronousBinProcessor bin_processor;
+    
+        // Loop until the user presses the ESC key
+        while (!quit) {
+    
+            // Get the CSI data from the UDP broadcast
+            struct sockaddr_in addr_in{};
+            socklen_t senderLen = sizeof(addr_in);
+            ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
+                                            (struct sockaddr*)&addr_in, &senderLen);
+
+            if (received_size > 0) {
+                // TODO: Process the received data
+
+                std::cout << "." << std::endl;
+            }
+        }
+    
+        b_csi_sampling_task = false;
 }
 
 
@@ -159,11 +193,17 @@ int main(int argc, char* argv[])
     // Initialize the parameters
     init_params(port, cap);
 
-    // Create the thread pool with one thread
+    // Create the thread for video capture
     std::thread video_capture_thread(video_capture_task, &cap);
 
     // Start the thread
     video_capture_thread.detach();
+
+    // Create the thread for CSI sampling
+    std::thread csi_sampling_thread(csi_sampling_task, &cap);
+
+    // Start the thread
+    csi_sampling_thread.detach();
 
     // Print the waiting message
     printf("Waiting for the first packet...\n");
@@ -171,15 +211,9 @@ int main(int argc, char* argv[])
     // Keep listening to the kernel and waiting for the csi report
     while(!quit) {
 
-        // Get the CSI data from the UDP broadcast
-        struct sockaddr_in addr_in{};
-        socklen_t senderLen = sizeof(addr_in);
-        ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
-                                         (struct sockaddr*)&addr_in, &senderLen);
+        // Wait for 1ms
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-        if (received_size > 0) {
-            // TODO: Process the received data
-        }
     }
 
     // Release the resources
