@@ -62,7 +62,19 @@ void SynchronousBinProcessor::open_file() {
 
     // generate the filename
     filename_handler = gen_filename();
-    auto filename = filename_handler + ".bin";
+    auto bin_file = filename_handler + ".bin";
+
+    // open the file
+    ofs.open(bin_file, std::ios::binary | std::ios::out);
+
+    // check if the file is opened
+    if (!ofs.is_open()) {
+        std::cout << "Error: cannot open file " << bin_file << std::endl;
+        exit(-1);
+    } else {
+        std::cout << "File " << filename_handler << ".bin opened successfully!" << std::endl;
+    }
+
 
     // create a new video writer
     video_writer = VideoHelper::openVideoWriter(
@@ -71,15 +83,12 @@ void SynchronousBinProcessor::open_file() {
             30,
             cv::Size(1280, 720));
 
-    // open the file
-    ofs.open(filename, std::ios::binary | std::ios::out);
-
-    // check if the file is opened
-    if (!ofs.is_open()) {
-        std::cout << "Error: cannot open file " << filename << std::endl;
+    // check if the video writer is opened
+    if (!video_writer.isOpened()) {
+        std::cout << "Error: cannot open video writer!" << std::endl;
         exit(-1);
     } else {
-        std::cout << "File " << filename << " opened successfully!" << std::endl;
+        std::cout << "File" << filename_handler << ".avi opened successfully!" << std::endl;
     }
 }
 
@@ -95,6 +104,9 @@ void SynchronousBinProcessor::close_file() {
 
     // print out the message
     std::cout << "File " << filename_handler << ".bin closed successfully!" << std::endl;
+
+    // print out the message
+    std::cout << "File " << filename_handler << ".avi closed successfully!" << std::endl;
 }
 
 
