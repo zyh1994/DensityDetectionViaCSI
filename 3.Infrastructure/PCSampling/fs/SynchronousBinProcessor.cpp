@@ -64,6 +64,13 @@ void SynchronousBinProcessor::open_file() {
     filename_handler = gen_filename();
     auto filename = filename_handler + ".bin";
 
+    // create a new video writer
+    video_writer = VideoHelper::openVideoWriter(
+            filename_handler + ".avi",
+            get_fourcc(VideoTypeFourCC::MPEG_4),
+            30,
+            cv::Size(1280, 720));
+
     // open the file
     ofs.open(filename, std::ios::binary | std::ios::out);
 
@@ -80,6 +87,10 @@ void SynchronousBinProcessor::open_file() {
 void SynchronousBinProcessor::close_file() {
     if (ofs.is_open()) {
         ofs.close();
+    }
+
+    if (video_writer.isOpened()) {
+        video_writer.release();
     }
 
     // print out the message
@@ -194,6 +205,13 @@ void SynchronousBinProcessor::save_data_to_bin(){
 
         // Then write the data to the file
         {
+            // report the memory usage first
+            auto cv_data_usage = (double)cv_swap_size / (1024 * 1024);
+            auto csi_data_usage = (double)csi_swap_size / (1024 * 1024);
+
+            std::cout << "CV memory usage " << cv_data_usage << " MB" << std::endl
+                     << "CSI memory usage " << csi_data_usage << " MB" << std::endl;
+
             // lock the mutex with unique_lock
             std::unique_lock<std::mutex> lock(mutex_lock);
 
@@ -210,33 +228,14 @@ void SynchronousBinProcessor::save_data_to_bin(){
                 ofs.write(reinterpret_cast<char *>(&csi_swap_size), sizeof(size_t));
 
                 // write the cv data
-                ofs.write(cv_swap, cv_swap_size);
+                ofs.write(cv_swap, static_cast<long>(cv_swap_size));
 
                 // write the csi data
-                ofs.write(csi_swap, csi_swap_size);
+                ofs.write(csi_swap, static_cast<long>(csi_swap_size));
             }
 
             // save the video
-            if (cv_frames_swap.size() > 0) {
-
-                // generate the filename
-                auto filename = filename_handler + ".avi";
-
-                // get the FourCC
-                auto fourcc = get_fourcc(VideoTypeFourCC::MPEG_4);
-
-                // create a video writer for saving the video
-                auto video_writer = VideoHelper::openVideoWriter(
-                    filename_handler,
-                    fourcc, 
-                    30, 
-                    cv::Size(1280, 720));
-
-                // check if the video writer is opened
-                if (!video_writer.isOpened()) {
-                    std::cout << "Error: cannot open video writer!" << std::endl;
-                    exit(-1);
-                }
+            if (!cv_frames_swap.empty()) {
 
                 // write the frames to the video
                 for (auto &frame : cv_frames_swap) {
