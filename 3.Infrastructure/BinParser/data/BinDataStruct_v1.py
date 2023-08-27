@@ -10,6 +10,7 @@ class OpenCVFrameData:
         self.width = None       # int
         self.height = None      # int
         self.channels = None    # int
+        self.reserved = None    # int
         self.raw = None         # bytes
 
         self.endian_format = '<'
@@ -36,8 +37,11 @@ class OpenCVFrameData:
         # Get the number of channels
         self.channels = struct.unpack(self.endian_format + 'i', raw_data[32:36])[0]
 
-        # Get the raw data, skip an int
-        self.raw = raw_data[36 + 4:]
+        # Get the reserved int
+        self.reserved = struct.unpack(self.endian_format + 'i', raw_data[36:40])[0]
+
+        # Get the raw data
+        self.raw = raw_data[40:]
 
 
 class CSIDataFrameData:
@@ -46,6 +50,7 @@ class CSIDataFrameData:
         self.frame_size = None  # long
         self.raw_size = None    # long
         self.timestamp = None   # long
+        self.reserved = None    # long
         self.raw = None         # bytes
 
         self.endian_format = '<'
@@ -64,5 +69,8 @@ class CSIDataFrameData:
         # Get the timestamp
         self.timestamp = struct.unpack(self.endian_format + 'Q', raw_data[16:24])[0]
 
+        # Get the reserved long
+        self.reserved = struct.unpack(self.endian_format + 'Q', raw_data[24:32])[0]
+
         # Get the raw data, skip a long
-        self.raw = raw_data[24 + 8:]
+        self.raw = raw_data[32: ]
