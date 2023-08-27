@@ -19,18 +19,18 @@ constexpr int BUF_SIZE = 1024 * 1024 * 1024; // buffer size, 1GB
 constexpr int FLUSH_INTERVAL = 60;           // refresh interval, 60s
 
 struct OpenCVFrameInfo {
-    size_t frame_size;
-    size_t raw_size;
-    long long timestamp;
+    long frame_size;
+    long raw_size;
+    long timestamp;
     int width;
     int height;
     int channels;
 };
 
 struct CSIDataFrameInfo {
-    size_t frame_size;
-    size_t raw_size;
-    long long timestamp;
+    long frame_size;
+    long raw_size;
+    long timestamp;
 };
 
 

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import time
 
+
 class VideoWriter:
 
     def __init__(self, filename, fps, width, height):
@@ -15,7 +16,6 @@ class VideoWriter:
 
         # create a video writer
         self.video_writer = cv2.VideoWriter(self.filename, fourcc, self.fps, (self.width, self.height), False)
-
 
     def write(self, raw_frame, timestamp):
 
@@ -39,21 +39,20 @@ class VideoWriter:
         if frame is not None and self.video_writer.isOpened():
             # write the frame to the video file
             self.video_writer.write(frame)
-        
+
         # if the video writer is not opened
         elif not self.video_writer.isOpened():
             print("VideoWriter is not opened")
             exit(1)
-        
+
         # if the frame is empty
         elif frame is None:
             print("Frame is empty")
             exit(1)
-        
+
         else:
             print("Unknown error")
             exit(1)
 
     def release(self):
         self.video_writer.release()
-

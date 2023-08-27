@@ -113,21 +113,21 @@ void SynchronousBinProcessor::close_file() {
 void SynchronousBinProcessor::append_data(cv::Mat &mat) {
 
     // create a new cv mat
-    cv::Mat new_mat;
+    cv::Mat mat_320p;
 
-    // resize the cv mat to 320x240, and convert to grayscale
-    cv::resize(mat, new_mat, cv::Size(320, 240));
-    cv::cvtColor(new_mat, new_mat, cv::COLOR_BGR2GRAY);
+    // resize the cv mat to 320p
+    cv::resize(mat, mat_320p, cv::Size(320, 240));
+    cv::cvtColor(mat_320p, mat_320p, cv::COLOR_BGR2GRAY);
 
     // assign the information to the struct
     OpenCVFrameInfo mat_info{};
-    mat_info.frame_size = sizeof(OpenCVFrameInfo) + new_mat.total() * new_mat.elemSize();
-    mat_info.raw_size = new_mat.total() * new_mat.elemSize();
+    mat_info.raw_size = mat_320p.total() * mat_320p.elemSize();
+    mat_info.frame_size = sizeof(OpenCVFrameInfo) + mat_info.raw_size;
     mat_info.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
-    mat_info.width = new_mat.cols;
-    mat_info.height = new_mat.rows;
-    mat_info.channels = new_mat.channels();
+    mat_info.width = mat_320p.cols;
+    mat_info.height = mat_320p.rows;
+    mat_info.channels = mat_320p.channels();
 
     // lock the mutex with unique_lock
     std::unique_lock<std::mutex> lock(mutex_swap);
@@ -189,6 +189,7 @@ void SynchronousBinProcessor::swap_buffer() {
 
 
 void SynchronousBinProcessor::save_data() {
+
     // report the memory usage first
     auto cv_data_usage = (double)cv_swap_size / (1024 * 1024);
     auto csi_data_usage = (double)csi_swap_size / (1024 * 1024);
