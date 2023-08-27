@@ -12,7 +12,7 @@ def parse_image_data(cv_data: bytes, cv_data_len: int,
                      width: int = 320, height: int = 180, fps: int = 30):
     
     # Video writer for generating the mp4 file
-    video_writer = VideoWriter("cv_data.mp4", fps=fps, width=width, height=height)
+    video_writer = VideoWriter("cv_data.mp4", fps=fps, width=height, height=width)
 
     # Use a list to store the CV data frames
     cv_data_frames = []

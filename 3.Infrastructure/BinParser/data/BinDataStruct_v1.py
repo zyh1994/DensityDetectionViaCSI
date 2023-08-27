@@ -41,7 +41,10 @@ class OpenCVFrameData:
         self.reserved = struct.unpack(self.endian_format + 'i', raw_data[36:40])[0]
 
         # Get the raw data
-        self.raw = raw_data[40:]
+        if self.reserved == raw_data[40]:
+            self.raw = raw_data[40:]
+        else:
+            raise ValueError("Error: The reserved int is not equal to the raw data")
 
 
 class CSIDataFrameData:
@@ -72,5 +75,8 @@ class CSIDataFrameData:
         # Get the reserved long
         self.reserved = struct.unpack(self.endian_format + 'Q', raw_data[24:32])[0]
 
-        # Get the raw data, skip a long
-        self.raw = raw_data[32: ]
+        # Get the raw data
+        if self.reserved == raw_data[32]:
+            self.raw = raw_data[32:]
+        else:
+            raise ValueError("Error: The reserved int is not equal to the raw data")

@@ -128,6 +128,7 @@ void SynchronousBinProcessor::append_data(cv::Mat &mat) {
     mat_info.width = mat_320p.cols;
     mat_info.height = mat_320p.rows;
     mat_info.channels = mat_320p.channels();
+    mat_info.reserved = mat_320p.data[0];
 
     // lock the mutex with unique_lock
     std::unique_lock<std::mutex> lock(mutex_swap);
@@ -152,6 +153,7 @@ void SynchronousBinProcessor::append_data(unsigned char *buf, size_t data_size) 
     csi_info.raw_size = data_size;
     csi_info.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
+    csi_info.reserved = buf[0];
 
     // lock the mutex with unique_lock
     std::unique_lock<std::mutex> lock(mutex_swap);
