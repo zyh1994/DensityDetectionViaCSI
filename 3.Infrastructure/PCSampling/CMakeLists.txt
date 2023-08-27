@@ -12,8 +12,8 @@ file(GLOB all_SRCS
         "${PROJECT_SOURCE_DIR}/threads/*"
         "${PROJECT_SOURCE_DIR}/network/*"
         "${PROJECT_SOURCE_DIR}/security/*"
+        "${PROJECT_SOURCE_DIR}/local/*"
         "${PROJECT_SOURCE_DIR}/fs/*"
-        "${PROJECT_SOURCE_DIR}/thread/*"
         "${PROJECT_SOURCE_DIR}/Main.cpp"
         )
 

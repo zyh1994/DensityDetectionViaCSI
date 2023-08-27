@@ -130,7 +130,7 @@ void SynchronousBinProcessor::append_data(cv::Mat &mat) {
     mat_info.channels = new_mat.channels();
 
     // lock the mutex with unique_lock
-    std::unique_lock<std::mutex> lock(mutex_lock);
+    std::unique_lock<std::mutex> lock(mutex_swap);
 
     // copy the data into the buffer
     memcpy(cv_buff + cv_buff_size, &mat_info, sizeof(OpenCVFrameInfo));
@@ -154,7 +154,7 @@ void SynchronousBinProcessor::append_data(unsigned char *buf, size_t data_size) 
             std::chrono::system_clock::now().time_since_epoch()).count();
 
     // lock the mutex with unique_lock
-    std::unique_lock<std::mutex> lock(mutex_lock);
+    std::unique_lock<std::mutex> lock(mutex_swap);
 
     // copy the data into the buffer
     memcpy(csi_buff + csi_buff_size, &csi_info, sizeof(CSIDataFrameInfo));
@@ -162,6 +162,76 @@ void SynchronousBinProcessor::append_data(unsigned char *buf, size_t data_size) 
 
     // update the buffer size
     csi_buff_size += sizeof(CSIDataFrameInfo) + data_size;
+}
+
+
+void SynchronousBinProcessor::swap_buffer() {
+    // lock the mutex with unique_lock
+    std::unique_lock<std::mutex> lock(mutex_swap);
+
+    // swap the buffers
+    std::swap(cv_buff, cv_swap);
+    std::swap(cv_buff_size, cv_swap_size);
+
+    // swap the cv mat containers
+    std::swap(csi_buff, csi_swap);
+    std::swap(csi_buff_size, csi_swap_size);
+
+    // swap the cv mat containers
+    std::swap(cv_frames, cv_frames_swap);
+
+    // update the last updated time
+    last_updated = std::chrono::system_clock::now();
+
+    // reset the count of written data to be zero
+    cv_buff_size = csi_buff_size = 0;
+};
+
+
+void SynchronousBinProcessor::save_data() {
+    // report the memory usage first
+    auto cv_data_usage = (double)cv_swap_size / (1024 * 1024);
+    auto csi_data_usage = (double)csi_swap_size / (1024 * 1024);
+
+    std::cout << "CV memory usage " << cv_data_usage << " MB" << std::endl
+                << "CSI memory usage " << csi_data_usage << " MB" << std::endl;
+
+    // lock the mutex with unique_lock
+    std::unique_lock<std::mutex> lock(mutex_save);
+
+    // open the file
+    open_file();
+
+    // check if the file is opened, and write the data to the file
+    if (cv_swap_size > 0 && csi_swap_size > 0) {
+
+        // write the size of cv data
+        ofs.write(reinterpret_cast<char *>(&cv_swap_size), sizeof(size_t));
+
+        // write the size of csi data
+        ofs.write(reinterpret_cast<char *>(&csi_swap_size), sizeof(size_t));
+
+        // write the cv data
+        ofs.write(cv_swap, static_cast<long>(cv_swap_size));
+
+        // write the csi data
+        ofs.write(csi_swap, static_cast<long>(csi_swap_size));
+    }
+
+    // save the video
+    if (!cv_frames_swap.empty()) {
+
+        // write the frames to the video
+        for (auto &frame : cv_frames_swap) {
+            video_writer.write(frame);
+        }
+
+        // clear the vector
+        cv_frames_swap.clear();
+    }
+
+    // close the file
+    close_file();
 }
 
 
@@ -193,74 +263,10 @@ void SynchronousBinProcessor::save_data_to_bin(){
         }
 
         // Use the mutex to swap the buffer
-        {
-            // lock the mutex with unique_lock
-            std::unique_lock<std::mutex> lock(mutex_lock);
-
-            // swap the buffers
-            std::swap(cv_buff, cv_swap);
-            std::swap(cv_buff_size, cv_swap_size);
-
-            // swap the cv mat containers
-            std::swap(csi_buff, csi_swap);
-            std::swap(csi_buff_size, csi_swap_size);
-
-            // swap the cv mat containers
-            std::swap(cv_frames, cv_frames_swap);
-
-            // update the last updated time
-            last_updated = std::chrono::system_clock::now();
-
-            // reset the count of written data to be zero
-            cv_buff_size = csi_buff_size = 0;
-        }
+        swap_buffer();
 
         // Then write the data to the file
-        {
-            // report the memory usage first
-            auto cv_data_usage = (double)cv_swap_size / (1024 * 1024);
-            auto csi_data_usage = (double)csi_swap_size / (1024 * 1024);
-
-            std::cout << "CV memory usage " << cv_data_usage << " MB" << std::endl
-                     << "CSI memory usage " << csi_data_usage << " MB" << std::endl;
-
-            // lock the mutex with unique_lock
-            std::unique_lock<std::mutex> lock(mutex_lock);
-
-            // open the file
-            open_file();
-
-            // check if the file is opened, and write the data to the file
-            if (cv_swap_size > 0 && csi_swap_size > 0) {
-
-                // write the size of cv data
-                ofs.write(reinterpret_cast<char *>(&cv_swap_size), sizeof(size_t));
-
-                // write the size of csi data
-                ofs.write(reinterpret_cast<char *>(&csi_swap_size), sizeof(size_t));
-
-                // write the cv data
-                ofs.write(cv_swap, static_cast<long>(cv_swap_size));
-
-                // write the csi data
-                ofs.write(csi_swap, static_cast<long>(csi_swap_size));
-            }
-
-            // save the video
-            if (!cv_frames_swap.empty()) {
-
-                // write the frames to the video
-                for (auto &frame : cv_frames_swap) {
-                    video_writer.write(frame);
-                }
-
-                // clear the vector
-                cv_frames_swap.clear();
-            }
-
-            // close the file
-            close_file();
-        }
+        save_data();
     }
 
     // set the flag to be false

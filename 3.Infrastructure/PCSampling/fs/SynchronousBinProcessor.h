@@ -54,8 +54,11 @@ private:
     size_t csi_buff_size;
     size_t csi_swap_size;
 
-    // mutex when swapping the buffer
-    std::mutex mutex_lock;
+    // mutex locks.
+    // one for swapping the buffer,
+    // one for saving the buffer
+    std::mutex mutex_swap;
+    std::mutex mutex_save;
 
     // flag for continuing the loop
     bool b_thread_running;
@@ -93,6 +96,10 @@ public:
 
 private:
     void save_data_to_bin();
+
+    void swap_buffer();
+
+    void save_data();
 };
 
 
