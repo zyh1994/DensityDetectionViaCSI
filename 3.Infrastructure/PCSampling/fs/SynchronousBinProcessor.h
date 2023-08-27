@@ -25,12 +25,14 @@ struct OpenCVFrameInfo {
     int width;
     int height;
     int channels;
+    int reserved;
 };
 
 struct CSIDataFrameInfo {
     long frame_size;
     long raw_size;
     long timestamp;
+    long reserved;
 };
 
 

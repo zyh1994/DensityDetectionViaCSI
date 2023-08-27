@@ -36,8 +36,8 @@ class OpenCVFrameData:
         # Get the number of channels
         self.channels = struct.unpack(self.endian_format + 'i', raw_data[32:36])[0]
 
-        # Get the raw data
-        self.raw = raw_data[36:]
+        # Get the raw data, skip an int
+        self.raw = raw_data[36 + 4:]
 
 
 class CSIDataFrameData:
@@ -64,5 +64,5 @@ class CSIDataFrameData:
         # Get the timestamp
         self.timestamp = struct.unpack(self.endian_format + 'Q', raw_data[16:24])[0]
 
-        # Get the raw data 
-        self.raw = raw_data[24:]
+        # Get the raw data, skip a long
+        self.raw = raw_data[24 + 8:]
