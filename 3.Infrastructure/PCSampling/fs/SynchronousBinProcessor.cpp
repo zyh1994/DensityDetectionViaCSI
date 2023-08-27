@@ -116,7 +116,7 @@ void SynchronousBinProcessor::append_data(cv::Mat &mat) {
     cv::Mat mat_320p;
 
     // resize the cv mat to 320p
-    cv::resize(mat, mat_320p, cv::Size(320, 240));
+    cv::resize(mat, mat_320p, cv::Size(320, 180));
     cv::cvtColor(mat_320p, mat_320p, cv::COLOR_BGR2GRAY);
 
     // assign the information to the struct

@@ -64,5 +64,5 @@ class CSIDataFrameData:
         # Get the timestamp
         self.timestamp = struct.unpack(self.endian_format + 'Q', raw_data[16:24])[0]
 
-        # Get the raw data
+        # Get the raw data 
         self.raw = raw_data[24:]

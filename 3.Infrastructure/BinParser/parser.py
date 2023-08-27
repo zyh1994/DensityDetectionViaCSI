@@ -9,7 +9,7 @@ from data.BinDataStruct_v1 import OpenCVFrameData, CSIDataFrameData
 
 
 def parse_image_data(cv_data: bytes, cv_data_len: int,
-                     width: int = 320, height: int = 240, fps: int = 30):
+                     width: int = 320, height: int = 180, fps: int = 30):
     
     # Video writer for generating the mp4 file
     video_writer = VideoWriter("cv_data.mp4", fps=fps, width=width, height=height)
