@@ -59,16 +59,15 @@ private:
     // mutex locks.
     // one for swapping the buffer,
     // one for saving the buffer
-    std::mutex mutex_swap;
-    std::mutex mutex_save;
+    std::mutex mutex_lock;
 
     // flag for continuing the loop
     bool b_thread_running;
     bool b_thread_end;
 
     // vector for storing original OpenCV frames
-//    std::vector<cv::Mat> cv_frames;
-//    std::vector<cv::Mat> cv_frames_swap;
+    std::vector<cv::Mat> cv_frames;
+    std::vector<cv::Mat> cv_frames_swap;
 
     // VideoWriter for saving video
     cv::VideoWriter video_writer;
@@ -97,6 +96,7 @@ public:
     void append_data(unsigned char* buf, size_t data_size);
 
 private:
+
     void save_data_to_bin();
 
     void swap_buffer();
