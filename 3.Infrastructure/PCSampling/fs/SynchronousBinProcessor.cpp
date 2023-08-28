@@ -140,8 +140,8 @@ void SynchronousBinProcessor::append_data(cv::Mat &mat) {
     // update the buffer size
     cv_buff_size += sizeof(OpenCVFrameInfo) + mat_info.raw_size;
 
-    // now append the original cv frame to the vector
-    cv_frames.push_back(mat.clone());
+    // Now, write the image to the video
+    video_writer.write(mat);
 }
 
 
@@ -180,7 +180,7 @@ void SynchronousBinProcessor::swap_buffer() {
     std::swap(csi_buff_size, csi_swap_size);
 
     // swap the cv mat containers
-    std::swap(cv_frames, cv_frames_swap);
+//    std::swap(cv_frames, cv_frames_swap);
 
     // update the last updated time
     last_updated = std::chrono::system_clock::now();
@@ -221,17 +221,17 @@ void SynchronousBinProcessor::save_data() {
         ofs.write(csi_swap, static_cast<long>(csi_swap_size));
     }
 
-    // save the video
-    if (!cv_frames_swap.empty()) {
+    // // save the video
+    // if (!cv_frames_swap.empty()) {
 
-        // write the frames to the video
-        for (auto &frame : cv_frames_swap) {
-            video_writer.write(frame);
-        }
+    //     // write the frames to the video
+    //     for (auto &frame : cv_frames_swap) {
+    //         video_writer.write(frame);
+    //     }
 
-        // clear the vector
-        cv_frames_swap.clear();
-    }
+    //     // clear the vector
+    //     cv_frames_swap.clear();
+    // }
 
     // close the file
     close_file();

@@ -67,8 +67,8 @@ private:
     bool b_thread_end;
 
     // vector for storing original OpenCV frames
-    std::vector<cv::Mat> cv_frames;
-    std::vector<cv::Mat> cv_frames_swap;
+//    std::vector<cv::Mat> cv_frames;
+//    std::vector<cv::Mat> cv_frames_swap;
 
     // VideoWriter for saving video
     cv::VideoWriter video_writer;
