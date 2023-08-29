@@ -10,10 +10,11 @@
 #include "network/Network.h"
 #include "fs/SynchronousBinProcessor.h"
 
-#define BUF_SIZE            4096
-#define BROADCAST_PORT      8080
-
 using namespace cv;
+
+
+#define BUF_SIZE            4096
+
 
 unsigned char       temp_buf[BUF_SIZE]; // buffer for storing the received data
 bool                b_quit;             // flag for quitting the program
@@ -123,22 +124,6 @@ void csi_sampling_task() {
  */
 int main(int argc, char* argv[])
 {
-    // If the user doesn't specify the port, use the default 8080
-    int port;
-
-    // Parse the command line arguments
-    if (argc == 2 && strcmp(argv[1], "-h") == 0) {
-        std::cout << "Usage: " << argv[0] << " [port]" << std::endl;
-        return 0;
-    } else if (argc == 1) {
-        port = BROADCAST_PORT;
-    } else if (argc == 2) {
-        port = static_cast<int>(strtol(argv[1], nullptr, 10));
-    } else {
-        std::cout << "Invalid arguments. Use -h for help." << std::endl;
-        exit(1);
-    }
-
     // Register the signal handler ctrl + c
     signal(SIGINT, sig_handler);
 
@@ -151,15 +136,10 @@ int main(int argc, char* argv[])
     // Create the thread for CSI sampling
     std::thread csi_sampling_thread(csi_sampling_task);
 
-    // Print the waiting message
-    printf("Waiting for the first packet...\n");
-
-    // Register the signal handler ctrl + c
-    signal(SIGINT, sig_handler);
-
-    // Set the flag 
-    b_quit = false;
-
+    // This thread will run 1 minute 30 seconds
+    std::this_thread::sleep_for(std::chrono::seconds(70));
+    b_quit = true;
+    
     // Wait all the threads to finish
     video_capture_thread.join();
     csi_sampling_thread.join();
