@@ -30,12 +30,20 @@ typedef struct
     u_int16_t payload_len;  /*  payload length (bytes) */
     u_int16_t csi_len;      /*  csi data length (bytes) */
     u_int16_t buf_len;      /*  data length in buffer */
-} CSIMetaInfo;
+
+} OpenWrt_CSI_MetaInfo_V1;
+
+
+typedef struct
+{
+    int real;
+    int imag;
+} CSIComplex;
 
 //extern bool  is_big_endian();
 
-extern CSIMetaInfo*  get_csi_metadata(const unsigned char* buf, int buf_size);
+extern OpenWrt_CSI_MetaInfo_V1*  get_csi_metadata(const unsigned char* buf, int buf_size);
 
-// extern CSIComplex* get_csi_matrix(unsigned char* buf, CSIMetaInfo* csi_status);
+extern CSIComplex* fill_csi_matrix(u_int8_t* csi_addr, int nr, int nc, int num_tones);
 
 #endif //DENSITYDETECTION_CSIHELPER_H
