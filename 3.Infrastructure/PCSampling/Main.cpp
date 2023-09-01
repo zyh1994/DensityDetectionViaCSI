@@ -1,25 +1,23 @@
 #include <csignal>
 #include <iostream>
-#include <chrono>
 #include <thread>
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>               // OpenCV, for video capture and display
 
-#include "cv/VideoHelper.h"
-#include "csi/CSIHelper.h"
-#include "network/Network.h"
-#include "fs/SynchronousBinProcessor.h"
+#include "cv/VideoHelper.h"                 // Video capture helper, this
+#include "csi/OpenWRT_v1.h"                 // Get CSI data frame from OpenWRT device, the version is 1
+#include "csi/GeneralCSIDataStruct.h"       // General CSI data structure for next step processing
+#include "network/Network.h"                // Network, for UDP broadcast
+#include "fs/SynchronousBinProcessor.h"     // Synchronous bin processor, for saving the CSI signals and images
 
-#define BUF_SIZE            4096
-#define BROADCAST_PORT      8080
-
-using namespace cv;
-
-unsigned char       temp_buf[BUF_SIZE]; // buffer for storing the received data
-bool                b_quit;             // flag for quitting the program
+#define BUF_SIZE                            4096
+#define BROADCAST_PORT                      8080
 
 
-SynchronousBinProcessor bin_processor;  // create the synchronous bin processor
+unsigned char       temp_buf[BUF_SIZE];     // buffer for storing the received data
+bool                b_quit;                 // flag for quitting the program
+
+using namespace     cv;
 
 /**
  * @brief Handle the Ctrl+C signal
@@ -39,7 +37,10 @@ void sig_handler(int signal) {
 /**
  * @brief Get the video frame
  */
-void video_capture_task() {
+void video_capture_task(void* vptr) {
+
+    // Convert the bin processor
+    auto* ptr = (SynchronousBinProcessor*)vptr;
 
     // Create the video capture
      VideoCapture cap = VideoHelper::openCamera();
@@ -67,7 +68,7 @@ void video_capture_task() {
         }
 
         // Save the frame to the bin processor
-        bin_processor.append_data(frame);
+        ptr->append_data(frame);
 
         // Display the video frame
         imshow("Real-time VideoCapture", frame);
@@ -87,7 +88,10 @@ void video_capture_task() {
 /**
  * @brief Get the CSI data
  */
-void csi_sampling_task() {
+void csi_sampling_task(void* vptr) {
+
+    // Convert the bin processor
+    auto* ptr = (SynchronousBinProcessor*)vptr;
 
     // Create the socket
     int sock_fd = create_broadcast_socket();
@@ -106,7 +110,7 @@ void csi_sampling_task() {
 
         // If the received data is valid
         if (received_size > 0) {
-            bin_processor.append_data(temp_buf, received_size);
+            ptr->append_data(temp_buf, received_size);
         }
     }
 
@@ -123,17 +127,17 @@ void csi_sampling_task() {
  */
 int main(int argc, char* argv[])
 {
-    // If the user doesn't specify the port, use the default 8080
-    int port;
+    // Create the bin processor
+    SynchronousBinProcessor* bin;
 
     // Parse the command line arguments
     if (argc == 2 && strcmp(argv[1], "-h") == 0) {
         std::cout << "Usage: " << argv[0] << " [port]" << std::endl;
         return 0;
     } else if (argc == 1) {
-        port = BROADCAST_PORT;
+        bin = new BinProcessor(BROADCAST_PORT);
     } else if (argc == 2) {
-        port = static_cast<int>(strtol(argv[1], nullptr, 10));
+        bin = new BinProcessor(static_cast<int>(strtol(argv[1], nullptr, 10)));
     } else {
         std::cout << "Invalid arguments. Use -h for help." << std::endl;
         exit(1);
@@ -146,10 +150,10 @@ int main(int argc, char* argv[])
     b_quit = false;
     
     // Create the thread for video capture
-    std::thread video_capture_thread(video_capture_task);
+    std::thread video_capture_thread(video_capture_task, bin);
 
     // Create the thread for CSI sampling
-    std::thread csi_sampling_thread(csi_sampling_task);
+    std::thread csi_sampling_thread(csi_sampling_task, bin);
 
     // Print the waiting message
     printf("Waiting for the first packet...\n");
@@ -163,6 +167,9 @@ int main(int argc, char* argv[])
     // Wait all the threads to finish
     video_capture_thread.join();
     csi_sampling_thread.join();
+
+    // Release the bin processor
+    delete bin;
 
     // Exit the program
     return 0;

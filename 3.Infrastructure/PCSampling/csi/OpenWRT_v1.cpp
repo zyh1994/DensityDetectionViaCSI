@@ -1,15 +1,15 @@
 #include <cstdint>
 
-#include "CSIHelper.h"
+#include "OpenWRT_v1.h"
 
 #define CSI_META_LEN 23
 
 
-CSIComplex   csi_matrix[3][3][114];
 OpenWrt_CSI_MetaInfo_V1  csi_meta;
+CSIComplex   csi_matrix[3][3][114];
 
 
-OpenWrt_CSI_MetaInfo_V1* get_csi_metadata(const unsigned char* buf_addr, int cnt) {
+const OpenWrt_CSI_MetaInfo_V1* get_csi_metadata(const unsigned char* buf_addr, int cnt) {
     uint16_t csi_len;
     uint16_t channel;
     uint16_t buf_len;
@@ -49,6 +49,7 @@ OpenWrt_CSI_MetaInfo_V1* get_csi_metadata(const unsigned char* buf_addr, int cnt
     return &csi_meta;
 }
 
+
 int bit_convert(int data, int maxbit)
 {
    if ( data & (1 << (maxbit - 1)))
@@ -60,12 +61,12 @@ int bit_convert(int data, int maxbit)
 }
 
 
-CSIComplex* fill_csi_matrix(u_int8_t* csi_addr, int nr, int nc, int num_tones) {
+const CSIComplex* fill_csi_matrix(const unsigned char* csi_addr, int nr, int nc, int num_tones) {
+    int k, bits_left, nr_idx, nc_idx;
+    int bitmask, idx, current_data, h_data;
+    int real,imag;
 
-   u_int8_t k;
-   u_int8_t bits_left, nr_idx, nc_idx;
-   u_int32_t bitmask, idx, current_data, h_data;
-   int real,imag;
+
    /* init bits_left
     * we process 16 bits at a time*/
    bits_left = 16;
@@ -168,5 +169,5 @@ CSIComplex* fill_csi_matrix(u_int8_t* csi_addr, int nr, int nc, int num_tones) {
        }
    }
 
-   return csi_matrix;
+    return &csi_matrix[0][0][0];
 }

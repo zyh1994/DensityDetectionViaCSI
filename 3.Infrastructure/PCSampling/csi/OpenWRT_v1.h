@@ -40,10 +40,19 @@ typedef struct
     int imag;
 } CSIComplex;
 
-//extern bool  is_big_endian();
 
-extern OpenWrt_CSI_MetaInfo_V1*  get_csi_metadata(const unsigned char* buf, int buf_size);
+extern const OpenWrt_CSI_MetaInfo_V1*  get_csi_metadata(const unsigned char* buf, int buf_size);
 
-extern CSIComplex* fill_csi_matrix(u_int8_t* csi_addr, int nr, int nc, int num_tones);
+
+extern const CSIComplex* fill_csi_matrix(const unsigned char* buf, int nr, int nc, int num_tones);
+
+
+#ifndef OPENWRT_CSI_INDEX_CALCULATION
+#define OPENWRT_CSI_INDEX_CALCULATION
+
+#define index(ptr, nc_idx, nr_idx, k, nc, num_tones) \
+((ptr) + (nr_idx) * (nc) * (num_tones) + (nc_idx) * (num_tones) + (k))
+
+#endif
 
 #endif //DENSITYDETECTION_CSIHELPER_H

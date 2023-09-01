@@ -83,7 +83,7 @@ private:
 
 public:
 
-    SynchronousBinProcessor();
+    explicit SynchronousBinProcessor(int i);
 
     ~SynchronousBinProcessor();
 
@@ -102,7 +102,10 @@ private:
     void swap_buffer();
 
     void save_data();
+
 };
+
+typedef SynchronousBinProcessor BinProcessor;
 
 
 #endif //PC_SAMPLING_SYNCHRONOUSBINPROCESSOR_H

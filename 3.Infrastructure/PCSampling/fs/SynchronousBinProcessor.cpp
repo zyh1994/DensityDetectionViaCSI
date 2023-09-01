@@ -7,7 +7,7 @@
 #include "../cv/VideoHelper.h"
 
 
-SynchronousBinProcessor::SynchronousBinProcessor() {
+SynchronousBinProcessor::SynchronousBinProcessor(int i) {
 
     // flag for continuing the loop
     b_thread_running = b_thread_end = false;
