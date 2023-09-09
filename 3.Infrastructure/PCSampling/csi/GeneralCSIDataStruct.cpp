@@ -20,6 +20,16 @@ CSIStandardData::CSIStandardData() {
     rssi_antenna_0 = 0;
     rssi_antenna_1 = 0;
     rssi_antenna_2 = 0;
+
+    // initialize the csi matrix
+    for (auto & i : csi_matrix) {
+        for (auto & j : i) {
+            for (auto & k : j) {
+                k.real = 0;
+                k.imag = 0;
+            }
+        }
+    }
 }
 
 
@@ -29,22 +39,22 @@ std::string CSIStandardData::toCSVString(const std::string& separator) const {
     std::stringstream ss;
 
     // write the data to the stringstream
-    ss << std::to_string(timestamp) << separator;
-    ss << std::to_string(csi_length) << separator;
-    ss << std::to_string(channel_number) << separator;
-    ss << std::to_string(buffer_length) << separator;
-    ss << std::to_string(payload_length) << separator;
-    ss << std::to_string(physical_error) << separator;
-    ss << std::to_string(noise_level) << separator;
-    ss << std::to_string(transmission_rate) << separator;
-    ss << std::to_string(channel_bandwidth) << separator;
-    ss << std::to_string(number_of_tones) << separator;
-    ss << std::to_string(receiver_antennas) << separator;
-    ss << std::to_string(transmitter_antennas) << separator;
-    ss << std::to_string(received_signal_strength) << separator;
-    ss << std::to_string(rssi_antenna_0) << separator;
-    ss << std::to_string(rssi_antenna_1) << separator;
-    ss << std::to_string(rssi_antenna_2) << separator;
+    ss << std::to_string((uint64_t)timestamp) << separator;
+    ss << std::to_string((int32_t)csi_length) << separator;
+    ss << std::to_string((int32_t)channel_number) << separator;
+    ss << std::to_string((int32_t)buffer_length) << separator;
+    ss << std::to_string((int32_t)payload_length) << separator;
+    ss << std::to_string((int32_t)physical_error) << separator;
+    ss << std::to_string((int32_t)noise_level) << separator;
+    ss << std::to_string((int32_t)transmission_rate) << separator;
+    ss << std::to_string((int32_t)channel_bandwidth) << separator;
+    ss << std::to_string((int32_t)number_of_tones) << separator;
+    ss << std::to_string((int32_t)receiver_antennas) << separator;
+    ss << std::to_string((int32_t)transmitter_antennas) << separator;
+    ss << std::to_string((int32_t)received_signal_strength) << separator;
+    ss << std::to_string((int32_t)rssi_antenna_0) << separator;
+    ss << std::to_string((int32_t)rssi_antenna_1) << separator;
+    ss << std::to_string((int32_t)rssi_antenna_2) << separator;
 
     // convert the csi matrix to json string
     ss << "[";
@@ -54,7 +64,7 @@ std::string CSIStandardData::toCSVString(const std::string& separator) const {
             ss << "[";
             for (int nr_idx = 0; nr_idx < receiver_antennas; nr_idx++) {
                 ss << "["
-                << std::to_string(csi_matrix[nr_idx][nc_idx][k].real)
+                << std::to_string((int32_t)csi_matrix[nr_idx][nc_idx][k].real)
                 << ", "
                 << std::to_string(csi_matrix[nr_idx][nc_idx][k].imag)
                 << "]";
@@ -92,25 +102,29 @@ std::string CSIStandardData::toCSVHeader(const std::string& separator) {
     ss << "rssi_antenna_0" << separator;
     ss << "rssi_antenna_1" << separator;
     ss << "rssi_antenna_2" << separator;
-    ss << "csi_matrix" << separator;
+    ss << "csi_matrix";
+
+    // return the string
+    return ss.str();
 }
 
+#include "../csi/OpenWRT_v1.h"
 
-void CSIStandardData::update_withOpenWRT_v1(const unsigned char *buffer, int buffer_size) {
+void CSIStandardData::updateWithOpenWRTv1(uint8_t *buffer, size_t buffer_size) {
 
-    // get the meta info
-    const OpenWrt_CSI_MetaInfo_V1* meta_info = get_csi_metadata(buffer, buffer_size);
+    // Get the CSI meta information from buffer
+    auto meta_info = get_csi_metadata(buffer, buffer_size);
 
-    // update the meta info
-    timestamp = meta_info->tstamp;
+    // Update the meta information
+    timestamp = meta_info->timestamp;
     csi_length = meta_info->csi_len;
     channel_number = meta_info->channel;
-    buffer_length =  meta_info->buf_len;
+    buffer_length = meta_info->buf_len;
     payload_length = meta_info->payload_len;
-    physical_error = meta_info->phyerr;
+    physical_error = meta_info->physical_err;
     noise_level = meta_info->noise;
     transmission_rate = meta_info->rate;
-    channel_bandwidth = meta_info->chanBW;
+    channel_bandwidth = meta_info->bandwidth;
     number_of_tones = meta_info->num_tones;
     receiver_antennas = meta_info->nr;
     transmitter_antennas = meta_info->nc;
@@ -119,20 +133,11 @@ void CSIStandardData::update_withOpenWRT_v1(const unsigned char *buffer, int buf
     rssi_antenna_1 = meta_info->rssi_1;
     rssi_antenna_2 = meta_info->rssi_2;
 
-    // get the csi matrix
-    const CSIComplex *openwrt_ptr = fill_csi_matrix(
-            buffer,
-            receiver_antennas,
-            transmitter_antennas,
-            number_of_tones);
+    //////// Update the CSI matrix ////////
 
-    // update the csi matrix
-    for (int nr_idx = 0; nr_idx < receiver_antennas; nr_idx++) {
-        for (int nc_idx = 0; nc_idx < transmitter_antennas; nc_idx++) {
-            for (int k = 0; k < number_of_tones; k++) {
-                csi_matrix[nr_idx][nc_idx][k].real = index(openwrt_ptr, nc_idx, nr_idx, k, transmitter_antennas, number_of_tones)->real;
-                csi_matrix[nr_idx][nc_idx][k].imag = index(openwrt_ptr, nc_idx, nr_idx, k, transmitter_antennas, number_of_tones)->imag;
-            }
-        }
-    }
+    // Convert the CSI matrix to an int32_t array with one dimension
+    auto* csi_matrix_ptr = reinterpret_cast<int32_t*>(csi_matrix);
+
+    // Use the function decode_openwrt_v1 to get the CSI matrix
+    decode_openwrt_v1(buffer + CSI_META_LEN + 2, meta_info->csi_len, csi_matrix_ptr);
 }

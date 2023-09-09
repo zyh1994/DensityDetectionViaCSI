@@ -3,11 +3,11 @@
 //
 
 #include "SynchronousBinProcessor.h"
-#include "FileSystemUtils.h"
+#include "GeneralUtils.h"
 #include "../cv/VideoHelper.h"
 
 
-SynchronousBinProcessor::SynchronousBinProcessor(int i) {
+SynchronousBinProcessor::SynchronousBinProcessor() {
 
     // flag for continuing the loop
     b_thread_running = b_thread_end = false;
@@ -20,11 +20,11 @@ SynchronousBinProcessor::SynchronousBinProcessor(int i) {
     csi_buff_size = csi_swap_size = 0;
 
     // malloc the buffer
-    cv_buff = new char[BUF_SIZE];
-    cv_swap = new char[BUF_SIZE];
+    cv_buff = new uint8_t[BUF_SIZE];
+    cv_swap = new uint8_t[BUF_SIZE];
 
-    csi_buff = new char[BUF_SIZE];
-    csi_swap = new char[BUF_SIZE];
+    csi_buff = new uint8_t[BUF_SIZE];
+    csi_swap = new uint8_t[BUF_SIZE];
 
     // start the backend thread
     t_backend_saver = std::thread(&SynchronousBinProcessor::save_data_to_bin, this);
@@ -119,26 +119,37 @@ void SynchronousBinProcessor::append_data(cv::Mat &mat) {
     cv::resize(mat, mat_320p, cv::Size(320, 180));
     cv::cvtColor(mat_320p, mat_320p, cv::COLOR_BGR2GRAY);
 
-    // assign the information to the struct
-    OpenCVFrameInfo mat_info{};
-    mat_info.raw_size = mat_320p.total() * mat_320p.elemSize();
-    mat_info.frame_size = sizeof(OpenCVFrameInfo) + mat_info.raw_size;
-    mat_info.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
-    mat_info.width = mat_320p.cols;
-    mat_info.height = mat_320p.rows;
-    mat_info.channels = mat_320p.channels();
-    mat_info.reserved = mat_320p.data[0];
+    // get the size of OpenCvFrameInfo
+    auto struct_len = sizeof(struct OpenCVFrameInfo);
+
+    // assign the length of the raw data
+    st_cv_frame.raw_size = mat_320p.total() * mat_320p.elemSize();
+
+    // calculate the entire frame size
+    st_cv_frame.frame_size = struct_len + st_cv_frame.raw_size;
+
+    // assign the timestamp
+    st_cv_frame.timestamp = timestamp();
+
+    // assign the width and height
+    st_cv_frame.width = mat_320p.cols;
+    st_cv_frame.height = mat_320p.rows;
+
+    // assign the channels
+    st_cv_frame.channels = mat_320p.channels();
+
+    // calculate the crc
+    st_cv_frame.crc32 = calculate_crc32(mat_320p.data, st_cv_frame.raw_size);
 
     // lock the mutex with unique_lock
     std::unique_lock<std::mutex> lock(mutex_lock);
 
     // copy the data into the buffer
-    memcpy(cv_buff + cv_buff_size, &mat_info, sizeof(OpenCVFrameInfo));
-    memcpy(cv_buff + cv_buff_size + sizeof(OpenCVFrameInfo), mat.data, mat_info.raw_size);
+    memcpy(cv_buff + cv_buff_size, &st_cv_frame, struct_len);
+    memcpy(cv_buff + cv_buff_size + struct_len, mat.data, st_cv_frame.raw_size);
 
     // update the buffer size
-    cv_buff_size += sizeof(OpenCVFrameInfo) + mat_info.raw_size;
+    cv_buff_size += struct_len + st_cv_frame.raw_size;
 
     // push the frame to the vector
     cv_frames.push_back(mat.clone());
@@ -147,23 +158,30 @@ void SynchronousBinProcessor::append_data(cv::Mat &mat) {
 
 void SynchronousBinProcessor::append_data(unsigned char *buf, size_t data_size) {
 
+    // get the size of CSIDataFrameInfo
+    auto struct_len = sizeof(struct CSIDataFrameInfo);
+
     // assign the information to the struct
-    CSIDataFrameInfo csi_info{};
-    csi_info.frame_size = sizeof(CSIDataFrameInfo) + data_size;
-    csi_info.raw_size = data_size;
-    csi_info.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
-    csi_info.reserved = buf[0];
+    st_csi_frame.frame_size = struct_len + data_size;
+
+    // assign the length of the raw data
+    st_csi_frame.raw_size = data_size;
+
+    // assign the timestamp
+    st_csi_frame.timestamp = timestamp();
+
+    // assign the crc32
+    st_csi_frame.crc32 = calculate_crc32(buf, data_size);
 
     // lock the mutex with unique_lock
     std::unique_lock<std::mutex> lock(mutex_lock);
 
     // copy the data into the buffer
-    memcpy(csi_buff + csi_buff_size, &csi_info, sizeof(CSIDataFrameInfo));
-    memcpy(csi_buff + csi_buff_size + sizeof(CSIDataFrameInfo), buf, data_size);
+    memcpy(csi_buff + csi_buff_size, &st_csi_frame, struct_len);
+    memcpy(csi_buff + csi_buff_size + struct_len, buf, data_size);
 
     // update the buffer size
-    csi_buff_size += sizeof(CSIDataFrameInfo) + data_size;
+    csi_buff_size += struct_len + data_size;
 }
 
 
@@ -212,10 +230,10 @@ void SynchronousBinProcessor::save_data() {
         ofs.write(reinterpret_cast<char *>(&csi_swap_size), sizeof(size_t));
 
         // write the cv data
-        ofs.write(cv_swap, static_cast<long>(cv_swap_size));
+        ofs.write(reinterpret_cast<char *>(cv_swap), static_cast<long>(cv_swap_size));
 
         // write the csi data
-        ofs.write(csi_swap, static_cast<long>(csi_swap_size));
+        ofs.write(reinterpret_cast<char *>(csi_swap), static_cast<long>(csi_swap_size));
     }
 
     // save the video

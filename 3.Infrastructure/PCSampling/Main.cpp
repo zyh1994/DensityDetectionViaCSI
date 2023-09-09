@@ -8,7 +8,7 @@
 #include "csi/OpenWRT_v1.h"                 // Get CSI data frame from OpenWRT device, the version is 1
 #include "csi/GeneralCSIDataStruct.h"       // General CSI data structure for next step processing
 #include "network/Network.h"                // Network, for UDP broadcast
-#include "fs/SynchronousBinProcessor.h"     // Synchronous bin processor, for saving the CSI signals and images
+#include "bin/SynchronousBinProcessor.h"    // Synchronous bin processor, for saving the CSI signals and images
 
 #define BUF_SIZE                            4096
 #define BROADCAST_PORT                      8080
@@ -88,7 +88,7 @@ void video_capture_task(void* vptr) {
 /**
  * @brief Get the CSI data
  */
-void csi_sampling_task(void* vptr) {
+void csi_sampling_task(void* vptr, int port) {
 
     // Convert the bin processor
     auto* ptr = (SynchronousBinProcessor*)vptr;
@@ -97,7 +97,7 @@ void csi_sampling_task(void* vptr) {
     int sock_fd = create_broadcast_socket();
 
     // Bind the socket
-    bind_addr(sock_fd, BROADCAST_PORT);
+    bind_addr(sock_fd, port);
 
     // Loop until the user presses the ESC key
     while (!b_quit) {
@@ -128,16 +128,19 @@ void csi_sampling_task(void* vptr) {
 int main(int argc, char* argv[])
 {
     // Create the bin processor
-    SynchronousBinProcessor* bin;
+    SynchronousBinProcessor bin;
+
+    // Define the port
+    int port = 0;
 
     // Parse the command line arguments
     if (argc == 2 && strcmp(argv[1], "-h") == 0) {
         std::cout << "Usage: " << argv[0] << " [port]" << std::endl;
         return 0;
     } else if (argc == 1) {
-        bin = new BinProcessor(BROADCAST_PORT);
+        port = BROADCAST_PORT;
     } else if (argc == 2) {
-        bin = new BinProcessor(static_cast<int>(strtol(argv[1], nullptr, 10)));
+        port = static_cast<int>(strtol(argv[1], nullptr, 10));
     } else {
         std::cout << "Invalid arguments. Use -h for help." << std::endl;
         exit(1);
@@ -150,10 +153,10 @@ int main(int argc, char* argv[])
     b_quit = false;
     
     // Create the thread for video capture
-    std::thread video_capture_thread(video_capture_task, bin);
+    std::thread video_capture_thread(video_capture_task, &bin);
 
     // Create the thread for CSI sampling
-    std::thread csi_sampling_thread(csi_sampling_task, bin);
+    std::thread csi_sampling_thread(csi_sampling_task, &bin, port);
 
     // Print the waiting message
     printf("Waiting for the first packet...\n");
@@ -167,9 +170,6 @@ int main(int argc, char* argv[])
     // Wait all the threads to finish
     video_capture_thread.join();
     csi_sampling_thread.join();
-
-    // Release the bin processor
-    delete bin;
 
     // Exit the program
     return 0;

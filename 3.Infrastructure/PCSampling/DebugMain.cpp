@@ -5,22 +5,14 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "cv/VideoHelper.h"
-#include "csi/CSIHelper.h"
-#include "network/Network.h"
-#include "fs/SynchronousBinProcessor.h"
+#include "bin/SynchronousBinProcessor.h"
+#include "csi/GeneralCSIDataStruct.h"
 
-using namespace cv;
-
-
+using namespace             cv;
 #define BUF_SIZE            4096
-
-
-unsigned char       temp_buf[BUF_SIZE]; // buffer for storing the received data
-bool                b_quit;             // flag for quitting the program
-
-
-SynchronousBinProcessor bin_processor;  // create the synchronous bin processor
+unsigned char               temp_buf[BUF_SIZE]; // buffer for storing the received data
+bool                        b_quit;             // flag for quitting the program
+BinProcessor                processor;  // create the synchronous bin processor
 
 /**
  * @brief Handle the Ctrl+C signal
@@ -42,20 +34,11 @@ void sig_handler(int signal) {
  */
 void video_capture_task() {
 
-    // Create the video capture
-     VideoCapture cap = VideoHelper::openCamera();
-
-    // Set the camera resolution
-    VideoHelper::setCameraResolution(cap, 1280, 720);
-
-    // Get the video frame
-    cv::Mat frame;
+    // Use image to instead of video capture
+    Mat frame = imread("Actresses.jpg");
 
     // Loop until the user presses the ESC key
     while (!b_quit) {
-
-        // Get the video frame
-        cap >> frame;
 
         // If the frame is empty, skip it
         if (frame.empty()) {
@@ -68,7 +51,7 @@ void video_capture_task() {
         }
 
         // Save the frame to the bin processor
-        bin_processor.append_data(frame);
+        processor.append_data(frame);
 
         // Display the video frame
         imshow("Real-time VideoCapture", frame);
@@ -79,9 +62,6 @@ void video_capture_task() {
 
     // Close all the windows
     destroyAllWindows();
-
-    // Close the video capture
-    VideoHelper::closeCamera(cap);
 }
 
 
@@ -90,29 +70,16 @@ void video_capture_task() {
  */
 void csi_sampling_task() {
 
-    // Create the socket
-    int sock_fd = create_broadcast_socket();
-
-    // Bind the socket
-    bind_addr(sock_fd, BROADCAST_PORT);
-
     // Loop until the user presses the ESC key
     while (!b_quit) {
 
-        // Get the CSI data from the UDP broadcast
-        struct sockaddr_in addr_in{};
-        socklen_t senderLen = sizeof(addr_in);
-        ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
-                                        (struct sockaddr*)&addr_in, &senderLen);
-
-        // If the received data is valid
-        if (received_size > 0) {
-            bin_processor.append_data(temp_buf, received_size);
-        }
+        // TODO: Generate fake CSI data
+//
+//        // If the received data is valid
+//        if (received_size > 0) {
+//            processor.append_data(temp_buf, received_size);
+//        }
     }
-
-    // Close the socket
-    close(sock_fd);
 }
 
 
