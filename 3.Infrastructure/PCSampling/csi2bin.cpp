@@ -6,6 +6,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "bin/SynchronousBinProcessor.h"
+#include "bin/GeneralUtils.h"
 #include "csi/OpenWRT_v1.h"
 #include "csi/StandardCSIDataProcessing.h"
 #include "network/Network.h"
@@ -43,6 +44,21 @@ void video_capture_task() {
     VideoCapture cap(0);
     Mat frame;
 
+    // Check FPS
+    int fps = 0;
+    int FPS = 0;
+
+    // Timestamp indicating the counting time
+    auto start = std::chrono::system_clock::now();
+
+    // Set the camera resolution to 720p
+    cap.set(CAP_PROP_FRAME_WIDTH, 1280);
+    cap.set(CAP_PROP_FRAME_HEIGHT, 720);
+
+    // Set the camera resolution to 480p 16:9
+    //cap.set(CAP_PROP_FRAME_WIDTH, 640);
+    //cap.set(CAP_PROP_FRAME_HEIGHT, 480);
+
     // Loop until the user presses the ESC key
     while (!b_quit) {
 
@@ -54,21 +70,40 @@ void video_capture_task() {
             continue;
         }
 
-        // If the frame is not 720p, resize it to 720p
-        if (frame.rows != 720 || frame.cols != 1280) {
-            resize(frame, frame, Size(1280, 720));
-        }
-
         // Save the frame to the bin processor
         processor.append_data(frame);
 
-// if not _DEBUG mode, enable the following code
+        // Calculate the FPS
+        fps++;
+
+        // Get the current time
+        auto end = std::chrono::system_clock::now();
+
+        // Calculate the time difference
+        auto diff = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+
+        // If the time difference is greater than 1 second
+        if (diff >= 1) {
+
+            // Update the FPS
+            FPS = fps;
+
+            // Reset the FPS
+            fps = 0;
+
+            // Reset the start time
+            start = std::chrono::system_clock::now();
+        }
+
 #if not _DEBUG
+        // Print the FPS on the OpenCV window
+        cv::putText(frame, "FPS: " + std::to_string(FPS), cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 2);
+
         // Display the video frame
         imshow("Real-time VideoCapture", frame);
 #endif
-        // Wait for 30ms
-        waitKey(30);
+        // Wait for 20ms
+        waitKey(1);
     }
 
     // Close all the windows
@@ -84,15 +119,18 @@ void csi_sampling_task() {
     // Create the socket
     int sock_fd = create_broadcast_socket();
 
+#if not _DEBUG
+    
     // Bind the socket
     bind_addr(sock_fd, BROADCAST_PORT);
 
+    // Socket address
+    struct sockaddr_in addr_in;
+
+#endif
     // CSI Standard Data Processing Class for processing the CSI data
     size_t received_size = 0;
     CSIStandardDataProcessingClass csiHandeler;
-
-    // Socket address
-    struct sockaddr_in addr_in{};
 
     // Loop until the user presses the ESC key
     while (!b_quit) {
@@ -107,7 +145,7 @@ void csi_sampling_task() {
 #endif
         // Process the CSI data
         if (received_size > 0) {
-
+            
             // Process the CSI data
             csiHandeler.updateWithOpenWRTv1(temp_buf, received_size);
 
@@ -116,6 +154,9 @@ void csi_sampling_task() {
 
             // Save the CSI data to the bin processor
             processor.append_data(raw_data, received_size);
+
+            // Sleep for 1 ms
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
 #if _DEBUG
@@ -139,24 +180,6 @@ void csi_sampling_task() {
  */
 int main(int argc, char* argv[])
 {
-#if not _DEBUG
-    // If the user doesn't specify the port, use the default 8080
-    int port;
-
-    // Parse the command line arguments
-    if (argc == 2 && strcmp(argv[1], "-h") == 0) {
-        std::cout << "Usage: " << argv[0] << " [port]" << std::endl;
-        return 0;
-    } else if (argc == 1) {
-        port = BROADCAST_PORT;
-    } else if (argc == 2) {
-        port = static_cast<int>(strtol(argv[1], nullptr, 10));
-    } else {
-        std::cout << "Invalid arguments. Use -h for help." << std::endl;
-        exit(1);
-    }
-#endif
-
     // Register the signal handler ctrl + c
     signal(SIGINT, sig_handler);
 
@@ -175,7 +198,7 @@ int main(int argc, char* argv[])
     b_quit = true;
 #else
     // Keep listening to the kernel and waiting for the csi report
-    while(!b_quit) {
+    while (!b_quit) {
 
         // Wait for 1ms
         std::this_thread::sleep_for(std::chrono::milliseconds(1));

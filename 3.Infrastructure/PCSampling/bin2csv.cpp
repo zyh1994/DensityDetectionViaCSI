@@ -6,14 +6,14 @@
 
 int main(int argc, char* argv[])
 {
-    //if (argc != 2)
-    //{
-    //    std::cout << "Usage: bin2csv <input file>" << std::endl;
-    //    return 1;
-    //}
+    if (argc != 2)
+    {
+       std::cout << "Usage: bin2csv <input file>" << std::endl;
+       return 1;
+    }
 
     // Get the data of the file
-    auto f_data = load_data_from_bin("./202309101257.bin");
+    auto f_data = load_data_from_bin(argv[1]);
 
     // Print out the size of the file
     std::cout << "Input file size: " << std::get<0>(f_data) << " Bytes" << std::endl;

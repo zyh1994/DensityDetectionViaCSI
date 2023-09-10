@@ -94,19 +94,25 @@ void decode_openwrt_v1(uint8_t* input, int32_t bytes_len, int32_t* output) {
 const OpenWrt_CSI_MetaInfo_V1* get_csi_metadata(const unsigned char* buf_addr, int cnt) {
     int32_t idx = 0;
 
-    if (is_big_endian()) {
-        csi_meta.timestamp = read_64bits_by_big_endian(buf_addr, idx);
-        csi_meta.csi_len = read_16bits_by_big_endian(buf_addr, idx);
-        csi_meta.channel = read_16bits_by_big_endian(buf_addr, idx);
-        csi_meta.buf_len = (buf_addr[cnt - 2] << 8) | buf_addr[cnt - 1];
-        csi_meta.payload_len = (buf_addr[CSI_META_LEN] << 8) | buf_addr[CSI_META_LEN + 1];
-    } else {
-        csi_meta.timestamp = read_64bits_by_little_endian(buf_addr, idx);
-        csi_meta.csi_len = read_16bits_by_little_endian(buf_addr, idx);
-        csi_meta.channel = read_16bits_by_little_endian(buf_addr, idx);
-        csi_meta.buf_len = (buf_addr[cnt - 1] << 8) | buf_addr[cnt - 2];
-        csi_meta.payload_len = (buf_addr[CSI_META_LEN + 1] << 8) | buf_addr[CSI_META_LEN];
-    }
+    //if (is_big_endian()) {
+    //    csi_meta.timestamp = read_64bits_by_big_endian(buf_addr, idx);
+    //    csi_meta.csi_len = read_16bits_by_big_endian(buf_addr, idx);
+    //    csi_meta.channel = read_16bits_by_big_endian(buf_addr, idx);
+    //    csi_meta.buf_len = (buf_addr[cnt - 2] << 8) | buf_addr[cnt - 1];
+    //    csi_meta.payload_len = (buf_addr[CSI_META_LEN] << 8) | buf_addr[CSI_META_LEN + 1];
+    //} else {
+    //    csi_meta.timestamp = read_64bits_by_little_endian(buf_addr, idx);
+    //    csi_meta.csi_len = read_16bits_by_little_endian(buf_addr, idx);
+    //    csi_meta.channel = read_16bits_by_little_endian(buf_addr, idx);
+    //    csi_meta.buf_len = (buf_addr[cnt - 1] << 8) | buf_addr[cnt - 2];
+    //    csi_meta.payload_len = (buf_addr[CSI_META_LEN + 1] << 8) | buf_addr[CSI_META_LEN];
+    //}
+
+    csi_meta.timestamp = read_64bits_by_big_endian(buf_addr, idx);
+    csi_meta.csi_len = read_16bits_by_big_endian(buf_addr, idx);
+    csi_meta.channel = read_16bits_by_big_endian(buf_addr, idx);
+    csi_meta.buf_len = (buf_addr[cnt - 2] << 8) | buf_addr[cnt - 1];
+    csi_meta.payload_len = (buf_addr[CSI_META_LEN] << 8) | buf_addr[CSI_META_LEN + 1];
 
     csi_meta.physical_err = buf_addr[12];
     csi_meta.noise = buf_addr[13];

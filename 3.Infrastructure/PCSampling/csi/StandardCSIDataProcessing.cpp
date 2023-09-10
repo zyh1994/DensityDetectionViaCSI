@@ -146,13 +146,33 @@ void CSIStandardDataProcessingClass::updateWithOpenWRTv1(uint8_t *buffer, size_t
     data.rssi_antenna_1 = meta_info->rssi_1;
     data.rssi_antenna_2 = meta_info->rssi_2;
 
-    //////// Update the CSI matrix ////////
+#if 0
+    system("clear");
+   
+    std::cout << "timestamp " << data.timestamp << std::endl;
+    std::cout << "csi_length " << (int)data.csi_length << std::endl;
+    std::cout << "channel_number " << (int)data.channel_number << std::endl;
+    std::cout << "buffer_length " << (int)data.buffer_length << std::endl;
+    std::cout << "payload_length " << (int)data.payload_length << std::endl;
+    std::cout << "physical_error " << (int)data.physical_error << std::endl;
+    std::cout << "noise_level " << (int)data.noise_level << std::endl;
+    std::cout << "transmission_rate " << (int)data.transmission_rate << std::endl;
+    std::cout << "channel_bandwidth " << (int)data.channel_bandwidth << std::endl;
+    std::cout << "number_of_tones " << (int)data.number_of_tones << std::endl;
+    std::cout << "receiver_antennas " << (int)data.receiver_antennas << std::endl;
+    std::cout << "transmitter_antennas " << (int)data.transmitter_antennas << std::endl;
+    std::cout << "received_signal_strength " << (int)data.received_signal_strength << std::endl;
+    std::cout << "rssi_antenna_0 " << (int)data.rssi_antenna_0 << std::endl;
+    std::cout << "rssi_antenna_1 " << (int)data.rssi_antenna_1 << std::endl;
+    std::cout << "rssi_antenna_2 " << (int)data.rssi_antenna_2 << std::endl;
+#endif
+
 
     // Convert the CSI matrix to an int32_t array with one dimension
     auto* csi_matrix_ptr = reinterpret_cast<int32_t*>(data.csi_matrix);
 
     // Use the function decode_openwrt_v1 to get the CSI matrix
-    decode_openwrt_v1(buffer + CSI_META_LEN + 2, meta_info->csi_len, csi_matrix_ptr);
+    //decode_openwrt_v1(buffer + CSI_META_LEN + 2, meta_info->csi_len, csi_matrix_ptr);
 }
 
 #include <cstring>

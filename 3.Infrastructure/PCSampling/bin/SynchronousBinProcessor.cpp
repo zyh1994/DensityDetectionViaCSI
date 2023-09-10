@@ -82,7 +82,7 @@ void SynchronousBinProcessor::open_file() {
     video_writer = VideoHelper::openVideoWriter(
             filename_handler + ".avi",
             get_fourcc(VideoTypeFourCC::MPEG_4),
-            30,
+            15, // <--- target device is only 15 FPS available, so the regenerated video should keep in 15 FPS
             cv::Size(1280, 720));
 
     // check if the video writer is opened
