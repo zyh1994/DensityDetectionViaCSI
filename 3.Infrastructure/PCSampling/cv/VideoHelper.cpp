@@ -1,6 +1,15 @@
 //
 // Created by Seagosoft on 6/11/2023.
 //
+// If the Operation System is Windows, use the macro to include the opencv_world480.lib file
+#ifdef _WIN32
+#ifdef _DEBUG
+#pragma comment(lib, "opencv_world480d.lib")
+#else
+#pragma comment(lib, "opencv_world480.lib")
+#endif
+#endif
+
 
 #include "VideoHelper.h"
 

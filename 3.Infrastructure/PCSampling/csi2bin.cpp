@@ -5,21 +5,19 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "cv/VideoHelper.h"
-#include "csi/CSIHelper.h"
+#include "bin/SynchronousBinProcessor.h"
+#include "csi/OpenWRT_v1.h"
+#include "csi/StandardCSIDataProcessing.h"
 #include "network/Network.h"
-#include "fs/SynchronousBinProcessor.h"
 
-#define BUF_SIZE            4096
+
 #define BROADCAST_PORT      8080
 
-using namespace cv;
+using namespace             cv;
+unsigned char               temp_buf[4096];     // buffer for storing the received data
+bool                        b_quit;             // flag for quitting the program
+BinProcessor                processor;          // create the synchronous bin processor
 
-unsigned char       temp_buf[BUF_SIZE]; // buffer for storing the received data
-bool                b_quit;             // flag for quitting the program
-
-
-SynchronousBinProcessor bin_processor;  // create the synchronous bin processor
 
 /**
  * @brief Handle the Ctrl+C signal
@@ -41,14 +39,9 @@ void sig_handler(int signal) {
  */
 void video_capture_task() {
 
-    // Create the video capture
-     VideoCapture cap = VideoHelper::openCamera();
-
-    // Set the camera resolution
-    VideoHelper::setCameraResolution(cap, 1280, 720);
-
-    // Get the video frame
-    cv::Mat frame;
+    // Open camera
+    VideoCapture cap(0);
+    Mat frame;
 
     // Loop until the user presses the ESC key
     while (!b_quit) {
@@ -67,20 +60,19 @@ void video_capture_task() {
         }
 
         // Save the frame to the bin processor
-        bin_processor.append_data(frame);
+        processor.append_data(frame);
 
+// if not _DEBUG mode, enable the following code
+#if not _DEBUG
         // Display the video frame
         imshow("Real-time VideoCapture", frame);
-
+#endif
         // Wait for 30ms
         waitKey(30);
     }
 
     // Close all the windows
     destroyAllWindows();
-
-    // Close the video capture
-    VideoHelper::closeCamera(cap);
 }
 
 
@@ -95,23 +87,47 @@ void csi_sampling_task() {
     // Bind the socket
     bind_addr(sock_fd, BROADCAST_PORT);
 
+    // CSI Standard Data Processing Class for processing the CSI data
+    size_t received_size = 0;
+    CSIStandardDataProcessingClass csiHandeler;
+
+    // Socket address
+    struct sockaddr_in addr_in{};
+
     // Loop until the user presses the ESC key
     while (!b_quit) {
 
-        // Get the CSI data from the UDP broadcast
-        struct sockaddr_in addr_in{};
+#if _DEBUG
+        // Generate the Fake CSI data
+        gen_fake_data(temp_buf, received_size);
+#else
+        // Receive the CSI data from the socket
         socklen_t senderLen = sizeof(addr_in);
-        ssize_t received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0,
-                                        (struct sockaddr*)&addr_in, &senderLen);
-
-        // If the received data is valid
+        received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0, (struct sockaddr*)&addr_in, &senderLen);
+#endif
+        // Process the CSI data
         if (received_size > 0) {
-            bin_processor.append_data(temp_buf, received_size);
+
+            // Process the CSI data
+            csiHandeler.updateWithOpenWRTv1(temp_buf, received_size);
+
+            // Get the raw data from the CSI data
+            auto* raw_data = csiHandeler.toBytes(received_size);
+
+            // Save the CSI data to the bin processor
+            processor.append_data(raw_data, received_size);
         }
+
+#if _DEBUG
+        // Sleep for 10ms
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+#endif
     }
 
+#if not _DEBUG
     // Close the socket
     close(sock_fd);
+#endif
 }
 
 
@@ -123,6 +139,7 @@ void csi_sampling_task() {
  */
 int main(int argc, char* argv[])
 {
+#if not _DEBUG
     // If the user doesn't specify the port, use the default 8080
     int port;
 
@@ -138,28 +155,32 @@ int main(int argc, char* argv[])
         std::cout << "Invalid arguments. Use -h for help." << std::endl;
         exit(1);
     }
+#endif
 
     // Register the signal handler ctrl + c
     signal(SIGINT, sig_handler);
 
     // Set the flag 
     b_quit = false;
-    
+
     // Create the thread for video capture
     std::thread video_capture_thread(video_capture_task);
 
     // Create the thread for CSI sampling
     std::thread csi_sampling_thread(csi_sampling_task);
 
-    // Print the waiting message
-    printf("Waiting for the first packet...\n");
-
+#if _DEBUG
+    // This thread will run 1 minute 30 seconds
+    std::this_thread::sleep_for(std::chrono::seconds(70));
+    b_quit = true;
+#else
     // Keep listening to the kernel and waiting for the csi report
     while(!b_quit) {
 
         // Wait for 1ms
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+#endif
 
     // Wait all the threads to finish
     video_capture_thread.join();

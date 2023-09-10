@@ -9,4 +9,8 @@
 
 std::string gen_filename();
 
+const uint32_t calculate_crc32(const unsigned char *buf, size_t len);
+
+const uint64_t timestamp();
+
 #endif //PC_SAMPLING_FILESYSTEMUTILS_H

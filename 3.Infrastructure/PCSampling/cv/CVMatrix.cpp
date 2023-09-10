@@ -1,7 +1,6 @@
 //
 // Created by Orlando Chen on 2023/07/11.
 //
-
 #include "CVMatrix.h"
 
 // malloc
