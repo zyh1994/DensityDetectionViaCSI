@@ -5,7 +5,9 @@
 #include "SynchronousBinProcessor.h"
 #include "GeneralUtils.h"
 #include "../cv/VideoHelper.h"
+#include "../csi/StandardCSIDataStruct.h"
 
+#include <cstdio>
 
 SynchronousBinProcessor::SynchronousBinProcessor() {
 
@@ -20,14 +22,14 @@ SynchronousBinProcessor::SynchronousBinProcessor() {
     csi_buff_size = csi_swap_size = 0;
 
     // malloc the buffer
-    cv_buff = new uint8_t[BUF_SIZE];
-    cv_swap = new uint8_t[BUF_SIZE];
+    ptr_cv_buff = new uint8_t[BUF_SIZE];
+    ptr_cv_swap = new uint8_t[BUF_SIZE];
 
-    csi_buff = new uint8_t[BUF_SIZE];
-    csi_swap = new uint8_t[BUF_SIZE];
+    ptr_csi_buff = new uint8_t[BUF_SIZE];
+    ptr_csi_swap = new uint8_t[BUF_SIZE];
 
     // start the backend thread
-    t_backend_saver = std::thread(&SynchronousBinProcessor::save_data_to_bin, this);
+    t_backend_saver = std::thread(&SynchronousBinProcessor::save_to_bin, this);
 
     // detach the thread
     t_backend_saver.detach();
@@ -45,10 +47,10 @@ SynchronousBinProcessor::~SynchronousBinProcessor() {
     }
 
     // free the buffer
-    delete[] cv_buff;
-    delete[] cv_swap;
-    delete[] csi_buff;
-    delete[] csi_swap;
+    delete[] ptr_cv_buff;
+    delete[] ptr_cv_swap;
+    delete[] ptr_csi_buff;
+    delete[] ptr_csi_swap;
 
     // close the file
     close_file();
@@ -119,69 +121,60 @@ void SynchronousBinProcessor::append_data(cv::Mat &mat) {
     cv::resize(mat, mat_320p, cv::Size(320, 180));
     cv::cvtColor(mat_320p, mat_320p, cv::COLOR_BGR2GRAY);
 
-    // get the size of OpenCvFrameInfo
-    auto struct_len = sizeof(struct OpenCVFrameInfo);
+#if _DEBUG
+    // show the resized image
+    cv::imshow("Grayscale VideoCapture", mat_320p);
+#endif
 
-    // assign the length of the raw data
-    st_cv_frame.raw_size = mat_320p.total() * mat_320p.elemSize();
-
-    // calculate the entire frame size
-    st_cv_frame.frame_size = struct_len + st_cv_frame.raw_size;
-
-    // assign the timestamp
+    // Assign the timestamp
     st_cv_frame.timestamp = timestamp();
 
-    // assign the width and height
+    // Calculate the crc
+    auto frame_len = mat_320p.cols * mat_320p.rows * mat_320p.channels();
+    st_cv_frame.crc32 = calculate_crc32(mat_320p.data, frame_len);
+
+    // Assign the width
     st_cv_frame.width = mat_320p.cols;
+
+    // Assign the height
     st_cv_frame.height = mat_320p.rows;
 
-    // assign the channels
+    // Assign the channels
     st_cv_frame.channels = mat_320p.channels();
 
-    // calculate the crc
-    st_cv_frame.crc32 = calculate_crc32(mat_320p.data, st_cv_frame.raw_size);
+    // copy the data into the struct
+    memcpy(st_cv_frame.bytes, mat_320p.data, frame_len);
 
     // lock the mutex with unique_lock
     std::unique_lock<std::mutex> lock(mutex_lock);
 
     // copy the data into the buffer
-    memcpy(cv_buff + cv_buff_size, &st_cv_frame, struct_len);
-    memcpy(cv_buff + cv_buff_size + struct_len, mat.data, st_cv_frame.raw_size);
+    memcpy(ptr_cv_buff + cv_buff_size, &st_cv_frame, CVDATA_CHECKSUM_SIZE);
 
     // update the buffer size
-    cv_buff_size += struct_len + st_cv_frame.raw_size;
+    cv_buff_size += CVDATA_CHECKSUM_SIZE;
 
-    // push the frame to the vector
+    // push the original frame to the vector
     cv_frames.push_back(mat.clone());
 }
 
 
 void SynchronousBinProcessor::append_data(unsigned char *buf, size_t data_size) {
 
-    // get the size of CSIDataFrameInfo
-    auto struct_len = sizeof(struct CSIDataFrameInfo);
-
-    // assign the information to the struct
-    st_csi_frame.frame_size = struct_len + data_size;
-
-    // assign the length of the raw data
-    st_csi_frame.raw_size = data_size;
-
-    // assign the timestamp
-    st_csi_frame.timestamp = timestamp();
-
     // assign the crc32
     st_csi_frame.crc32 = calculate_crc32(buf, data_size);
+
+    // copy the data into the struct
+    memcpy(st_csi_frame.bytes, buf, data_size);
 
     // lock the mutex with unique_lock
     std::unique_lock<std::mutex> lock(mutex_lock);
 
     // copy the data into the buffer
-    memcpy(csi_buff + csi_buff_size, &st_csi_frame, struct_len);
-    memcpy(csi_buff + csi_buff_size + struct_len, buf, data_size);
+    memcpy(ptr_csi_buff + csi_buff_size, &st_csi_frame, CSISTD_CHECKSUM_SIZE);
 
     // update the buffer size
-    csi_buff_size += struct_len + data_size;
+    csi_buff_size += CSISTD_CHECKSUM_SIZE;
 }
 
 
@@ -190,11 +183,11 @@ void SynchronousBinProcessor::swap_buffer() {
     std::unique_lock<std::mutex> lock(mutex_lock);
 
     // swap the buffers
-    std::swap(cv_buff, cv_swap);
+    std::swap(ptr_cv_buff, ptr_cv_swap);
     std::swap(cv_buff_size, cv_swap_size);
 
     // swap the cv mat containers
-    std::swap(csi_buff, csi_swap);
+    std::swap(ptr_csi_buff, ptr_csi_swap);
     std::swap(csi_buff_size, csi_swap_size);
 
     // swap the cv mat containers
@@ -211,8 +204,8 @@ void SynchronousBinProcessor::swap_buffer() {
 void SynchronousBinProcessor::save_data() {
 
     // report the memory usage first
-    auto cv_data_usage = (double)cv_swap_size / (1024 * 1024);
-    auto csi_data_usage = (double)csi_swap_size / (1024 * 1024);
+    auto cv_data_usage = cv_swap_size / 1024 / 1024;
+    auto csi_data_usage = csi_swap_size / 1024 / 1024;
 
     std::cout << "CV memory usage " << cv_data_usage << " MB" << std::endl
                 << "CSI memory usage " << csi_data_usage << " MB" << std::endl;
@@ -230,10 +223,10 @@ void SynchronousBinProcessor::save_data() {
         ofs.write(reinterpret_cast<char *>(&csi_swap_size), sizeof(size_t));
 
         // write the cv data
-        ofs.write(reinterpret_cast<char *>(cv_swap), static_cast<long>(cv_swap_size));
+        ofs.write(reinterpret_cast<char *>(ptr_cv_swap), static_cast<long>(cv_swap_size));
 
         // write the csi data
-        ofs.write(reinterpret_cast<char *>(csi_swap), static_cast<long>(csi_swap_size));
+        ofs.write(reinterpret_cast<char *>(ptr_csi_swap), static_cast<long>(csi_swap_size));
     }
 
     // save the video
@@ -253,7 +246,7 @@ void SynchronousBinProcessor::save_data() {
 }
 
 
-void SynchronousBinProcessor::save_data_to_bin(){
+void SynchronousBinProcessor::save_to_bin(){
 
     // set the flag to be true
     b_thread_running = true;

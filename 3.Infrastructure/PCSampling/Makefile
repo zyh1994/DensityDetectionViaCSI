@@ -1,58 +1,48 @@
-# Define the compiler
+# Compiler and Flags
 CC = g++
-
-# Use PKG_CONFIG to get the right compiler flags for OpenCV
-CFLAGS = `pkg-config --cflags opencv4`
-
-# Use PKG_CONFIG to get the right linker flags for OpenCV
+CFLAGS = `pkg-config --cflags opencv4` -std=c++17
 LDFLAGS = `pkg-config --libs opencv4`
-
-# Include the project header files
 INCLUDES =
 
-# Define the source files (excluding main files for now)
-SOURCES = $(wildcard csi/*.cpp) $(wildcard cv/*.cpp) $(wildcard bin/*.cpp) $(wildcard local/*.cpp) $(wildcard network/*.cpp) $(wildcard security/*.cpp) $(wildcard threads/*.cpp)
-
-# Define the debug main file
-DEBUG_MAIN = DebugMain.cpp
-
-# Define the executable main file
-EXEC_MAIN = Main.cpp
-
-# Define the object files
+# Source files, object files and main files
+SOURCES = $(wildcard csi/*.cpp) \
+         $(wildcard cv/*.cpp) \
+         $(wildcard bin/*.cpp) \
+         $(wildcard local/*.cpp) \
+         $(wildcard network/*.cpp) \
+         $(wildcard security/*.cpp) \
+         $(wildcard threads/*.cpp) \
+		 $(wildcard csv/*.cpp) \
+         
 OBJECTS = $(SOURCES:.cpp=.o)
+BIN2CSV_MAIN = bin2csv.cpp
+CSI2BIN_MAIN = csi2bin.cpp
 
-# Define the debug object file
-DEBUG_OBJECTS = $(DEBUG_MAIN:.cpp=.o)
+BIN2CSV_OBJECTS = $(BIN2CSV_MAIN:.cpp=.o)
+CSI2BIN_OBJECTS = $(CSI2BIN_MAIN:.cpp=.o)
 
-# Define the executable object file
-EXEC_OBJECTS = $(EXEC_MAIN:.cpp=.o)
+# Target executables
+BIN2CSV_EXE = pc_bin2csv
+CSI2BIN_EXE = pc_csi2bin
 
-# Define the executable file
-EXECUTABLE = pc_sampling
+# Default target
+all: $(CSI2BIN_EXE) $(BIN2CSV_EXE)
 
-# Define the debug executable file
-DEBUG_EXECUTABLE = pc_debug
+# Individual build targets
+bin2csv: $(BIN2CSV_EXE)
+csi2bin: $(CSI2BIN_EXE)
 
-# make all is the default action
-all: $(EXECUTABLE) $(DEBUG_EXECUTABLE)
-
-# make debug is compiling the debug version
-debug: $(DEBUG_EXECUTABLE)
-
-# make exec is compiling the executable version
-exec: $(EXECUTABLE)
-
-$(DEBUG_EXECUTABLE): $(DEBUG_OBJECTS) $(OBJECTS)
+# Linking rules
+$(BIN2CSV_EXE): $(BIN2CSV_OBJECTS) $(OBJECTS)
 	$(CC) $^ -o $@ $(LDFLAGS)
 
-$(EXECUTABLE): $(EXEC_OBJECTS) $(OBJECTS)
+$(CSI2BIN_EXE): $(CSI2BIN_OBJECTS) $(OBJECTS)
 	$(CC) $^ -o $@ $(LDFLAGS)
 
-# Compile the source files
+# Compilation rule
 .cpp.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-# Clean the project
+# Clean rule
 clean:
-	rm -f $(OBJECTS) $(DEBUG_OBJECTS) $(EXEC_OBJECTS) $(EXECUTABLE) $(DEBUG_EXECUTABLE)
+	rm -f $(OBJECTS) $(BIN2CSV_OBJECTS) $(CSI2BIN_OBJECTS) $(CSI2BIN_EXE) $(BIN2CSV_EXE)

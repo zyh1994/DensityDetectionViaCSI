@@ -6,9 +6,7 @@
 #include "../bin/GeneralUtils.h"
 
 
-
 OpenWrt_CSI_MetaInfo_V1  csi_meta;
-
 
 
 void encode_openwrt_v1(int32_t* input, int32_t data_len, uint8_t* output) {
@@ -66,7 +64,7 @@ void decode_openwrt_v1(uint8_t* input, int32_t bytes_len, int32_t* output) {
     int32_t data_idx = 0;
 
     // Now, we can decode the data
-    while (bytes_idx < bytes_len - 1) {
+    while (bytes_idx <= bytes_len) {
         if ((bits_left - 10) < 0) {
             // uint8_t buf[2] = { 0xCD, 0xAB }; ==> 0xABCD
             h_data = read_16bits_by_little_endian(input, bytes_idx);

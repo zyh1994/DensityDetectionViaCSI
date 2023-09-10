@@ -4,7 +4,6 @@
 
 #include <cstdint>
 #include <iostream>
-#include <strstream>
 
 /**
  * @brief Convert the data to a negative number if the highest bit is 1

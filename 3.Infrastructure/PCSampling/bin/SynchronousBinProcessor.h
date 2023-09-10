@@ -13,53 +13,34 @@
 #include <condition_variable>
 #include <cstdint>
 
-
 #include <opencv2/opencv.hpp>
+#include "../csi/StandardCSIDataStruct.h"
 
 
 constexpr int BUF_SIZE          = 1024 * 1024 * 1024;   // buffer size, 1GB
 constexpr int FLUSH_INTERVAL    = 60;                   // refresh interval, 60s
-
-struct OpenCVFrameInfo {
-    uint32_t    frame_size;
-    uint32_t    raw_size;
-    uint32_t    timestamp;
-    uint32_t    crc32;
-    
-    uint16_t    width;
-    uint16_t    height;
-    uint16_t    channels;
-    uint16_t    reserved;
-};
-
-struct CSIDataFrameInfo {
-    uint32_t    frame_size;
-    uint32_t    raw_size;
-    uint32_t    timestamp;
-    uint32_t    crc32;
-};
 
 
 class SynchronousBinProcessor {
 
 private:
     // OpenCV frame
-    OpenCVFrameInfo     st_cv_frame;
-    CSIDataFrameInfo    st_csi_frame;
+    OpenCVDataFrameWithChecksum     st_cv_frame;
+    CSIStandardDataWithChecksum     st_csi_frame;
 
     // file stream
     std::ofstream       ofs;
 
     // vector for cv mat
-    uint8_t             *cv_buff; 
-    uint8_t             *cv_swap; 
+    uint8_t             *ptr_cv_buff; 
+    uint8_t             *ptr_cv_swap; 
 
     size_t              cv_buff_size;
     size_t              cv_swap_size;
 
     // buffer for csi raw data
-    uint8_t             *csi_buff; 
-    uint8_t             *csi_swap; 
+    uint8_t             *ptr_csi_buff; 
+    uint8_t             *ptr_csi_swap; 
 
     size_t              csi_buff_size;
     size_t              csi_swap_size;
@@ -103,7 +84,7 @@ public:
 
 private:
 
-    void save_data_to_bin();
+    void save_to_bin();
 
     void swap_buffer();
 

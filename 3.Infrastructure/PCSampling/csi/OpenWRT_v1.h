@@ -33,7 +33,7 @@ typedef struct
 #define OPENWRT_CSI_META_INFO_V1
 #define DEFAULT_TX      3   // Transmitter
 #define DEFAULT_RX      3   // Receiver
-#define DEFAULT_TONES   114 // Number of subcarriers
+#define DEFAULT_TONES   116 // Number of subcarriers
 #define CSI_META_LEN    23  // Length of CSI meta info
 #endif
 
