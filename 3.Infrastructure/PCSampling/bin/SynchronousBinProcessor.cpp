@@ -2,12 +2,14 @@
 // Created by Seagosoft on 8/20/2023.
 //
 
-#include "SynchronousBinProcessor.h"
 #include "GeneralUtils.h"
+#include "SynchronousBinProcessor.h"
 #include "../cv/VideoHelper.h"
 #include "../csi/StandardCSIDataStruct.h"
 
+
 #include <cstdio>
+#include <fstream>
 
 SynchronousBinProcessor::SynchronousBinProcessor() {
 
@@ -175,6 +177,9 @@ void SynchronousBinProcessor::append_data(unsigned char *buf, size_t data_size) 
 
     // update the buffer size
     csi_buff_size += CSISTD_CHECKSUM_SIZE;
+
+    // print out the message
+    std::cout << "CSI data size " << csi_buff_size << std::endl;
 }
 
 
@@ -198,6 +203,9 @@ void SynchronousBinProcessor::swap_buffer() {
 
     // reset the count of written data to be zero
     cv_buff_size = csi_buff_size = 0;
+
+    // print out the message
+    std::cout << "Buffer swapped!" << std::endl;
 };
 
 
@@ -229,6 +237,9 @@ void SynchronousBinProcessor::save_data() {
         ofs.write(reinterpret_cast<char *>(ptr_csi_swap), static_cast<long>(csi_swap_size));
     }
 
+    // print out the message
+    std::cout << "Data saved!" << std::endl;
+
     // save the video
     if (!cv_frames_swap.empty()) {
 
@@ -240,6 +251,9 @@ void SynchronousBinProcessor::save_data() {
         // clear the vector
         cv_frames_swap.clear();
     }
+
+    // print out the message
+    std::cout << "Video saved!" << std::endl;
 
     // close the file
     close_file();
@@ -254,24 +268,11 @@ void SynchronousBinProcessor::save_to_bin(){
     // loop for the backend thread
     while (b_thread_running) {
 
-        // The following loop is for time interval control
-        // if the time interval is not reached, the loop will continue
-        {
-            // get current time clock
-            auto current_time = std::chrono::system_clock::now();
+        // sleep for 1 minute
+        std::this_thread::sleep_for(std::chrono::minutes(1));
 
-            // calculate the elapsed time
-            auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(current_time - last_updated).count();
-
-            // if a minute does not pass
-            if (elapsed_time < FLUSH_INTERVAL) {
-                // sleep for a millisecond
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-                // continue the loop
-                continue;
-            }
-        }
+        // Print out the message
+        std::cout << "Flushing the buffer..." << std::endl;
 
         // Use the mutex to swap the buffer
         swap_buffer();

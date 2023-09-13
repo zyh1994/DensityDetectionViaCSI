@@ -188,6 +188,8 @@ void CSIStandardDataProcessingClass::updateWithOpenWRTv1(uint8_t *buffer, size_t
             }
         }
     }
+
+    // So far, this is OK
 }
 
 #include <cstring>
