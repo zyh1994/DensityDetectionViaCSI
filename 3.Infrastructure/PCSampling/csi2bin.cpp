@@ -31,9 +31,6 @@ void sig_handler(int signal) {
 
         // close the log file
         b_quit = true;
-
-        // close the program
-        processor.close_program();
     }
 }
 
