@@ -155,6 +155,9 @@ void csi_sampling_task() {
             // Save the CSI data to the bin processor
             processor.append_data(raw_data, received_size);
 
+            // set to zero
+            received_size = 0;
+
             // // Sleep for 1 ms
             // std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }

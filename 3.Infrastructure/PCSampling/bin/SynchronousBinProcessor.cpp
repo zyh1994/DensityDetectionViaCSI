@@ -164,19 +164,25 @@ void SynchronousBinProcessor::append_data(cv::Mat &mat) {
 void SynchronousBinProcessor::append_data(unsigned char *buf, size_t data_size) {
 
     // assign the crc32
-    st_csi_frame.crc32 = calculate_crc32(buf, data_size);
+    // st_csi_frame.crc32 = calculate_crc32(buf, data_size);
 
     // copy the data into the struct
-    memcpy(st_csi_frame.bytes, buf, data_size);
+    // memcpy(st_csi_frame.bytes, buf, data_size);
 
     // lock the mutex with unique_lock
     std::unique_lock<std::mutex> lock(mutex_lock);
 
     // copy the data into the buffer
-    memcpy(ptr_csi_buff + csi_buff_size, &st_csi_frame, CSISTD_CHECKSUM_SIZE);
+    memcpy(ptr_csi_buff + csi_buff_size, buf, data_size);
+    
+    // update the buffer size
+    csi_buff_size += data_size;
+
+    // copy \r\n into the buffer
+    memcpy(ptr_csi_buff + csi_buff_size, "\r\n", 2);
 
     // update the buffer size
-    csi_buff_size += CSISTD_CHECKSUM_SIZE;
+    csi_buff_size += 2;
 
     // print out the message
     std::cout << "CSI data size " << csi_buff_size << std::endl;
