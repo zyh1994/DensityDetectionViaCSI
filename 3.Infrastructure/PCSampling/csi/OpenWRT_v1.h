@@ -37,6 +37,8 @@ typedef struct
 #define CSI_META_LEN    23  // Length of CSI meta info
 #endif
 
+#include "StandardCSIDataStruct.h"
+
 
 extern const OpenWrt_CSI_MetaInfo_V1*  get_csi_metadata(const unsigned char* buf, int buf_size);
 
@@ -48,6 +50,13 @@ extern void encode_openwrt_v1(int32_t* input, int32_t data_len, uint8_t* output)
 
 
 extern void gen_fake_data(uint8_t *buf, size_t& buf_size);
+
+
+#if 1  // Enable the old version
+extern complex(* csi_matrix)[3][114] fill_csi_matrix(uint8_t* buf, int8_t nr, int8_t nc, int8_t num_tones);
+#endif
+
+extern void 
 
 
 #endif //DENSITYDETECTION_CSIHELPER_H

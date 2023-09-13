@@ -147,7 +147,8 @@ void CSIStandardDataProcessingClass::updateWithOpenWRTv1(uint8_t *buffer, size_t
     data.rssi_antenna_2 = meta_info->rssi_2;
 
 #if 0
-    system("clear");
+    /* Clear the screen */
+    printf("\033[2J");
    
     std::cout << "timestamp " << data.timestamp << std::endl;
     std::cout << "csi_length " << (int)data.csi_length << std::endl;
@@ -169,10 +170,24 @@ void CSIStandardDataProcessingClass::updateWithOpenWRTv1(uint8_t *buffer, size_t
 
 
     // Convert the CSI matrix to an int32_t array with one dimension
-    auto* csi_matrix_ptr = reinterpret_cast<int32_t*>(data.csi_matrix);
+    // auto* csi_matrix_ptr = reinterpret_cast<int32_t*>(data.csi_matrix);
 
     // Use the function decode_openwrt_v1 to get the CSI matrix
-    //decode_openwrt_v1(buffer + CSI_META_LEN + 2, meta_info->csi_len, csi_matrix_ptr);
+    // decode_openwrt_v1(buffer + CSI_META_LEN + 2, meta_info->csi_len, csi_matrix_ptr);
+
+    // Use old method to get the CSI matrix
+    // fill_csi_matrix(uint8_t* buf, int nr, int nc, int num_tones);
+    auto csi_matrix = fill_csi_matrix(buffer + CSI_META_LEN + 2, data.receiver_antennas, data.transmitter_antennas, data.number_of_tones);
+
+    // Copy the CSI matrix to the data
+    for (int i = 0; i < data.receiver_antennas; i++) {
+        for (int j = 0; j < data.transmitter_antennas; j++) {
+            for (int k = 0; k <  data.number_of_tones; k++) {
+                data.csi_matrix[i][j][k].real = csi_matrix[i][j][k].real;
+                data.csi_matrix[i][j][k].imag = csi_matrix[i][j][k].imag;
+            }
+        }
+    }
 }
 
 #include <cstring>
