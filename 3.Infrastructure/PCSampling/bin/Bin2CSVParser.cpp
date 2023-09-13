@@ -125,16 +125,16 @@ void save_csi_header(std::ofstream &ofs, CSIStandardDataWithChecksum* frame) {
 }
 
 
-// void save_csi_data(std::ofstream &ofs, CSIStandardDataWithChecksum* frame) {
-//     // From CSIStandardDataWithChecksum get CSIStandardData
-//     auto* ptr_std_data = reinterpret_cast<CSIStandardData*>(frame->bytes);
+void save_csi_data(std::ofstream &ofs, CSIStandardDataWithChecksum* frame) {
+    // From CSIStandardDataWithChecksum get CSIStandardData
+    auto* ptr_std_data = reinterpret_cast<CSIStandardData*>(frame->bytes);
 
-//     // Update the data
-//     csi_std_class->updateWithCSIDataStruct(ptr_std_data);
+    // Update the data
+    csi_std_class->updateWithCSIDataStruct(ptr_std_data);
 
-//     // Write the data to the CSV file
-//     ofs << csi_std_class->toCSVString() << std::endl;
-// };
+    // Write the data to the CSV file
+    ofs << csi_std_class->toCSVString() << std::endl;
+};
 
 
 void parse_opencv_data(uint8_t* bytes, int32_t size) {
