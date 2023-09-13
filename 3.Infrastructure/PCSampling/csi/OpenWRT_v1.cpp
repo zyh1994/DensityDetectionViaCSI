@@ -351,7 +351,7 @@ int bit_convert(int data, int maxbit)
     return data;
 }
 
-complex(* csi_matrix)[3][114] fill_csi_matrix(uint8_t* csi_addr, int8_t nr, int8_t nc, int8_t num_tones) {
+void fill_csi_matrix(uint8_t* csi_addr, int8_t nr, int8_t nc, int8_t num_tones) {
 
     u_int8_t k;
     u_int8_t bits_left, nr_idx, nc_idx;
@@ -415,8 +415,5 @@ complex(* csi_matrix)[3][114] fill_csi_matrix(uint8_t* csi_addr, int8_t nr, int8
             }
         }
     }
-
-    return csi_matrix;
 }
-
 #endif

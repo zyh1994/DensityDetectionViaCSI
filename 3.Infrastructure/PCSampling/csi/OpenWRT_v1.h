@@ -53,7 +53,8 @@ extern void gen_fake_data(uint8_t *buf, size_t& buf_size);
 
 
 #if 1  // Enable the old version
-extern complex(* csi_matrix)[3][114] fill_csi_matrix(uint8_t* buf, int8_t nr, int8_t nc, int8_t num_tones);
+extern complex csi_matrix[3][3][114];
+extern void fill_csi_matrix(uint8_t* buf, int8_t nr, int8_t nc, int8_t num_tones);
 #endif
 
 #endif //DENSITYDETECTION_CSIHELPER_H

@@ -177,7 +177,7 @@ void CSIStandardDataProcessingClass::updateWithOpenWRTv1(uint8_t *buffer, size_t
 
     // Use old method to get the CSI matrix
     // fill_csi_matrix(uint8_t* buf, int nr, int nc, int num_tones);
-    auto csi_matrix = fill_csi_matrix(buffer + CSI_META_LEN + 2, data.receiver_antennas, data.transmitter_antennas, data.number_of_tones);
+    fill_csi_matrix(buffer + CSI_META_LEN + 2, data.receiver_antennas, data.transmitter_antennas, data.number_of_tones);
 
     // Copy the CSI matrix to the data
     for (int i = 0; i < data.receiver_antennas; i++) {
