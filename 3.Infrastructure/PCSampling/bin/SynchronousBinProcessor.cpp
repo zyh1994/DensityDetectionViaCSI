@@ -113,31 +113,6 @@ void SynchronousBinProcessor::close_file() {
     std::cout << "File " << filename_handler << ".avi closed successfully!" << std::endl;
 }
 
-
-void SynchronousBinProcessor::close_program() {
-
-    // set the flag to be false
-    b_thread_running = false;
-
-    // wait until the backend thread ends
-    while (!b_thread_end) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
-    if (ofs.is_open()) {
-        ofs.close();
-    }
-
-    if (video_writer.isOpened()) {
-        video_writer.release();
-    }
-
-    // print out the message
-    std::cout << "Program closed successfully!" << std::endl;
-};
-
-
-
 void SynchronousBinProcessor::append_data(cv::Mat &mat) {
 
     // create a new cv mat
@@ -219,9 +194,6 @@ void SynchronousBinProcessor::swap_buffer() {
 
     // swap the cv mat containers
     std::swap(cv_frames, cv_frames_swap);
-
-    // update the last updated time
-    last_updated = std::chrono::system_clock::now();
 
     // reset the count of written data to be zero
     cv_buff_size = csi_buff_size = 0;
@@ -306,6 +278,9 @@ void SynchronousBinProcessor::save_to_bin(){
 
                 // continue the loop
                 continue;
+            } else {
+                // update the last updated time
+                last_updated = std::chrono::system_clock::now();
             }
         }
 
