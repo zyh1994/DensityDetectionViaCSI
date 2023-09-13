@@ -105,12 +105,6 @@ void SynchronousBinProcessor::close_file() {
     if (video_writer.isOpened()) {
         video_writer.release();
     }
-
-    // print out the message
-    std::cout << "File " << filename_handler << ".bin closed successfully!" << std::endl;
-
-    // print out the message
-    std::cout << "File " << filename_handler << ".avi closed successfully!" << std::endl;
 }
 
 void SynchronousBinProcessor::append_data(cv::Mat &mat) {
@@ -232,7 +226,10 @@ void SynchronousBinProcessor::save_data() {
     }
 
     // print out the message
-    std::cout << "Data saved!" << std::endl;
+    std::cout << "File " << filename_handler << ".bin saved successfully!" << std::endl;
+
+    // print out the message
+    std::cout << "File " << filename_handler << ".avi saved successfully!" << std::endl;
 
     // save the video
     if (!cv_frames_swap.empty()) {
