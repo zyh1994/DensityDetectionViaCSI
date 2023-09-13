@@ -65,7 +65,7 @@ public:
      * @param buf_size
      * @return
     */
-    inline uint8_t* toBytes(size_t& buf_size) const {
+    inline uint8_t* toBytes(int32_t& buf_size) const {
         buf_size = sizeof(CSIStandardData);
         return reinterpret_cast<uint8_t*>(const_cast<CSIStandardData*>(&data));
     };

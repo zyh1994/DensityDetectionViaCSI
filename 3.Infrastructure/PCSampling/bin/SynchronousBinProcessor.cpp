@@ -114,6 +114,30 @@ void SynchronousBinProcessor::close_file() {
 }
 
 
+void close_program() {
+
+    // set the flag to be false
+    b_thread_running = false;
+
+    // wait until the backend thread ends
+    while (!b_thread_end) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    if (ofs.is_open()) {
+        ofs.close();
+    }
+
+    if (video_writer.isOpened()) {
+        video_writer.release();
+    }
+
+    // print out the message
+    std::cout << "Program closed successfully!" << std::endl;
+};
+
+
+
 void SynchronousBinProcessor::append_data(cv::Mat &mat) {
 
     // create a new cv mat
@@ -185,7 +209,7 @@ void SynchronousBinProcessor::append_data(unsigned char *buf, size_t data_size) 
     csi_buff_size += 2;
 
     // print out the message
-    std::cout << "CSI data size " << csi_buff_size << std::endl;
+    // std::cout << "CSI data size " << csi_buff_size << std::endl;
 }
 
 
@@ -273,6 +297,25 @@ void SynchronousBinProcessor::save_to_bin(){
 
     // loop for the backend thread
     while (b_thread_running) {
+
+        // The following loop is for time interval control
+        // if the time interval is not reached, the loop will continue
+        {
+            // get current time clock
+            auto current_time = std::chrono::system_clock::now();
+
+            // calculate the elapsed time
+            auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(current_time - last_updated).count();
+
+            // if a minute does not pass
+            if (elapsed_time < FLUSH_INTERVAL) {
+                // sleep for a millisecond
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+                // continue the loop
+                continue;
+            }
+        }
 
         // sleep for 1 minute
         std::this_thread::sleep_for(std::chrono::minutes(1));

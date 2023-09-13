@@ -77,6 +77,8 @@ public:
 
     void close_file();
 
+    void close_program();
+
     void append_data(cv::Mat& mat);
 
     void append_data(unsigned char* buf, size_t data_size);

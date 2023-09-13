@@ -31,6 +31,9 @@ void sig_handler(int signal) {
 
         // close the log file
         b_quit = true;
+
+        // close the program
+        processor.close_program();
     }
 }
 
@@ -129,23 +132,23 @@ void csi_sampling_task() {
 
 #endif
     // CSI Standard Data Processing Class for processing the CSI data
-    size_t received_size = 0;
+    int received_size = 0;
     CSIStandardDataProcessingClass csiHandeler;
 
     // Loop until the user presses the ESC key
     while (!b_quit) {
 
-#if _DEBUG
-        // Generate the Fake CSI data
-        gen_fake_data(temp_buf, received_size);
-#else
+// #if _DEBUG
+//         // Generate the Fake CSI data
+//         gen_fake_data(temp_buf, received_size);
+// #else
         // Receive the CSI data from the socket
         socklen_t senderLen = sizeof(addr_in);
         received_size = recvfrom(sock_fd, temp_buf, BUF_SIZE, 0, (struct sockaddr*)&addr_in, &senderLen);
-#endif
+// #endif
         // Process the CSI data
         if (received_size > 0) {
-            
+
             // Process the CSI data
             csiHandeler.updateWithOpenWRTv1(temp_buf, received_size);
 
@@ -157,9 +160,6 @@ void csi_sampling_task() {
 
             // set to zero
             received_size = 0;
-
-            // // Sleep for 1 ms
-            // std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
 #if _DEBUG
