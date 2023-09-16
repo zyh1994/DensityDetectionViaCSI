@@ -1,3 +1,10 @@
+- [1. Download and install Ubuntu 16.04.7 with kernel 4.15.0-112-generic:](#1-download-and-install-ubuntu-16047-with-kernel-4150-112-generic)
+- [2. Change the Ubuntu mirror and disable updates:](#2-change-the-ubuntu-mirror-and-disable-updates)
+- [3. Install necessary packages:](#3-install-necessary-packages)
+- [4. Build and install modified wireless driver:](#4-build-and-install-modified-wireless-driver)
+- [5. Verify CSI tool is working:](#5-verify-csi-tool-is-working)
+
+
 
 # 1. Download and install Ubuntu 16.04.7 with kernel 4.15.0-112-generic:
 
