@@ -13,7 +13,6 @@ if [ -n "$dirlist" ]; then
     for dir in $dirlist
     do
         # If the directory name starts with a 2023, then execute the script
-        # on the directory.
         if [[ $dir == *"2023"* ]]; then
             echo "Running script on $dir"
             python3 yolov8_detect.py "$dir"
