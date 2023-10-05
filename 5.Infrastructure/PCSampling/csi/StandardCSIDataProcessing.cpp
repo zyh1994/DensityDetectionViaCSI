@@ -1,4 +1,5 @@
 #include "StandardCSIDataProcessing.h"
+#include "../bin/GeneralUtils.h"
 #include <sstream>
 #include <string>
 
@@ -131,7 +132,8 @@ void CSIStandardDataProcessingClass::updateWithOpenWRTv1(uint8_t *buffer, size_t
     auto meta_info = get_csi_metadata(buffer, buffer_size);
 
     // Update the meta information
-    data.timestamp = meta_info->timestamp;
+    // data.timestamp = meta_info->timestamp;
+    data.timestamp = timestamp();
     data.csi_length = meta_info->csi_len;
     data.channel_number = meta_info->channel;
     data.buffer_length = meta_info->buf_len;
