@@ -7,9 +7,14 @@
   - [Install the Docker Image](#install-the-docker-image)
   - [Compile the ESP32 CSI project](#compile-the-esp32-csi-project)
     - [Use the Docker Image to Compile the ESP32 CSI project](#use-the-docker-image-to-compile-the-esp32-csi-project)
+    - [Change the Chip Version](#change-the-chip-version)
     - [Flash the ESP32 CSI project](#flash-the-esp32-csi-project)
     - [Monitor the ESP32 CSI project](#monitor-the-esp32-csi-project)
     - [Clean the ESP32 CSI project](#clean-the-esp32-csi-project)
+  - [Additional](#additional)
+    - [Using Remote Serial Port](#using-remote-serial-port)
+    - [Check the Serial Port Number in Windows](#check-the-serial-port-number-in-windows)
+    - [Use Another Tool to Flash the Board](#use-another-tool-to-flash-the-board)
 
 
 
@@ -93,6 +98,16 @@ cd examples/get-started/hello_world
 docker run -it --rm -v $PWD:/project -w /project espressif/idf:v5.0.4 idf.py build
 ```
 
+### Change the Chip Version
+
+`espressif/idf` compiles the project into ESP32 as default, but for this project, it is a ESP32S3. So we have to dedicate the chip version.
+
+
+```bash
+docker run -it --rm -v $PWD:/project -w /project espressif/idf:v5.0.4 idf.py set-target esp32s3
+```
+
+
 ### Flash the ESP32 CSI project
 
 
@@ -100,6 +115,12 @@ After the compilation is finished, you can find the `hello_world.bin` file in th
 
 ```bash
 docker run -it --rm -v $PWD:/project -w /project espressif/idf:v5.0.4 idf.py flash
+```
+
+*For our project, the above command changes to the following command.*
+
+```bash
+docker run -it --rm -v $PWD:/project -w /project espressif/idf:v5.0.4 idf.py --port 'rfc2217://host.docker.internal:4000?ign_set_control' flash
 ```
 
 ### Monitor the ESP32 CSI project
@@ -110,10 +131,83 @@ After the flashing is finished, you can use the following command to monitor the
 docker run -it --rm -v $PWD:/project -w /project espressif/idf:v5.0.4 idf.py monitor
 ```
 
+*For our project, the above command changes to the following command.*
+
+```bash
+docker run -it --rm -v $PWD:/project -w /project espressif/idf:v5.0.4 idf.py --port 'rfc2217://host.docker.internal:4000?ign_set_control' monitor
+```
+
+Then, you can see the following output.
+
+![MonitorMode](./img/MonitorMode.png)
+
 ### Clean the ESP32 CSI project
 
 If you want to clean the ESP32 CSI project, you can use the following command.
 
 ```bash
 docker run -it --rm -v $PWD:/project -w /project espressif/idf:v5.0.4 idf.py fullclean
+```
+
+## Additional
+
+### Using Remote Serial Port
+
+The RFC2217 (Telnet) protocol can be used to remotely connect to a serial port. For more information please see the remote serial ports documentation in the ESP tool project. This method can also be used to access the serial port inside a Docker container if it cannot be accessed directly. Following is an example of how to use the Flash command from within a Docker container.
+
+On host install and `start esp_rfc2217_server`:
+
+On Windows, the package is available as a one-file bundled executable created by `pyinstaller` and it can be downloaded from the [esptool releases page](https://github.com/espressif/esptool/releases) in a ZIP archive along with other ESP tool utilities:
+
+```bash
+esp_rfc2217_server -v -p 4000 COM3
+```
+
+> Before you start to use the server, you have to make sure that board is connected to the host via the serial port. For our project, the 'USB-to-UART' is used to connect the ESP32S3 board to the host.
+
+![ESP32S3](./img/ESP32S3_Board.jpg)
+
+On Linux or macOS, the package is available as part of esptool, which can be found in the ESP-IDF environment or by installing using `pip`:
+
+```bash
+pip install esptool
+```
+And then starting the server by executing
+
+```bash
+esp_rfc2217_server.py -v -p 4000 /dev/ttyUSB0
+```
+
+Now the device attached to the host can be flashed from inside a Docker container by using:
+
+```bash
+docker run --rm -v <host_path>:/<container_path> -w /<container_path> espressif/idf idf.py --port 'rfc2217://host.docker.internal:4000?ign_set_control' flash
+```
+
+Please make sure that `<host_path>` is properly set to your project path on the host, and `<container_path>` is set as a working directory inside the container with the `-w` option. The `host.docker.internal` is a special Docker DNS name to access the host. This can be replaced with a host IP if necessary.
+
+
+### Check the Serial Port Number in Windows
+
+In Windows, you can check the serial port number by opening the Device Manager.
+
+![Device Manager](./img/DeviceManager_CheckSerialPortNumOnWin.png)
+
+Then, you can find the serial port number in the 'Ports (COM & LPT)'.
+
+
+### Use Another Tool to Flash the Board
+
+Instead of using the `idf.py` to flash the board, you can also use the `esptool.py` to flash the board. The `esptool.py` is a tool for communicating with ESP8266 and ESP32 chips. It is written in Python and works on Windows, macOS, Linux and BSD. It can communicate with the ESP32 chip over multiple protocols such as Serial UART, WiFi, and BLE. The `esptool.py` is a part of the ESP-IDF project. 
+
+Use the following command to flash the board.
+
+```bash
+docker run -it --rm -v $PWD:/project -w /project espressif/idf:v5.0.4 esptool.py --chip esp32s3 --port COM3 --baud 115200 write_flash 0x0 hello_world.bin
+```
+
+Or directly, you can use the following command to flash the board.
+
+```bash
+esptool.py --chip esp32s3 --port COM3 --baud 115200 write_flash 0x0 hello_world.bin
 ```

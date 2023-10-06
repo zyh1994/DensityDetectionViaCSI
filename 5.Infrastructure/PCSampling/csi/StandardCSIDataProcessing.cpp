@@ -57,22 +57,23 @@ std::string CSIStandardDataProcessingClass::toCSVString(const std::string& separ
     ss << std::to_string((int32_t)data.rssi_antenna_1) << separator;
     ss << std::to_string((int32_t)data.rssi_antenna_2) << separator;
 
-    // convert the csi matrix to json string
+    // Convert the CSI matrix to json string
     ss << "[";
-    for (int k = 0; k < data.number_of_tones; k++) {
+    for (int nr_idx = 0; nr_idx < data.receiver_antennas; nr_idx++) {
         ss << "[";
         for (int nc_idx = 0; nc_idx < data.transmitter_antennas; nc_idx++) {
             ss << "[";
-            for (int nr_idx = 0; nr_idx < data.receiver_antennas; nr_idx++) {
+            for (int k = 0; k < data.number_of_tones; k++) {
                 ss << "["
                 << std::to_string((int32_t)data.csi_matrix[nr_idx][nc_idx][k].real)
                 << ","
                 << std::to_string(data.csi_matrix[nr_idx][nc_idx][k].imag)
                 << "]";
 
-                if (nr_idx < data.receiver_antennas - 1) {
+                if (k < data.number_of_tones - 1) {
                     ss << ",";
                 }
+
             }
             ss << "]";
 
@@ -82,10 +83,11 @@ std::string CSIStandardDataProcessingClass::toCSVString(const std::string& separ
         }
         ss << "]";
 
-        if (k < data.number_of_tones - 1) {
+        if (nr_idx < data.receiver_antennas - 1) {
             ss << ",";
         }
     }
+
     ss << "]";
 
     // return the string
