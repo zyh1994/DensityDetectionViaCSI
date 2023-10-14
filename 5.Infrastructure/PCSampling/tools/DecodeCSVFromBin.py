@@ -43,8 +43,15 @@ def move_files_to_folder(path: str):
 
 
 def decode_csv_from_bin(bin_file: str):
-    # Decode the bin file
-    os.system('./pc_bin2csv ' + bin_file)
+
+    # Print out the executing command
+    print("Executing command: ./pc_bin2csv {}".format(bin_file))
+
+    # If the system is Windows
+    if os.name == 'nt':
+        os.system('pc_bin2csv.exe ' + bin_file)
+    else:
+        os.system('./pc_bin2csv ' + bin_file)
 
     # Move the files to a folder
     move_files_to_folder(bin_file)
