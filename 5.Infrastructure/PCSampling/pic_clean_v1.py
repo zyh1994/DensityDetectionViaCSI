@@ -16,7 +16,7 @@ def load_images_from_folder(folder_path: str):
     return image_dict
 
 
-def rename_images(image_dict: dict, start_time):
+def rename_images_in_dir(image_dict: dict, start_time):
     # Current time
     current_time = start_time
 
@@ -44,19 +44,38 @@ def rename_images(image_dict: dict, start_time):
     temp_pd['Timestamp_GAP'] = temp_pd['Timestamp_GAP'].fillna(0)
     temp_pd['Timestamp_GAP'] = temp_pd['Timestamp_GAP'].astype(int)
 
-    # Calculate new timestamp, Timestamp_GAP + Timestamp_CSV
-    temp_pd['Timestamp_New'] = temp_pd['Timestamp_GAP'] + temp_pd['Timestamp_CSV']
+    # Calculate the accumulated timestamp gap
+    temp_pd['Accumulated_GAP'] = temp_pd['Timestamp_GAP'].cumsum()
 
-    # Rename the files
-    timestamp_with_dirs = temp_pd[['Timestamp_New', 'ImagePath']]
+    # Calculate new timestamp, Accumulated_GAP + Timestamp_CSV
+    temp_pd['Timestamp_New'] = temp_pd['Accumulated_GAP'] + temp_pd['Timestamp_CSV']
 
-    # Convert the timestamp_with_dirs to dict
-    
+    # Based on timestamp_with_dirs, rename the images
+    for index, row in temp_pd.iterrows():
+        # Get the timestamp and image path
+        timestamp = row['Timestamp_New']
+        image_path = row['ImagePath']
 
-    print(timestamp_with_dirs)
+        # Get the image name
+        image_fn = os.path.basename(image_path)
+
+        # Get the image extension
+        image_ext = os.path.splitext(image_fn)[1]
+
+        # Get the image directory
+        image_dir = os.path.dirname(image_path)
+
+        # Get the new image name
+        new_image_fn = str(timestamp) + image_ext
+
+        # Get the new image path
+        new_image_path = os.path.join(image_dir, new_image_fn)
+
+        # Rename the image
+        os.rename(image_path, new_image_path)
 
 
-def do_cleaning(csv_path: str):
+def rename_pics_in_dirs(csv_path: str):
     # Scan the directory and get all the image files
     for root, dirs, files in os.walk(csv_path):
 
@@ -84,14 +103,33 @@ def do_cleaning(csv_path: str):
         last_timestamp = int(timestamp_list[-1])
 
         # Rename the images
-        rename_images(images, first_timestamp)
+        rename_images_in_dir(images, first_timestamp)
+
 
 if __name__ == "__main__":
 
     # print out the usage
-    # if len(sys.argv) == 2 and sys.argv[1] == '-h': 
-        # print("Usage: python pic_clean_v1.py <root_folder>")
+    if len(sys.argv) == 2 and sys.argv[1] == '-h': 
+        print("Usage: python pic_clean_v1.py <root_folder>")
     
-    # Move the files to a folder
-    # do_cleaning(sys.argv[1])
-    do_cleaning(r"C:\Users\z004uk0h\Downloads\Data\202310101534")
+    # Rename the pictures
+    csv_path_list = []
+    for root, dirs, files in os.walk(sys.argv[1]):
+        for file in files:
+            if file.endswith('csi.csv'):
+                csv_path_list.append(os.path.join(root, file))
+
+    do_cleaning(r"C:\Users\Seagosoft\Downloads\Data\202310101534")
+
+
+def do_cleaning(csv_path: str):
+    # Scan the directory and get all the csv files
+    csv_path_list = []
+    for root, dirs, files in os.walk(csv_path):
+        for file in files:
+            if file.endswith('csi.csv'):
+                csv_path_list.append(os.path.join(root, file))
+
+    # Clean the data    
+    for csv_path in csv_path_list:
+        clean_csv(csv_path)
