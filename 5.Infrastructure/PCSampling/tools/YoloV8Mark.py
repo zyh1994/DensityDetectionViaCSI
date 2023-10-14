@@ -76,15 +76,15 @@ def save_result_csv(model, image_list):
     print("The number of the bounding box is: ", count)
 
 
-def recognize_human_bbx(dir):
+def recognize_human_bbx(root_dir):
     # Load a model
     model = YOLO('yolov8n.pt')  # pretrained YOLOv8n model
 
     # Find the image
-    image_list = find_image(dir + "/jpg")
+    image_list = find_image(root_dir + "/jpg_processed")
 
     # Detect the human and save the bounding box to csv file
     save_result_csv(model, image_list)
 
     # Move the generated csv file to the current directory
-    os.system('mv bbx_result.csv ' + dir)
+    os.system('mv bbx_result.csv ' + root_dir)

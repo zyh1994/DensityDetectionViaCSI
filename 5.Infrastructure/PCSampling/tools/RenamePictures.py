@@ -70,9 +70,9 @@ def rename_images(image_dict: dict, start_time):
         os.rename(image_path, new_image_path)
 
 
-def rename_pics_in_dir(csv_path: str):
+def rename_pics_in_dir(root_dir: str):
     # Scan the directory and get all the image files
-    for root, dirs, files in os.walk(csv_path):
+    for root, dirs, files in os.walk(root_dir):
 
         # Load the images
         images = None
