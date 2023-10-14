@@ -90,8 +90,8 @@ def clean_low_dim_data_csi(csi_pd, dimension_list, dimension_count):
     return csi_pd
 
 
-def clean_csv_in_dir(csv_path: str):
-    # 测试用数据
+def clean_csv_by_given_path(csv_path: str):
+    # 从给定的CSV_PATH加载CSI数据
     csi_pd = load_csi_matrix_from_file(csv_path)
 
     # 检查数据维度的统一性
