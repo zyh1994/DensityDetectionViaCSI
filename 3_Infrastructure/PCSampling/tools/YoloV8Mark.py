@@ -1,6 +1,5 @@
 from ultralytics import YOLO
 import csv
-import cv2
 import os
 import sys
 
@@ -25,7 +24,7 @@ def find_image(path: str):
 
 def detect_human(model, image):
     # Run batched inference on a list of images
-    results = model(image)  
+    results = model(image)
 
     # Results list
     obj_entity = []
@@ -48,18 +47,17 @@ def detect_human(model, image):
                 xyxy3 = int(xyxy[3])
 
                 # save the bounding box to the list
-                obj_entity.append([image_list[img_idx], xyxy0, xyxy1, xyxy2, xyxy3])
-    
+                obj_entity.append([image[img_idx], xyxy0, xyxy1, xyxy2, xyxy3])
+
     return obj_entity
 
 
-def detect_human_save_bx_to_csv(model, image_list):
-
+def save_result_csv(model, image_list):
     # count
     count = 0
 
     # create a csv file
-    with open('result.csv', 'w', newline='') as csvfile:
+    with open('bbx_result.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['image_fn', 'x1', 'y1', 'x2', 'y2'])
 
@@ -67,26 +65,26 @@ def detect_human_save_bx_to_csv(model, image_list):
         for i in range(0, len(image_list), 10):
 
             # detect the human
-            results = detect_human(model, image_list[i:i+10])
+            results = detect_human(model, image_list[i:i + 10])
 
             # save the bounding box to the csv file
             for result in results:
                 writer.writerow(result)
                 count += 1
-    
+
     # print the number of the bounding box
     print("The number of the bounding box is: ", count)
-    
 
-if __name__ == '__main__':
+
+def recognize_human_bbx(root_dir):
     # Load a model
     model = YOLO('yolov8n.pt')  # pretrained YOLOv8n model
 
     # Find the image
-    image_list = find_image(sys.argv[1] + "/jpg")
+    image_list = find_image(root_dir + "/jpg_processed")
 
     # Detect the human and save the bounding box to csv file
-    detect_human_save_bx_to_csv(model, image_list)
+    save_result_csv(model, image_list)
 
     # Move the generated csv file to the current directory
-    os.system('mv result.csv ' + sys.argv[1])
+    os.system('mv bbx_result.csv ' + root_dir)
